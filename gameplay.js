@@ -38,10 +38,11 @@ window.addEventListener('keyup', keyup);
 
 class Gameplay {
 
-    constructor (conf, circuit, car, camera) {
+    constructor (conf, circuit, car, camera, particlesManager) {
         this.circuit = circuit;
         this.car = car;
         this.camera = camera;
+        this.particlesManager = particlesManager;
 
         // Init car position
         this._circuitMargin = conf.circuit.margin;
@@ -91,7 +92,7 @@ class Gameplay {
         this.car.setAtStartingPosition(nosePoint, slvt);
     }
 
-    update (speedhtml, laptimehtml) {
+    update (speedhtml, sectorshtml) {
 
         // Reset everything
         if (actions.reset) {
@@ -99,19 +100,22 @@ class Gameplay {
 
             this.clock = new THREE.Clock(false);
             this.laptime = 0;
-            laptimehtml.style.color = "black";
             
             this.started = false;
             this.validtime = true;
             this.nextcp = 0;
+
+            for (var i = 0; i < 3; i++) {
+                sectorshtml[i].innerHTML = "-";
+                sectorshtml[i].style.color = "black";
+            }
         }
 
         if (this.started && !this.clock.running) {
             this.clock.start();
-            laptimehtml.style.color = "#66ff66";
         }
 
-        // Update laptime
+        // Get & Print current laptime
         this.laptime += this.clock.getDelta();
         let min = Math.floor(this.laptime/60);
         let sec = Math.floor(this.laptime) % 60;
@@ -120,7 +124,9 @@ class Gameplay {
         if (sec < 10) sec = "0" + sec;
         if (milli < 10) milli = "00" + milli;
         else if (milli < 100) milli = "0" + milli;
-        laptimehtml.innerHTML = min + ":" + sec + ":" + milli;
+        if (this.started) {
+            sectorshtml[this.nextcp].innerHTML = min + ":" + sec + ":" + milli;
+        }
 
         // Print speed
         let speed = this.car.vehiclePhysics.getCurrentSpeedKmHour();
@@ -146,6 +152,9 @@ class Gameplay {
             if (intercir.length == 0) {
                 breakingForce = 60;
                 wheelOffside += 1;
+
+                // Particles
+                this.particlesManager.add(this.car.createParticleMarkGrass(i, speed));
             }
 
             if (actions.acceleration) {
@@ -194,7 +203,7 @@ class Gameplay {
             }
             else {
                 this.vehicleSteering = 0;
-                if (this.vehicleSteering < -this.steeringIncrement)
+                /*if (this.vehicleSteering < -this.steeringIncrement)
                     this.vehicleSteering += this.steeringIncrement;
                 else {
                     if (this.vehicleSteering > this.steeringIncrement)
@@ -202,7 +211,7 @@ class Gameplay {
                     else {
                         this.vehicleSteering = 0;
                     }
-                }
+                }*/
             }
         }
         this.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.car.FRONTLEFT);
@@ -216,16 +225,15 @@ class Gameplay {
                 if (!this.started) {
                     this.started = true;
                 } else {
-                    if (this.validtime) {
-                        console.log("GOOD " + laptimehtml.innerHTML);
-                    } else {
-                        console.log("BAD " + laptimehtml.innerHTML);
-                    }
+                    // TODO remember valid time
 
                     // Reset clock
                     this.laptime = 0;
                     this.validtime = true;
-                    laptimehtml.style.color = "#66ff66";
+                    for (var i = 0; i < 3; i++) {
+                        sectorshtml[i].innerHTML = "-";
+                        sectorshtml[i].style.color = "black";
+                    }
                 }
             }
 
@@ -238,7 +246,13 @@ class Gameplay {
         if (this.started && wheelOffside == this.car.WHEELSNUMBER) {
             this.car.chassisMesh.material.color.setHex(0xff0000);
             this.validtime = false;
-            laptimehtml.style.color = "red";
+            
+            for (var i = this.nextcp; i < 4; i++) {
+                var j = i;
+                if (j == 0) i = 4;
+                if (j == 3) j = 0;
+                sectorshtml[j].style.color = "red";
+            }
         } else {
             this.car.chassisMesh.material.color.setHex(0x00fff0);
         }
@@ -254,6 +268,9 @@ class Gameplay {
         
         this.camera.up = new THREE.Vector3(0,0,1);
         this.camera.lookAt(this.cameraLookAt);
+
+        // Update particles
+        this.particlesManager.update();
         
     }
 }

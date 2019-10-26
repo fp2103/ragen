@@ -206,4 +206,17 @@ class Car {
             this.wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
         }
     }
+
+    createParticleMarkGrass (idWheel, speed) {
+        let pos = this.wheelMeshes[idWheel].position.clone();
+        let y = ((1000*speed/3600) * (1/FPS)) + SMALL_GAP;
+        let part = new Particles(1, new THREE.Vector2(this._wheelRadius/1.5, y), 0x87B982, 2);
+        
+        pos.z -= this._wheelRadius;
+        let rot = this.chassisMesh.rotation.clone();
+        rot.x = 0;
+        rot.y = 0;
+        part.init_position(pos, new THREE.Quaternion().setFromEuler(rot));
+        return part;
+    }
 }

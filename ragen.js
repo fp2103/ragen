@@ -53,14 +53,15 @@ const GAMECONF = {
 var DISABLE_DEACTIVATION = 4;
 var SMALL_GAP = 0.1;
 var VERY_SMALL_GAP = 0.01;
+var FPS = 50;
 
 // ---------- Main --------------
 
 // Generate Seed & print it
 var seed = Math.random();
-//var seed = 0.7673798246104175;
-const seedp = document.getElementById("seed");
-seedp.innerHTML = "SEED: " + seed;
+//var seed = 0.3132418780476618;
+const seedinput = document.getElementById("seed");
+seedinput.value = seed;
 const myrng = new Math.seedrandom(seed);
 
 // TODO check WEBGL...
@@ -72,6 +73,11 @@ const stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.bottom = '0px';
 //container.appendChild( stats.domElement );
+
+//
+const sectorshtml = [document.querySelector('#laptime'), 
+                     document.querySelector('#sector1'),
+                     document.querySelector('#sector2')]
 
 
 // Main Vue
@@ -105,31 +111,32 @@ function init() {
     minimap.scene.add(car.minimapMesh);
     car.initPhysics(physics.world, GAMECONF.carPhysics);
 
+    // Particles
+    const particlesManager = new ParticlesManager(mainVue.scene);
+
     // Gameplay
-    gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera);
+    gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera, particlesManager);
 
 }
 
 
 // GAME LOOP
-const physicsfps = 45;
 const clock = new THREE.Clock();
-let pdt = 0;
+let dt = 0;
 function tick() {
     requestAnimationFrame(tick);
 
-    pdt += clock.getDelta();
+    dt += clock.getDelta() * FPS;
 
-    if (pdt > (1/physicsfps)) {
-        physics.world.stepSimulation(pdt, 1);
-        gameplay.update(document.querySelector('#speed'), document.querySelector('#time'));
+    if (dt >= 1) {
+        physics.world.stepSimulation(dt, 1);
+        gameplay.update(document.querySelector('#speed'), sectorshtml);
         stats.update();
-        pdt = pdt % (1/physicsfps);
+        dt -= 1;
     }
 
     mainVue.render();
     minimap.render();
-    //controls.update();
 }
 tick();
 

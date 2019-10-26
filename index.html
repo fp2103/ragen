@@ -6,11 +6,33 @@
 </head>
 <body>
     <div id="container">
-        <p id="seed"></p>
-        <p id="speed">0 km/h</p>
-        <div style="position: absolute; left: 50%;"><p id="time">00:00:000</p></div>
+
+        <div id="scoreboard">
+            <div id="track">
+                Track: <input type="text" name="seed" id="seed"><input type="button" value="Go">
+            </div>
+            <table>
+                <tr>
+                    <td>Leaderboard</td>
+                    <th>Name</th>
+                    <th>Sector 1</th>
+                    <th>Sector 2</th>
+                    <th>Lap</th>
+                </tr>
+                <tr>
+                    <th colspan="2">Current</th>
+                    <td id="sector1">-</td>
+                    <td id="sector2">-</td>
+                    <td id="laptime">-</td>
+                </tr>
+            </table>
+        </div>
+
         <canvas id="c"></canvas>
+
+        <p id="speed">0 km/h</p>
         <canvas id="frontc"></canvas>
+
     </div>
 </body>
 <script src="./node_modules/three/build/three.js"></script>
@@ -20,6 +42,7 @@
 <script src="ammo.js"></script>
 <script src="physics.js"></script>
 <script src="line.js"></script>
+<script src="particles.js"></script>
 <script src="terrain.js"></script>
 <script src="circuit_utils.js"></script>
 <script src="circuit.js"></script>

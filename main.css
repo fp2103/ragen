@@ -16,12 +16,6 @@ body {
     display: block;
 }
 
-#seed {
-    position: absolute;
-    z-index: 1;
-    left: 10px;
-    color: white;
-}
 
 #speed {
     position: absolute;
@@ -34,11 +28,6 @@ body {
     background-color: red;
 }
 
-#time {
-    position: relative;
-    left: -50%;
-}
-
 #frontc {
     width: 30vw;
     height: 15vw;
@@ -48,3 +37,13 @@ body {
     bottom: 0;
     z-index: 1;
 }
+
+#scoreboard {
+    position: absolute;
+    background-color: rgba(220,220,220,0.3);
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+  }
