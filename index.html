@@ -11,28 +11,28 @@
         <div id="menu" style="display: none;">
             <h3>Menu</h3>
             <span>Driver Name: </span>
-            <input type="text" name="name" id="name">
+            <input type="text" name="name" id="name" maxlength="10" value="anon">
 
             <h4>Solo</h4>
             <span>Track: </span>
-            <input type="text" name="menu_seed" id="menu_seed">
+            <input type="text" name="menu_seed" id="menu_seed" maxlength="10">
             <input type="button" value="Go" id="menu_go">
-            <input type="button" value="Random">
+            <input type="button" value="Random" id="menu_random">
 
             <h4>Multi</h4>
             <span>Session ID: </span>
-            <input type="text" name="sessionid" id="sessionid">
+            <input type="text" name="sessionid" id="sessionid" maxlength="4">
             <input type="button" value="Join/Create">
         </div>
 
 
-        <div id="game_elements">
+        <div id="game_elements" style="display: none;">
             <div id="scoreboard">
                 <div id="track">
                     <span>Track: </span>
-                    <input type="text" name="seed" id="seed">
+                    <input type="text" name="seed" id="seed" maxlength="10">
                     <input type="button" value="Go" id="go">
-                    <input type="button" value="Random">
+                    <input type="button" value="Random" id="random">
                 </div>
                 <table>
                     <tr>

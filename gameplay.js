@@ -23,7 +23,9 @@ function keyup(e) {
     }
 }
 function keydown(e) {
-    if(KEYSACTIONS[e.code]) {
+    const active = document.activeElement;
+    const textInput = active.tagName == "INPUT" && active.type == "text";
+    if(KEYSACTIONS[e.code] && !textInput) {
         actions[KEYSACTIONS[e.code]] = true;
         e.preventDefault();
         e.stopPropagation();
@@ -38,7 +40,8 @@ window.addEventListener('keyup', keyup);
 class Gameplay {
 
     constructor (conf, circuit, car, camera, particlesManager,
-                 htmlelements, currentTrack, circuitInitCallback) {
+                 htmlelements, currentTrack, circuitInitCallback,
+                 trackidGenerator) {
         this.circuit = circuit;
         this.car = car;
         this.camera = camera;
@@ -88,6 +91,10 @@ class Gameplay {
         this.htmlelements.go.addEventListener("click", this.onGoScoreboard.bind(this), false);
 
         this.circuitInitCallback = circuitInitCallback;
+
+        this.trackidGenerator = trackidGenerator;
+        this.htmlelements.menu_random.addEventListener("click", this.onRandomMenu.bind(this), false);
+        this.htmlelements.random.addEventListener("click", this.onRandomScoreboard.bind(this), false);
     }
 
     initCarPosition () {
@@ -125,11 +132,19 @@ class Gameplay {
 
         // particles
         this.particlesManager.reset()
+
+        // actions
+        actions['acceleration'] = false;
+        actions['braking'] = false;
+        actions['left'] = false;
+        actions['right'] = false;
+        actions['reset'] = false;
     }
 
     update () {
 
         if (this.onMenu) {
+            this.initCarPosition();
             this.car.updatePosition(0, true);
             return;
         }
@@ -332,6 +347,7 @@ class Gameplay {
     }
 
     onGoScoreboard () {
+        this.cameraLerp = this.lerpFast;
         this.onGo(this.htmlelements.seed.value);
     }
 
@@ -339,17 +355,27 @@ class Gameplay {
         if (askedTrack == this.currentTrack) {
             this.reset();
         } else {
-            console.log("lala");
-            this.reloadCircuit(this.circuitInitCallback(askedTrack));
             this.currentTrack = askedTrack;
+            this.reloadCircuit(this.circuitInitCallback(askedTrack));
         }
     }
 
-    reloadCircuit (circuit) {
-        this.circuit = circuit;
+    reloadCircuit (newCircuit) {
+        this.circuit = newCircuit;
         this.checkpoints = [this.circuit.slMesh,
                             this.circuit.cp1Mesh,
                             this.circuit.cp2Mesh];
         this.reset();
     }
-}
+
+    onRandomScoreboard () {
+        const tid = this.trackidGenerator();
+        this.cameraLerp = this.lerpFast;
+        this.onGo(tid);
+    }
+
+    onRandomMenu () {
+        const tid = this.trackidGenerator();
+        this.onGo(tid);
+    }
+ }

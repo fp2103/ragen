@@ -74,7 +74,9 @@ const HTMLELEMENTS = {
     game_elements: document.getElementById("game_elements"),
     menu_button: document.getElementById("menu_button"),
     menu_go: document.getElementById("menu_go"),
-    go: document.getElementById("go")
+    go: document.getElementById("go"),
+    menu_random: document.getElementById("menu_random"),
+    random: document.getElementById("random")
 }
 
 // ---------- Main --------------
@@ -82,7 +84,15 @@ const HTMLELEMENTS = {
 let physics, gameplay, currCircuit;
 
 // Generate Seed
-var myseed = Math.random();
+function generateRandomSeed () {
+    const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let seed = "";
+    for (var i = 0; i < 6; i++) {
+        let j = Math.floor(Math.random() * (ascii.length));
+        seed += ascii.charAt(j);
+    }
+    return seed; 
+}
 
 // TODO check WEBGL...
 
@@ -132,7 +142,8 @@ function init() {
     physics.world.addRigidBody(terrain.body);
 
     // Circuit
-    const circuit = initCircuit(myseed);
+    const seed = generateRandomSeed()
+    const circuit = initCircuit(seed);
 
     // Car
     const car = new Car(GAMECONF.car);
@@ -145,7 +156,8 @@ function init() {
 
     // Gameplay
     gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera,
-                            particlesManager, HTMLELEMENTS, myseed, initCircuit);
+                            particlesManager, HTMLELEMENTS, seed,
+                            initCircuit, generateRandomSeed);
 
 }
 
