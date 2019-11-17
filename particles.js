@@ -16,13 +16,15 @@ class Particles {
         // Time
         this.clock = new THREE.Clock();
         this.maxTime = time;
+
+        this.killed = false;
     }
 
     alive () {
-        return this.clock.getElapsedTime() < this.maxTime;
+        return !this.killed && this.clock.getElapsedTime() < this.maxTime;
     }
 
-    init_position (pos, quat) {
+    initPosition (pos, quat) {
         for (var i = 0; i < this.meshes.length; i++) {
             this.meshes[i].position.set(pos.x, pos.y, pos.z);
             this.meshes[i].quaternion.set(quat.x, quat.y, quat.z, quat.w);
@@ -30,6 +32,10 @@ class Particles {
     }
 
     update () {}
+
+    kill () {
+        this.killed = true;
+    }
 
     dispose () {
         this.geo.dispose();
@@ -50,6 +56,13 @@ class ParticlesManager {
             this.scene.add(particles.meshes[i]);
         }
         this.list.push(particles);
+    }
+    
+    reset () {
+        for (var i = 0; i < this.list.length; i++) {
+            this.list[i].kill();
+        }   
+        this.update()
     }
 
     update () {

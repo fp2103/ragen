@@ -34,15 +34,16 @@ function keydown(e) {
 window.addEventListener('keydown', keydown);
 window.addEventListener('keyup', keyup);
 
-// Gameplay object
-
+// Gameplay and Menu
 class Gameplay {
 
-    constructor (conf, circuit, car, camera, particlesManager) {
+    constructor (conf, circuit, car, camera, particlesManager,
+                 htmlelements, currentTrack, circuitInitCallback) {
         this.circuit = circuit;
         this.car = car;
         this.camera = camera;
         this.particlesManager = particlesManager;
+        this.currentTrack = currentTrack;
 
         // Init car position
         this._circuitMargin = conf.circuit.margin;
@@ -51,6 +52,9 @@ class Gameplay {
         // Init camera position
         this.camera.position.set(0, 0, 300);
         this.cameraLookAt = new THREE.Vector3(0,0,0);
+        this.lerpSlow = conf.misc.lerpSlow;
+        this.lerpFast = conf.misc.lerpFast;
+        this.cameraLerp = this.lerpSlow;
 
         // driving parameter        
         this.steeringIncrement = conf.carPhysics.steeringIncrement;
@@ -68,10 +72,22 @@ class Gameplay {
         this.started = false;
         this.validtime = true;
 
-        this.CHECKPOINTS = [this.circuit.slMesh,
+        this.checkpoints = [this.circuit.slMesh,
                             this.circuit.cp1Mesh,
                             this.circuit.cp2Mesh];
         this.nextcp = 0;
+
+        // Html info & menu
+        this.htmlelements = htmlelements;
+
+        this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
+        this.displayMenu();
+        this.onMenu = true;
+
+        this.htmlelements.menu_go.addEventListener("click", this.onGoMenu.bind(this), false);
+        this.htmlelements.go.addEventListener("click", this.onGoScoreboard.bind(this), false);
+
+        this.circuitInitCallback = circuitInitCallback;
     }
 
     initCarPosition () {
@@ -92,25 +108,43 @@ class Gameplay {
         this.car.setAtStartingPosition(nosePoint, slvt);
     }
 
-    update (speedhtml, sectorshtml) {
+    reset () {
+        this.initCarPosition();
+
+        this.clock = new THREE.Clock(false);
+        this.laptime = 0;
+        
+        this.started = false;
+        this.validtime = true;
+        this.nextcp = 0;
+
+        for (var i = 0; i < 3; i++) {
+            this.htmlelements.sectors[i].innerHTML = "-";
+            this.htmlelements.sectors[i].style.color = "black";
+        }
+
+        // particles
+        this.particlesManager.reset()
+    }
+
+    update () {
+
+        if (this.onMenu) {
+            this.car.updatePosition(0, true);
+            return;
+        }
+
+        // update lerp factor after first movement
+        if (this.cameraLerp == this.lerpSlow && (actions.acceleration || actions.braking)) {
+            this.cameraLerp = this.lerpFast;
+        }
 
         // Reset everything
         if (actions.reset) {
-            this.initCarPosition();
-
-            this.clock = new THREE.Clock(false);
-            this.laptime = 0;
-            
-            this.started = false;
-            this.validtime = true;
-            this.nextcp = 0;
-
-            for (var i = 0; i < 3; i++) {
-                sectorshtml[i].innerHTML = "-";
-                sectorshtml[i].style.color = "black";
-            }
+            this.reset();
         }
 
+        // start timer
         if (this.started && !this.clock.running) {
             this.clock.start();
         }
@@ -125,7 +159,7 @@ class Gameplay {
         if (milli < 10) milli = "00" + milli;
         else if (milli < 100) milli = "0" + milli;
         if (this.started) {
-            sectorshtml[this.nextcp].innerHTML = min + ":" + sec + ":" + milli;
+            this.htmlelements.sectors[this.nextcp].innerHTML = min + ":" + sec + ":" + milli;
         }
 
         // Print speed
@@ -136,7 +170,7 @@ class Gameplay {
         } else if (speed < -1) {
             speedtext = "(r) " + Math.floor(-speed) + " km/h";
         }
-        speedhtml.innerHTML = speedtext;
+        this.htmlelements.speed.innerHTML = speedtext;
 
         // Update engine force
         let breakingForce = 3;
@@ -185,7 +219,7 @@ class Gameplay {
             }
 
             // verify next checkpoint crossed (with any wheel)
-            let intercp = raycaster.intersectObject(this.CHECKPOINTS[this.nextcp]);
+            let intercp = raycaster.intersectObject(this.checkpoints[this.nextcp]);
             if (!nextcpcrossed) {
                 nextcpcrossed = intercp.length > 0;
             }
@@ -231,14 +265,14 @@ class Gameplay {
                     this.laptime = 0;
                     this.validtime = true;
                     for (var i = 0; i < 3; i++) {
-                        sectorshtml[i].innerHTML = "-";
-                        sectorshtml[i].style.color = "black";
+                        this.htmlelements.sectors[i].innerHTML = "-";
+                        this.htmlelements.sectors[i].style.color = "black";
                     }
                 }
             }
 
             this.nextcp += 1;
-            if (this.nextcp >= this.CHECKPOINTS.length) {
+            if (this.nextcp >= this.checkpoints.length) {
                 this.nextcp = 0;
             }
         }
@@ -251,26 +285,71 @@ class Gameplay {
                 var j = i;
                 if (j == 0) i = 4;
                 if (j == 3) j = 0;
-                sectorshtml[j].style.color = "red";
+                this.htmlelements.sectors[j].style.color = "red";
             }
         } else {
             this.car.chassisMesh.material.color.setHex(0x00fff0);
         }
         
         // Update car position
-        this.car.updatePosition(speed);
+        this.car.updatePosition(speed, false);
         
         // Update camera Position
         let t = new THREE.Vector3();
         this.car.cameraPosition.getWorldPosition(t);
-        this.camera.position.lerp(t, 0.15);
-        this.cameraLookAt.lerp(this.car.chassisMesh.position, 0.15);
+        this.camera.position.lerp(t, this.cameraLerp);
+        this.cameraLookAt.lerp(this.car.chassisMesh.position, this.cameraLerp);
         
-        this.camera.up = new THREE.Vector3(0,0,1);
+        this.camera.up.lerp(new THREE.Vector3(0,0,1), this.lerpFast);
         this.camera.lookAt(this.cameraLookAt);
 
         // Update particles
         this.particlesManager.update();
         
+    }
+
+    // Menu functions
+    displayMenu () {
+        this.reset();
+
+        this.camera.position.set(0, 0, 300);
+        this.cameraLookAt = new THREE.Vector3(0,0,0);
+        this.camera.up = new THREE.Vector3(0,1,0);
+        this.camera.lookAt(this.cameraLookAt);
+        this.cameraLerp = this.lerpSlow;
+
+        this.htmlelements.menu.style.display = "block";
+        this.htmlelements.game_elements.style.display = "none";
+
+        this.onMenu = true;
+    }
+
+    onGoMenu () {
+        this.onGo(this.htmlelements.menu_seed.value);
+        this.htmlelements.menu.style.display = "none";
+        this.htmlelements.game_elements.style.display = "block";
+        this.onMenu = false;
+    }
+
+    onGoScoreboard () {
+        this.onGo(this.htmlelements.seed.value);
+    }
+
+    onGo (askedTrack) {
+        if (askedTrack == this.currentTrack) {
+            this.reset();
+        } else {
+            console.log("lala");
+            this.reloadCircuit(this.circuitInitCallback(askedTrack));
+            this.currentTrack = askedTrack;
+        }
+    }
+
+    reloadCircuit (circuit) {
+        this.circuit = circuit;
+        this.checkpoints = [this.circuit.slMesh,
+                            this.circuit.cp1Mesh,
+                            this.circuit.cp2Mesh];
+        this.reset();
     }
 }

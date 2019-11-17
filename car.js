@@ -29,7 +29,7 @@ class Car {
         this.vehiclePhysics = undefined;
     }
 
-    initMainVue (scene) {
+    initVue (scene) {
         // Build car shape around origin
         const w = this._width/2;
         const l = this._length/2;
@@ -177,11 +177,12 @@ class Car {
         this.chassisBody.setLinearVelocity(new Ammo.btVector3(0,0,0));
         this.chassisBody.setAngularVelocity(new Ammo.btVector3(0,0,0));
         this.chassisBody.setLinearVelocity(0);
-        this.updatePosition();
+
+        this.updatePosition(0, true);
     }
 
-    updatePosition (speed) {
-        const update = speed < -1 || speed > 1;
+    updatePosition (speed, force) {
+        const update = (speed < -1 || speed > 1) || force;
 
         if (update) {
             // Update chassis Position
@@ -209,14 +210,14 @@ class Car {
 
     createParticleMarkGrass (idWheel, speed) {
         let pos = this.wheelMeshes[idWheel].position.clone();
-        let y = ((1000*speed/3600) * (1/FPS)) + SMALL_GAP;
+        let y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
         let part = new Particles(1, new THREE.Vector2(this._wheelRadius/1.5, y), 0x87B982, 2);
         
         pos.z -= this._wheelRadius;
         let rot = this.chassisMesh.rotation.clone();
         rot.x = 0;
         rot.y = 0;
-        part.init_position(pos, new THREE.Quaternion().setFromEuler(rot));
+        part.initPosition(pos, new THREE.Quaternion().setFromEuler(rot));
         return part;
     }
 }

@@ -4,7 +4,8 @@ class Minimap {
 
     constructor (conf, canvas) {
         this.canvas = canvas;
-        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
+        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: false, 
+                                                 alpha: true, precision: "lowp"});
         this.scene = new THREE.Scene();
 
         // Create the Camera

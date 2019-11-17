@@ -5,34 +5,60 @@
     <title>My first three.js app</title>
 </head>
 <body>
+
     <div id="container">
 
-        <div id="scoreboard">
-            <div id="track">
-                Track: <input type="text" name="seed" id="seed"><input type="button" value="Go">
-            </div>
-            <table>
-                <tr>
-                    <td>Leaderboard</td>
-                    <th>Name</th>
-                    <th>Sector 1</th>
-                    <th>Sector 2</th>
-                    <th>Lap</th>
-                </tr>
-                <tr>
-                    <th colspan="2">Current</th>
-                    <td id="sector1">-</td>
-                    <td id="sector2">-</td>
-                    <td id="laptime">-</td>
-                </tr>
-            </table>
+        <div id="menu" style="display: none;">
+            <h3>Menu</h3>
+            <span>Driver Name: </span>
+            <input type="text" name="name" id="name">
+
+            <h4>Solo</h4>
+            <span>Track: </span>
+            <input type="text" name="menu_seed" id="menu_seed">
+            <input type="button" value="Go" id="menu_go">
+            <input type="button" value="Random">
+
+            <h4>Multi</h4>
+            <span>Session ID: </span>
+            <input type="text" name="sessionid" id="sessionid">
+            <input type="button" value="Join/Create">
         </div>
 
-        <canvas id="c"></canvas>
 
-        <p id="speed">0 km/h</p>
-        <canvas id="frontc"></canvas>
+        <div id="game_elements">
+            <div id="scoreboard">
+                <div id="track">
+                    <span>Track: </span>
+                    <input type="text" name="seed" id="seed">
+                    <input type="button" value="Go" id="go">
+                    <input type="button" value="Random">
+                </div>
+                <table>
+                    <tr>
+                        <td>Leaderboard</td>
+                        <th>Name</th>
+                        <th>Sector 1</th>
+                        <th>Sector 2</th>
+                        <th>Lap</th>
+                    </tr>
+                    <tr>
+                        <th colspan="2">Current</th>
+                        <td id="sector1">-</td>
+                        <td id="sector2">-</td>
+                        <td id="laptime">-</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <input id="menu_button" type="button" value="Menu">
 
+            <p id="speed">0 km/h</p>
+
+            <canvas id="minimapc"></canvas>
+        </div>
+
+        <canvas id="mainc"></canvas>
     </div>
 </body>
 <script src="./node_modules/three/build/three.js"></script>

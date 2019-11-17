@@ -46,6 +46,11 @@ const GAMECONF = {
         maxBreakingForce: 100,
         maxSpeed: 250,
         maxReverseSpeed: -30
+    },
+
+    misc: {
+        lerpFast: 0.15,
+        lerpSlow: 0.03
     }
 }
 
@@ -55,14 +60,29 @@ var SMALL_GAP = 0.1;
 var VERY_SMALL_GAP = 0.01;
 var FPS = 50;
 
+// HTML Constants
+const HTMLELEMENTS = {
+    speed: document.getElementById('speed'),
+    sectors: [document.getElementById('laptime'), 
+              document.getElementById('sector1'),
+              document.getElementById('sector2')],
+    seed: document.getElementById("seed"),
+    menu_seed: document.getElementById("menu_seed"),
+    main_canvas: document.getElementById("mainc"),
+    minimap_canvas: document.getElementById("minimapc"),
+    menu: document.getElementById("menu"),
+    game_elements: document.getElementById("game_elements"),
+    menu_button: document.getElementById("menu_button"),
+    menu_go: document.getElementById("menu_go"),
+    go: document.getElementById("go")
+}
+
 // ---------- Main --------------
 
-// Generate Seed & print it
-var seed = Math.random();
-//var seed = 0.3132418780476618;
-const seedinput = document.getElementById("seed");
-seedinput.value = seed;
-const myrng = new Math.seedrandom(seed);
+let physics, gameplay, currCircuit;
+
+// Generate Seed
+var myseed = Math.random();
 
 // TODO check WEBGL...
 
@@ -74,21 +94,33 @@ stats.domElement.style.position = 'absolute';
 stats.domElement.style.bottom = '0px';
 //container.appendChild( stats.domElement );
 
-//
-const sectorshtml = [document.querySelector('#laptime'), 
-                     document.querySelector('#sector1'),
-                     document.querySelector('#sector2')]
-
 
 // Main Vue
-const mainVue = new MainVue(GAMECONF.mainvue, document.querySelector('#c'));
-//const controls = new THREE.OrbitControls(mainVue.camera, mainVue.canvas);
+const mainVue = new MainVue(GAMECONF.mainvue, HTMLELEMENTS.main_canvas);
 
-// TODO Minimap Vue
-const minimap = new Minimap(undefined, document.querySelector('#frontc'));
+// Minimap Vue
+const minimap = new Minimap(undefined, HTMLELEMENTS.minimap_canvas);
+
+function initCircuit (seed) {
+    HTMLELEMENTS.seed.value = seed;
+    HTMLELEMENTS.menu_seed.value = seed;
+
+    if (currCircuit != undefined) {
+        mainVue.scene.remove(currCircuit.mesh);
+        minimap.scene.remove(currCircuit.minimapMesh);
+        physics.world.removeCollisionObject(currCircuit.body);
+    }
+
+    const newCircuit = new Circuit(GAMECONF.circuit, new Math.seedrandom(seed));
+    mainVue.scene.add(newCircuit.mesh);
+    minimap.scene.add(newCircuit.minimapMesh);
+    physics.world.addRigidBody(newCircuit.body);
+
+    currCircuit = newCircuit;
+    return newCircuit;
+}
 
 // Initialization
-let physics, gameplay;
 Ammo().then(init);
 function init() {
     // Physics
@@ -100,14 +132,11 @@ function init() {
     physics.world.addRigidBody(terrain.body);
 
     // Circuit
-    const circuit = new Circuit(GAMECONF.circuit, myrng);
-    mainVue.scene.add(circuit.mesh);
-    minimap.scene.add(circuit.minimapMesh);
-    physics.world.addRigidBody(circuit.body);
+    const circuit = initCircuit(myseed);
 
     // Car
     const car = new Car(GAMECONF.car);
-    car.initMainVue(mainVue.scene);
+    car.initVue(mainVue.scene);
     minimap.scene.add(car.minimapMesh);
     car.initPhysics(physics.world, GAMECONF.carPhysics);
 
@@ -115,7 +144,8 @@ function init() {
     const particlesManager = new ParticlesManager(mainVue.scene);
 
     // Gameplay
-    gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera, particlesManager);
+    gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera,
+                            particlesManager, HTMLELEMENTS, myseed, initCircuit);
 
 }
 
@@ -130,7 +160,7 @@ function tick() {
 
     if (dt >= 1) {
         physics.world.stepSimulation(dt, 1);
-        gameplay.update(document.querySelector('#speed'), sectorshtml);
+        gameplay.update();
         stats.update();
         dt -= 1;
     }
@@ -141,3 +171,8 @@ function tick() {
 tick();
 
 // todo clean code (= small code (especially js way...))
+/*
+TODO:
+- menu
+- eclairage
+*/
