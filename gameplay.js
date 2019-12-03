@@ -41,7 +41,7 @@ class Gameplay {
 
     constructor (conf, circuit, car, camera, particlesManager,
                  htmlelements, currentTrack, circuitInitCallback,
-                 trackidGenerator) {
+                 trackidGenerator, leaderboard, mainDriver) {
         this.circuit = circuit;
         this.car = car;
         this.camera = camera;
@@ -80,8 +80,17 @@ class Gameplay {
                             this.circuit.cp2Mesh];
         this.nextcp = 0;
 
+        this.justReset = false;
+
+        
+        // driver & leaderboard
+        this.driver = mainDriver;
+        this.leaderboard = leaderboard;
+        this.leaderboard.drivers.push(this.driver);
+
         // Html info & menu
         this.htmlelements = htmlelements;
+        this.htmlelements.name.addEventListener("change", this.updateDriverName.bind(this), false);
 
         this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
         this.displayMenu();
@@ -125,10 +134,10 @@ class Gameplay {
         this.validtime = true;
         this.nextcp = 0;
 
-        for (var i = 0; i < 3; i++) {
-            this.htmlelements.sectors[i].innerHTML = "-";
-            this.htmlelements.sectors[i].style.color = "black";
-        }
+        // driver & leaderboard times
+        this.driver.setToBest();
+        this.leaderboard.reset();
+        this.leaderboard.setLast(true);
 
         // particles
         this.particlesManager.reset()
@@ -139,6 +148,8 @@ class Gameplay {
         actions['left'] = false;
         actions['right'] = false;
         actions['reset'] = false;
+
+        this.justReset = true;
     }
 
     update () {
@@ -157,25 +168,16 @@ class Gameplay {
         // Reset everything
         if (actions.reset) {
             this.reset();
+        } else if (this.justReset) {
+            // win 1 frame to avoid starting timer too soon after reset. 
+            this.justReset = !(actions.acceleration || actions.braking);
         }
 
-        // start timer
+        // timer
         if (this.started && !this.clock.running) {
             this.clock.start();
         }
-
-        // Get & Print current laptime
         this.laptime += this.clock.getDelta();
-        let min = Math.floor(this.laptime/60);
-        let sec = Math.floor(this.laptime) % 60;
-        let milli = Math.round((this.laptime - Math.floor(this.laptime)) * 1000)
-        if (min < 10) min = "0" + min;
-        if (sec < 10) sec = "0" + sec;
-        if (milli < 10) milli = "00" + milli;
-        else if (milli < 100) milli = "0" + milli;
-        if (this.started) {
-            this.htmlelements.sectors[this.nextcp].innerHTML = min + ":" + sec + ":" + milli;
-        }
 
         // Print speed
         let speed = this.car.vehiclePhysics.getCurrentSpeedKmHour();
@@ -236,7 +238,7 @@ class Gameplay {
             // verify next checkpoint crossed (with any wheel)
             let intercp = raycaster.intersectObject(this.checkpoints[this.nextcp]);
             if (!nextcpcrossed) {
-                nextcpcrossed = intercp.length > 0;
+                nextcpcrossed = intercp.length > 0 && !this.justReset;
             }
         }
 
@@ -252,56 +254,40 @@ class Gameplay {
             }
             else {
                 this.vehicleSteering = 0;
-                /*if (this.vehicleSteering < -this.steeringIncrement)
-                    this.vehicleSteering += this.steeringIncrement;
-                else {
-                    if (this.vehicleSteering > this.steeringIncrement)
-                        this.vehicleSteering -= this.steeringIncrement;
-                    else {
-                        this.vehicleSteering = 0;
-                    }
-                }*/
             }
         }
         this.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.car.FRONTLEFT);
         this.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.car.FRONTRIGHT);
 
+        // Update leaderboard
+        this.leaderboard.updateDisplay(this._get_sector_id(), this.laptime, this.validtime);
 
         // Apply the rules
         if (nextcpcrossed) {
+            // update driver's time
+            if (this.started && this.validtime) {
+                this.driver.endSector(this._get_sector_id(), this.laptime);
+            }
+
             // startline
             if (this.nextcp == 0) {
                 if (!this.started) {
                     this.started = true;
                 } else {
-                    // TODO remember valid time
-
-                    // Reset clock
                     this.laptime = 0;
                     this.validtime = true;
-                    for (var i = 0; i < 3; i++) {
-                        this.htmlelements.sectors[i].innerHTML = "-";
-                        this.htmlelements.sectors[i].style.color = "black";
-                    }
+                    this.leaderboard.reset();
                 }
             }
 
             this.nextcp += 1;
-            if (this.nextcp >= this.checkpoints.length) {
-                this.nextcp = 0;
-            }
+            if (this.nextcp >= 3) this.nextcp = 0;
         }
 
         if (this.started && wheelOffside == this.car.WHEELSNUMBER) {
             this.car.chassisMesh.material.color.setHex(0xff0000);
             this.validtime = false;
-            
-            for (var i = this.nextcp; i < 4; i++) {
-                var j = i;
-                if (j == 0) i = 4;
-                if (j == 3) j = 0;
-                this.htmlelements.sectors[j].style.color = "red";
-            }
+            this.driver.setToBest();
         } else {
             this.car.chassisMesh.material.color.setHex(0x00fff0);
         }
@@ -320,7 +306,12 @@ class Gameplay {
 
         // Update particles
         this.particlesManager.update();
-        
+    }
+
+    _get_sector_id () {
+        let sector_id = this.nextcp - 1;
+        if (sector_id < 0) sector_id = 2;
+        return sector_id;
     }
 
     // Menu functions
@@ -353,7 +344,7 @@ class Gameplay {
 
     onGo (askedTrack) {
         if (askedTrack == this.currentTrack) {
-            this.reset();
+            actions["reset"] = true;
         } else {
             this.currentTrack = askedTrack;
             this.reloadCircuit(this.circuitInitCallback(askedTrack));
@@ -365,6 +356,7 @@ class Gameplay {
         this.checkpoints = [this.circuit.slMesh,
                             this.circuit.cp1Mesh,
                             this.circuit.cp2Mesh];
+        this.driver.reset();
         this.reset();
     }
 
@@ -377,5 +369,9 @@ class Gameplay {
     onRandomMenu () {
         const tid = this.trackidGenerator();
         this.onGo(tid);
+    }
+
+    updateDriverName () {
+        this.driver.updateName(this.htmlelements.name.value);
     }
  }

@@ -63,9 +63,9 @@ var FPS = 50;
 // HTML Constants
 const HTMLELEMENTS = {
     speed: document.getElementById('speed'),
-    sectors: [document.getElementById('laptime'), 
-              document.getElementById('sector1'),
-              document.getElementById('sector2')],
+    current_sectors: [document.getElementById('c_laptime'), 
+                      document.getElementById('c_sector1'),
+                      document.getElementById('c_sector2')],
     seed: document.getElementById("seed"),
     menu_seed: document.getElementById("menu_seed"),
     main_canvas: document.getElementById("mainc"),
@@ -76,7 +76,9 @@ const HTMLELEMENTS = {
     menu_go: document.getElementById("menu_go"),
     go: document.getElementById("go"),
     menu_random: document.getElementById("menu_random"),
-    random: document.getElementById("random")
+    random: document.getElementById("random"),
+    leaderboard: document.getElementById("leaderboard"),
+    name: document.getElementById("name")
 }
 
 // ---------- Main --------------
@@ -154,10 +156,16 @@ function init() {
     // Particles
     const particlesManager = new ParticlesManager(mainVue.scene);
 
+    // Driver
+    const driver = new Driver(HTMLELEMENTS.name.value);
+
+    // Leaderboard
+    const leaderboard = new Leaderboard(HTMLELEMENTS.leaderboard, driver);
+
     // Gameplay
     gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera,
                             particlesManager, HTMLELEMENTS, seed,
-                            initCircuit, generateRandomSeed);
+                            initCircuit, generateRandomSeed, leaderboard, driver);
 
 }
 
@@ -185,6 +193,10 @@ tick();
 // todo clean code (= small code (especially js way...))
 /*
 TODO:
-- menu
-- eclairage
+-c. eclairage
+-b. menu: car picker color
+-abc... . clean code
+-d. multi!
+-e. responsive
+-f. prettify (code&game)
 */

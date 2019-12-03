@@ -16,8 +16,9 @@
             <h4>Solo</h4>
             <span>Track: </span>
             <input type="text" name="menu_seed" id="menu_seed" maxlength="10">
-            <input type="button" value="Go" id="menu_go">
             <input type="button" value="Random" id="menu_random">
+            <input type="button" value="Go" id="menu_go">
+            
 
             <h4>Multi</h4>
             <span>Session ID: </span>
@@ -31,10 +32,10 @@
                 <div id="track">
                     <span>Track: </span>
                     <input type="text" name="seed" id="seed" maxlength="10">
-                    <input type="button" value="Go" id="go">
                     <input type="button" value="Random" id="random">
+                    <input type="button" value="Go" id="go">
                 </div>
-                <table>
+                <table id="leaderboard">
                     <tr>
                         <td>Leaderboard</td>
                         <th>Name</th>
@@ -43,10 +44,7 @@
                         <th>Lap</th>
                     </tr>
                     <tr>
-                        <th colspan="2">Current</th>
-                        <td id="sector1">-</td>
-                        <td id="sector2">-</td>
-                        <td id="laptime">-</td>
+                        <td colspan="5"></td>
                     </tr>
                 </table>
             </div>
@@ -69,10 +67,12 @@
 <script src="physics.js"></script>
 <script src="line.js"></script>
 <script src="particles.js"></script>
+<script src="leaderboard.js"></script>
 <script src="terrain.js"></script>
 <script src="circuit_utils.js"></script>
 <script src="circuit.js"></script>
 <script src="car.js"></script>
+<script src="driver.js"></script>
 <script src="gameplay.js"></script>
 <script src="mainVue.js"></script>
 <script src="minimap.js"></script>

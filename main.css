@@ -17,7 +17,7 @@ body {
     transform: translate(-50%, -50%);
     z-index: 1;
     background-color: rgba(220,220,220,0.7);
-    padding: 50px;
+    padding: 5%;
 }
 
 #mainc {
@@ -50,10 +50,11 @@ body {
 
 #scoreboard {
     position: absolute;
-    background-color: rgba(220,220,220,0.3);
+    background-color: rgba(220,220,220,0.7);
 }
 
 table, th, td {
+    text-align: center;
     border: 1px solid black;
     border-collapse: collapse;
 }
