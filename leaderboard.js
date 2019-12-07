@@ -20,7 +20,7 @@ class Leaderboard {
         this.last = undefined;
     }
 
-    setLast (reset, driverCurrTime, pb) {
+    setLast (reset, driverCurrTime, personalBest) {
         if (reset) {
             this.last = undefined;
         } else {
@@ -30,7 +30,7 @@ class Leaderboard {
                 this.last.push(driverCurrTime[i]);
             }
 
-            if (pb) {
+            if (personalBest) {
                 // TODO: different message if circuit best!!!
                 this.last.push("Personal Best");
             }
@@ -50,18 +50,16 @@ class Leaderboard {
         }
     }
 
-    convertTimeToString (time, onlysec) {
+    convertTimeToString (time) {
         let min = Math.floor(time/60);
         let sec = Math.floor(time) % 60;
         let milli = Math.round((time - Math.floor(time)) * 1000)
-        if (!onlysec && min < 10) min = "0" + min;
-        if (!onlysec && sec < 10) sec = "0" + sec;
+        if (min < 10) min = "0" + min;
+        if (sec < 10) sec = "0" + sec;
         if (milli < 10) milli = "00" + milli;
         else if (milli < 100) milli = "0" + milli;
 
-        let str = min + ":" + sec + ":" + milli;
-        if (onlysec) str = (min*60 + sec) + ":" + milli;
-        return str;
+        return min + ":" + sec + ":" + milli;
     }
 
     createRow (label, sectors) {
@@ -74,7 +72,7 @@ class Leaderboard {
         for (var i = 0; i < 3; i++) {
             let c = row.insertCell(-1);
             if (sectors[i] != undefined) {
-                c.innerHTML = this.convertTimeToString(sectors[i].time, false);
+                c.innerHTML = this.convertTimeToString(sectors[i].time);
                 if (sectors[i].color != undefined) c.style.color = sectors[i].color; 
             } else {
                 c.innerHTML = "-";

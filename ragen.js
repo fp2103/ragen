@@ -62,29 +62,31 @@ var FPS = 50;
 
 // HTML Constants
 const HTMLELEMENTS = {
-    speed: document.getElementById('speed'),
-    current_sectors: [document.getElementById('c_laptime'), 
-                      document.getElementById('c_sector1'),
-                      document.getElementById('c_sector2')],
-    seed: document.getElementById("seed"),
-    menu_seed: document.getElementById("menu_seed"),
     main_canvas: document.getElementById("mainc"),
-    minimap_canvas: document.getElementById("minimapc"),
-    menu: document.getElementById("menu"),
+
+    // game elements
     game_elements: document.getElementById("game_elements"),
+    speed: document.getElementById('speed'),
+    seed: document.getElementById("seed"),
+    go: document.getElementById("go"),
+    random: document.getElementById("random"),
+    minimap_canvas: document.getElementById("minimapc"),
+    leaderboard: document.getElementById("leaderboard"),
+    score_message: document.getElementById("score_message"),
+
+    // menu elements
+    menu_seed: document.getElementById("menu_seed"),
+    menu: document.getElementById("menu"),
     menu_button: document.getElementById("menu_button"),
     menu_go: document.getElementById("menu_go"),
-    go: document.getElementById("go"),
     menu_random: document.getElementById("menu_random"),
-    random: document.getElementById("random"),
-    leaderboard: document.getElementById("leaderboard"),
     name: document.getElementById("name"),
-    score_message: document.getElementById("score_message")
+    color: document.getElementById("color")
 }
 
 // ---------- Main --------------
 
-let physics, gameplay, currCircuit;
+let physics, gameplay, menu, currCircuit;
 
 // Generate Seed
 function generateRandomSeed () {
@@ -133,6 +135,20 @@ function initCircuit (seed) {
     return newCircuit;
 }
 
+function driverVuesCallback (visible, mainVueMeshes, minimapMesh) {
+    if (visible) {
+        for (var i = 0; i < mainVueMeshes.length; i++) {
+            mainVue.scene.add(mainVueMeshes[i]);
+        }
+        minimap.scene.add(minimapMesh);
+    } else {
+        for (var i = 0; i < mainVueMeshes.length; i++) {
+            mainVue.scene.remove(mainVueMeshes[i]);
+        }
+        minimap.scene.remove(minimapMesh);
+    }
+}
+
 // Initialization
 Ammo().then(init);
 function init() {
@@ -158,16 +174,17 @@ function init() {
     const particlesManager = new ParticlesManager(mainVue.scene);
 
     // Driver
-    const driver = new Driver(HTMLELEMENTS.name.value);
+    const driver = new Driver(HTMLELEMENTS.name.value, car, driverVuesCallback);
 
     // Leaderboard
     const leaderboard = new Leaderboard(HTMLELEMENTS.leaderboard, HTMLELEMENTS.score_message, driver);
 
     // Gameplay
-    gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera,
-                            particlesManager, HTMLELEMENTS, seed,
-                            initCircuit, generateRandomSeed, leaderboard, driver);
+    gameplay = new Gameplay(GAMECONF, circuit, driver, mainVue.camera, 
+                                  particlesManager, HTMLELEMENTS, leaderboard);
 
+    // Menu
+    menu = new Menu(HTMLELEMENTS, driver, gameplay, generateRandomSeed, initCircuit, seed);
 }
 
 
@@ -201,4 +218,8 @@ TODO:
 -dbis. ecart
 -e. responsive
 -f. prettify (code&game)
+
+
+iCbI8Q
+
 */

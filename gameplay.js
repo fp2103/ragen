@@ -39,14 +39,15 @@ window.addEventListener('keyup', keyup);
 // Gameplay and Menu
 class Gameplay {
 
-    constructor (conf, circuit, car, camera, particlesManager,
-                 htmlelements, currentTrack, circuitInitCallback,
-                 trackidGenerator, leaderboard, mainDriver) {
+    constructor (conf, circuit, player, camera,
+                 particlesManager, htmlelements, leaderboard) {
         this.circuit = circuit;
-        this.car = car;
+        this.player = player;
+        this.driver = player;
         this.camera = camera;
         this.particlesManager = particlesManager;
-        this.currentTrack = currentTrack;
+        this.htmlelements = htmlelements;
+        this.leaderboard = leaderboard;
 
         // Init car position
         this._circuitMargin = conf.circuit.margin;
@@ -75,35 +76,21 @@ class Gameplay {
         this.started = false;
         this.validtime = true;
 
+        // Circuit checkpoints
         this.checkpoints = [this.circuit.slMesh,
                             this.circuit.cp1Mesh,
                             this.circuit.cp2Mesh];
         this.nextcp = 0;
 
+        // Init leaderboard
+        this.leaderboard.drivers.push(this.player);
+        
+        // reset
         this.justReset = false;
 
-        
-        // driver & leaderboard
-        this.driver = mainDriver;
-        this.leaderboard = leaderboard;
-        this.leaderboard.drivers.push(this.driver);
-
-        // Html info & menu
-        this.htmlelements = htmlelements;
-        this.htmlelements.name.addEventListener("change", this.updateDriverName.bind(this), false);
-
-        this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
-        this.displayMenu();
+        // menu
         this.onMenu = true;
-
-        this.htmlelements.menu_go.addEventListener("click", this.onGoMenu.bind(this), false);
-        this.htmlelements.go.addEventListener("click", this.onGoScoreboard.bind(this), false);
-
-        this.circuitInitCallback = circuitInitCallback;
-
-        this.trackidGenerator = trackidGenerator;
-        this.htmlelements.menu_random.addEventListener("click", this.onRandomMenu.bind(this), false);
-        this.htmlelements.random.addEventListener("click", this.onRandomScoreboard.bind(this), false);
+        this.player.makeUnvisible();
     }
 
     initCarPosition () {
@@ -121,7 +108,7 @@ class Gameplay {
             nosePoint.add(slvt);
             slvt.multiplyScalar(-1);
         }
-        this.car.setAtStartingPosition(nosePoint, slvt);
+        this.player.car.setAtStartingPosition(nosePoint, slvt);
     }
 
     reset () {
@@ -155,14 +142,7 @@ class Gameplay {
     update () {
 
         if (this.onMenu) {
-            this.initCarPosition();
-            this.car.updatePosition(0, true);
             return;
-        }
-
-        // update lerp factor after first movement
-        if (this.cameraLerp == this.lerpSlow && (actions.acceleration || actions.braking)) {
-            this.cameraLerp = this.lerpFast;
         }
 
         // Reset everything
@@ -180,7 +160,7 @@ class Gameplay {
         this.laptime += this.clock.getDelta();
 
         // Print speed
-        let speed = this.car.vehiclePhysics.getCurrentSpeedKmHour();
+        let speed = this.player.car.vehiclePhysics.getCurrentSpeedKmHour();
         let speedtext = "0 km/h";
         if (speed > 1) {
             speedtext = Math.floor(speed) + " km/h";
@@ -194,10 +174,10 @@ class Gameplay {
         let engineForce = 0;
         let wheelOffside = 0;
         let nextcpcrossed = false;
-        for (var i = 0; i < this.car.WHEELSNUMBER; i++) {
+        for (var i = 0; i < this.player.car.WHEELSNUMBER; i++) {
             // Check Ground under each wheel
             // must use raycaster from threejs because ammojs doesn't work
-            let raycaster = new THREE.Raycaster(this.car.wheelMeshes[i].position, 
+            let raycaster = new THREE.Raycaster(this.player.car.wheelMeshes[i].position, 
                                                 new THREE.Vector3(0,0,-1), 0, 5);
             let intercir = raycaster.intersectObject(this.circuit.mesh);
             if (intercir.length == 0) {
@@ -205,7 +185,7 @@ class Gameplay {
                 wheelOffside += 1;
 
                 // Particles
-                this.particlesManager.add(this.car.createParticleMarkGrass(i, speed));
+                this.particlesManager.add(this.player.car.createParticleMarkGrass(i, speed));
             }
 
             if (actions.acceleration) {
@@ -228,11 +208,11 @@ class Gameplay {
                 }
             }
 
-            if (i == this.car.BACKLEFT || i == this.car.BACKRIGHT) {
-                this.car.vehiclePhysics.applyEngineForce(engineForce, i);
-                this.car.vehiclePhysics.setBrake(breakingForce, i);
+            if (i == this.player.car.BACKLEFT || i == this.player.car.BACKRIGHT) {
+                this.player.car.vehiclePhysics.applyEngineForce(engineForce, i);
+                this.player.car.vehiclePhysics.setBrake(breakingForce, i);
             } else {
-                this.car.vehiclePhysics.setBrake(breakingForce/3, i);
+                this.player.car.vehiclePhysics.setBrake(breakingForce/3, i);
             }
 
             // verify next checkpoint crossed (with any wheel)
@@ -256,8 +236,8 @@ class Gameplay {
                 this.vehicleSteering = 0;
             }
         }
-        this.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.car.FRONTLEFT);
-        this.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.car.FRONTRIGHT);
+        this.player.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.player.car.FRONTLEFT);
+        this.player.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.player.car.FRONTRIGHT);
 
         // Update leaderboard
         this.leaderboard.updateDisplay(this._get_sector_id(), this.laptime, this.validtime);
@@ -284,22 +264,25 @@ class Gameplay {
             if (this.nextcp >= 3) this.nextcp = 0;
         }
 
-        if (this.started && wheelOffside == this.car.WHEELSNUMBER) {
-            this.car.chassisMesh.material.color.setHex(0xff0000);
+        if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
+            this.player.car.chassisMesh.material.color.setHex(0xff0000);
             this.validtime = false;
             this.driver.setToBest();
         } else {
-            this.car.chassisMesh.material.color.setHex(0x00fff0);
+            this.player.car.chassisMesh.material.color.setHex(0x00fff0);
         }
         
         // Update car position
-        this.car.updatePosition(speed, false);
+        this.player.car.updatePosition(speed, false);
         
-        // Update camera Position
+        // Update camera Position (and lerp factor after 1st movement)
+        if (this.cameraLerp == this.lerpSlow && (actions.acceleration || actions.braking)) {
+            this.cameraLerp = this.lerpFast;
+        }
         let t = new THREE.Vector3();
-        this.car.cameraPosition.getWorldPosition(t);
+        this.player.car.cameraPosition.getWorldPosition(t);
         this.camera.position.lerp(t, this.cameraLerp);
-        this.cameraLookAt.lerp(this.car.chassisMesh.position, this.cameraLerp);
+        this.cameraLookAt.lerp(this.player.car.chassisMesh.position, this.cameraLerp);
         
         this.camera.up.lerp(new THREE.Vector3(0,0,1), this.lerpFast);
         this.camera.lookAt(this.cameraLookAt);
@@ -314,7 +297,6 @@ class Gameplay {
         return sector_id;
     }
 
-    // Menu functions
     displayMenu () {
         this.reset();
 
@@ -324,31 +306,17 @@ class Gameplay {
         this.camera.lookAt(this.cameraLookAt);
         this.cameraLerp = this.lerpSlow;
 
-        this.htmlelements.menu.style.display = "block";
-        this.htmlelements.game_elements.style.display = "none";
-
         this.onMenu = true;
+        this.player.makeUnvisible();
     }
 
-    onGoMenu () {
-        this.onGo(this.htmlelements.menu_seed.value);
-        this.htmlelements.menu.style.display = "none";
-        this.htmlelements.game_elements.style.display = "block";
+    hideMenu () {
         this.onMenu = false;
+        this.player.makeVisible();
     }
 
-    onGoScoreboard () {
+    setCameraLerpFast () {
         this.cameraLerp = this.lerpFast;
-        this.onGo(this.htmlelements.seed.value);
-    }
-
-    onGo (askedTrack) {
-        if (askedTrack == this.currentTrack) {
-            actions["reset"] = true;
-        } else {
-            this.currentTrack = askedTrack;
-            this.reloadCircuit(this.circuitInitCallback(askedTrack));
-        }
     }
 
     reloadCircuit (newCircuit) {
@@ -356,22 +324,8 @@ class Gameplay {
         this.checkpoints = [this.circuit.slMesh,
                             this.circuit.cp1Mesh,
                             this.circuit.cp2Mesh];
-        this.driver.reset();
+        this.driver.resetTime();
         this.reset();
     }
 
-    onRandomScoreboard () {
-        const tid = this.trackidGenerator();
-        this.cameraLerp = this.lerpFast;
-        this.onGo(tid);
-    }
-
-    onRandomMenu () {
-        const tid = this.trackidGenerator();
-        this.onGo(tid);
-    }
-
-    updateDriverName () {
-        this.driver.updateName(this.htmlelements.name.value);
-    }
- }
+}

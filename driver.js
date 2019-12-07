@@ -2,8 +2,10 @@
 
 class Driver {
 
-    constructor (name) {
+    constructor (name, car, vuesCb) {
         this.name = name;
+        this.car = car;
+        this.vuesCb = vuesCb;
 
         this.position = "-";
         this.bestTime = [undefined, undefined, undefined];
@@ -16,7 +18,7 @@ class Driver {
         this.name = newName;
     }
 
-    reset () {
+    resetTime () {
         this.position = "-";
         this.bestTime = [undefined, undefined, undefined];
         if (this.lb_setLastCb != undefined) this.lb_setLastCb(true);
@@ -60,5 +62,13 @@ class Driver {
                 this.setToBest();
             }
         }
+    }
+
+    makeUnvisible () {
+        this.vuesCb(false, [this.car.chassisMesh, ...this.car.wheelMeshes], this.car.minimapMesh);
+    }
+
+    makeVisible () {
+        this.vuesCb(true, [this.car.chassisMesh, ...this.car.wheelMeshes], this.car.minimapMesh);
     }
 }
