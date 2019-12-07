@@ -49,7 +49,8 @@ class Driver {
         if (sector == 2) {
             // callback leaderboard to show last lap
             if (this.lb_setLastCb != undefined) {
-                this.lb_setLastCb(false, this.currTime);
+                let pb = this.bestTime[2] == undefined || time < this.bestTime[2].time;
+                this.lb_setLastCb(false, this.currTime, pb);
             }
 
             // Update best time

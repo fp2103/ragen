@@ -78,7 +78,8 @@ const HTMLELEMENTS = {
     menu_random: document.getElementById("menu_random"),
     random: document.getElementById("random"),
     leaderboard: document.getElementById("leaderboard"),
-    name: document.getElementById("name")
+    name: document.getElementById("name"),
+    score_message: document.getElementById("score_message")
 }
 
 // ---------- Main --------------
@@ -160,7 +161,7 @@ function init() {
     const driver = new Driver(HTMLELEMENTS.name.value);
 
     // Leaderboard
-    const leaderboard = new Leaderboard(HTMLELEMENTS.leaderboard, driver);
+    const leaderboard = new Leaderboard(HTMLELEMENTS.leaderboard, HTMLELEMENTS.score_message, driver);
 
     // Gameplay
     gameplay = new Gameplay(GAMECONF, circuit, car, mainVue.camera,
@@ -197,6 +198,7 @@ TODO:
 -b. menu: car picker color
 -abc... . clean code
 -d. multi!
+-dbis. ecart
 -e. responsive
 -f. prettify (code&game)
 */
