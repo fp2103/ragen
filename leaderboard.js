@@ -62,12 +62,13 @@ class Leaderboard {
         return min + ":" + sec + ":" + milli;
     }
 
-    createRow (label, sectors) {
+    createRow (label, labelColor, sectors) {
         const row = this.htmltable.insertRow(-1);
 
         const c0 = row.insertCell(-1);
         c0.colSpan = 2;
         c0.innerHTML = label;
+        if (labelColor != undefined) c0.style.color = labelColor;
 
         for (var i = 0; i < 3; i++) {
             let c = row.insertCell(-1);
@@ -102,7 +103,7 @@ class Leaderboard {
         this.sortDrivers();
         for (var i = 0; i < this.drivers.length; i++) {
             const l = this.drivers[i].position + " . " + this.drivers[i].name;
-            this.createRow(l, this.drivers[i].currTime);
+            this.createRow(l, this.drivers[i].car.currentColor.getHexString(), this.drivers[i].currTime);
         }
 
         // Add last row
@@ -123,7 +124,7 @@ class Leaderboard {
         }
 
         // Create table current/last
-        const r = this.createRow(lastRowLabel, TCvalue);
+        const r = this.createRow(lastRowLabel, undefined, TCvalue);
         if (!showLast && !valid) r.style.color = "red";
     }
 }

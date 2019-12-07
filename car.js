@@ -27,6 +27,9 @@ class Car {
 
         this.chassisBody = undefined;
         this.vehiclePhysics = undefined;
+
+        this.currentColor = new THREE.Color("#00ffff");
+        this.minimapOuterColor = new THREE.Color(0xffff00);
     }
 
     initVue (scene) {
@@ -56,7 +59,7 @@ class Car {
         const edges = new THREE.EdgesGeometry(geo);
         const lineMesh = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
 
-        const material = new THREE.MeshBasicMaterial({color : 0x00fff0});
+        const material = new THREE.MeshBasicMaterial({color : this.currentColor});
         this.chassisMesh = new THREE.Mesh(geo, material);
         this.chassisMesh.add(lineMesh);
 
@@ -80,8 +83,13 @@ class Car {
         }
 
         // Minimap
-        const minimapgeo = new THREE.PlaneBufferGeometry(25,25);
-        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: 0xffff00}));
+        const minimapgeo = new THREE.PlaneBufferGeometry(30,30);
+        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: this.minimapOuterColor}));
+
+        const minimapgeoInner = new THREE.PlaneBufferGeometry(20,20);
+        this.minimapMeshInner = new THREE.Mesh(minimapgeoInner, new THREE.MeshBasicMaterial({color: this.currentColor}));
+
+        this.minimapMesh.add(this.minimapMeshInner);
     }
 
     initPhysics (physicsWorld, conf) {
@@ -219,5 +227,11 @@ class Car {
         rot.y = 0;
         part.initPosition(pos, new THREE.Quaternion().setFromEuler(rot));
         return part;
+    }
+
+    updateColor (color) {
+        this.currentColor = new THREE.Color(color);
+        this.chassisMesh.material.color.copy(this.currentColor);
+        this.minimapMeshInner.material.color.copy(this.currentColor);
     }
 }

@@ -19,6 +19,7 @@ class Menu {
         this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
 
         this.htmlelements.name.addEventListener("change", this.updatePlayerName.bind(this), false);
+        this.htmlelements.color.addEventListener("change", this.updateCarColor.bind(this), false);
 
         this.htmlelements.menu_go.addEventListener("click", this.onGoMenu.bind(this), false);
         this.htmlelements.go.addEventListener("click", this.onGoScoreboard.bind(this), false);
@@ -31,6 +32,10 @@ class Menu {
         this.player.updateName(this.htmlelements.name.value);
     }
 
+    updateCarColor () {
+        this.player.car.updateColor(this.htmlelements.color.value);
+    }
+ 
     displayMenu () {
         this.gameplay.displayMenu();
 

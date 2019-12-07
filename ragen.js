@@ -50,7 +50,7 @@ const GAMECONF = {
 
     misc: {
         lerpFast: 0.15,
-        lerpSlow: 0.03
+        lerpSlow: 0.02
     }
 }
 
@@ -212,14 +212,9 @@ tick();
 /*
 TODO:
 -c. eclairage
--b. menu: car picker color
 -abc... . clean code
 -d. multi!
 -dbis. ecart
 -e. responsive
 -f. prettify (code&game)
-
-
-iCbI8Q
-
 */

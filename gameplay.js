@@ -265,11 +265,12 @@ class Gameplay {
         }
 
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
-            this.player.car.chassisMesh.material.color.setHex(0xff0000);
+            const ic = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
+            this.player.car.chassisMesh.material.color.copy(ic);
             this.validtime = false;
             this.driver.setToBest();
         } else {
-            this.player.car.chassisMesh.material.color.setHex(0x00fff0);
+            this.player.car.chassisMesh.material.color.copy(this.player.car.currentColor);
         }
         
         // Update car position
