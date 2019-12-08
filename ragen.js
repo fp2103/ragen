@@ -209,7 +209,7 @@ tick();
 // todo clean code (= small code (especially js way...))
 /*
 TODO:
--abc... . clean code + improve perf (leaderboard)
+-abc... . clean code
 -d. multi!
 -dbis. ecart
 -e. responsive

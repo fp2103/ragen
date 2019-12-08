@@ -83,7 +83,7 @@ class Gameplay {
         this.nextcp = 0;
 
         // Init leaderboard
-        this.leaderboard.drivers.push(this.player);
+        this.leaderboard.addDriver(this.player);
         
         // reset
         this.justReset = false;

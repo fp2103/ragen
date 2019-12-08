@@ -7,6 +7,38 @@ class TimeColor {
     }
 }
 
+class Row {
+    constructor (table) {
+        const row = table.insertRow(-1);
+        
+        this.clabel = row.insertCell(-1);
+        this.clabel.colSpan = 2;
+
+        this.csectors = [];
+        for (var i = 0; i < 3; i++) {
+            let c = row.insertCell(-1);
+            c.innerHTML = "-";
+            this.csectors.push(c);
+        } 
+    }
+
+    reset () {
+        this.clabel.innerHTML = "";
+        this.clabel.style.color = "black";
+        for (var i = 0; i < 3; i++) {
+            this.csectors[i].innerHTML = "-";
+            this.csectors[i].style.color = "black";
+        }
+    }
+
+    setColorAllRow (color) {
+        this.clabel.style.color = color;
+        for (var i = 0; i < 3; i++) {
+            this.csectors[i].style.color = color;
+        }
+    }
+}
+
 class Leaderboard {
 
     constructor (htmltable, htmlmessage, mainDriver) {
@@ -18,6 +50,9 @@ class Leaderboard {
         this.drivers = [];
         this.current = [undefined, undefined, undefined];
         this.last = undefined;
+
+        // Rows (filled with 1 current/last row)
+        this.rows = [new Row(htmltable)];
     }
 
     setLast (reset, driverCurrTime, personalBest) {
@@ -38,6 +73,11 @@ class Leaderboard {
 
     reset () {
         this.current = [undefined, undefined, undefined];
+    }
+
+    addDriver (driver) {
+        this.drivers.push(driver);
+        this.rows.push(new Row(this.htmltable));        
     }
 
     sortDrivers () {
@@ -61,25 +101,19 @@ class Leaderboard {
         return min + ":" + sec + ":" + milli;
     }
 
-    createRow (label, labelColor, sectors) {
-        const row = this.htmltable.insertRow(-1);
+    fillRow (indice, label, labelColor, sectors) {
+        const row = this.rows[indice];
 
-        const c0 = row.insertCell(-1);
-        c0.colSpan = 2;
-        c0.innerHTML = label;
-        if (labelColor != undefined) c0.style.color = labelColor;
+        row.clabel.innerHTML = label;
+        if (labelColor != undefined) row.clabel.style.color = labelColor;
 
-        for (var i = 0; i < 3; i++) {
-            let c = row.insertCell(-1);
-            if (sectors[i] != undefined) {
-                c.innerHTML = this.convertTimeToString(sectors[i].time);
-                if (sectors[i].color != undefined) c.style.color = sectors[i].color; 
-            } else {
-                c.innerHTML = "-";
+        for (var j = 0; j < 3; j++) {
+            let c = row.csectors[j];
+            if (sectors[j] != undefined) {
+                c.innerHTML = this.convertTimeToString(sectors[j].time);
+                if (sectors[j].color != undefined) c.style.color = sectors[j].color; 
             }
         }
-
-        return row;
     } 
 
     updateDisplay (current_sector, time, valid) {
@@ -92,17 +126,18 @@ class Leaderboard {
             }
         }
 
-        // reset table
-        while (this.htmltable.rows.length > 2) {
-            this.htmltable.deleteRow(2);
+        // reset all rows & message
+        let i = 0;
+        for (i = 0; i < this.rows.length; i++) {
+            this.rows[i].reset();
         }
         this.htmlmessage.innerHTML = "";
         
-        // Create table drivers
+        // fill table drivers
         this.sortDrivers();
-        for (var i = 0; i < this.drivers.length; i++) {
+        for (i = 0; i < this.drivers.length; i++) {
             const l = this.drivers[i].position + " . " + this.drivers[i].name;
-            this.createRow(l, this.drivers[i].car.currentColor.getHexString(), this.drivers[i].currTime);
+            this.fillRow(i, l, this.drivers[i].car.currentColor.getHexString(), this.drivers[i].currTime);
         }
 
         // Add last row
@@ -123,7 +158,7 @@ class Leaderboard {
         }
 
         // Create table current/last
-        const r = this.createRow(lastRowLabel, undefined, TCvalue);
-        if (!showLast && !valid) r.style.color = "red";
+        this.fillRow(i, lastRowLabel, undefined, TCvalue);
+        if (!showLast && !valid) this.rows[i].setColorAllRow("red");
     }
 }
