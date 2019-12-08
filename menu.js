@@ -17,6 +17,7 @@ class Menu {
 
         // Link with action
         this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
+        window.addEventListener("blur", this.displayMenu.bind(this), false);
 
         this.htmlelements.name.addEventListener("change", this.updatePlayerName.bind(this), false);
         this.htmlelements.color.addEventListener("change", this.updateCarColor.bind(this), false);

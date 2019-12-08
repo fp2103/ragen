@@ -107,7 +107,7 @@ const container = document.querySelector('#container');
 const stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.bottom = '0px';
-//container.appendChild( stats.domElement );
+container.appendChild( stats.domElement );
 
 
 // Main Vue
@@ -171,7 +171,7 @@ function init() {
     car.initPhysics(physics.world, GAMECONF.carPhysics);
 
     // Particles
-    const particlesManager = new ParticlesManager(mainVue.scene);
+    const particlesManager = new ParticlesManager(mainVue.scene, 50);
 
     // Driver
     const driver = new Driver(HTMLELEMENTS.name.value, car, driverVuesCallback);
@@ -190,29 +190,26 @@ function init() {
 
 // GAME LOOP
 const clock = new THREE.Clock();
-let dt = 0;
+let df = 0;
 function tick() {
     requestAnimationFrame(tick);
 
-    dt += clock.getDelta() * FPS;
-
-    if (dt >= 1) {
-        physics.world.stepSimulation(dt, 1);
+    df += clock.getDelta() * FPS;    
+    while (df >= 1) {
+        physics.world.stepSimulation(1/FPS, 1);
         gameplay.update();
-        stats.update();
-        dt -= 1;
+        mainVue.render();
+        minimap.render();
+        df -= 1; 
     }
-
-    mainVue.render();
-    minimap.render();
+    stats.update();
 }
 tick();
 
 // todo clean code (= small code (especially js way...))
 /*
 TODO:
--c. eclairage
--abc... . clean code
+-abc... . clean code + improve perf (leaderboard)
 -d. multi!
 -dbis. ecart
 -e. responsive

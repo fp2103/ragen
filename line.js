@@ -244,11 +244,13 @@ function createWidthLineBufferGeo (points, width, loop, step) {
     }
 
     //console.log("Cleaned Points:", origPoints.length, secPoints.length);
+    const geo = new THREE.BufferGeometry().setFromPoints(vertices);
+    geo.computeVertexNormals();
 
     return {
         origPoints: origPoints,
         secPoints: secPoints,
-        geo: new THREE.BufferGeometry().setFromPoints(vertices),
+        geo: geo,
         btShape: new Ammo.btBvhTriangleMeshShape(btTMesh, true, true)
     }
 }

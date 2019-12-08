@@ -25,7 +25,6 @@ class Leaderboard {
             this.last = undefined;
         } else {
             this.last = [];
-            console.log(this.name);
             for (var i = 0; i < 3; i++) {
                 this.last.push(driverCurrTime[i]);
             }

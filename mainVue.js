@@ -15,26 +15,28 @@ class MainVue {
 
     constructor (conf, canvas) {
         this.canvas = canvas;
-        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true,
+                                                 gammaInput: true, gammaOutput: true});
+        this.renderer.shadowMap.enabled = true;
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(conf.sky);
 
         // Create the Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
+        // Add the lights and sky
+        this.scene.background = new THREE.Color(conf.sky);
+        this.scene.fog = new THREE.Fog(this.scene.background, 1, 2000);
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+		hemiLight.color.setHSL(0.6, 1, 0.6);
+		hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+		hemiLight.position.set(0, 0, 500);
+        this.scene.add(hemiLight);
         
-        // Create the Light
-        const skyColor = 0xFFFFFF;
-        const groundColor = 0x000000;
-        const intensity = 1.5;
-        const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
-        this.scene.add(light);
-        /*const ambientLight = new THREE.AmbientLight( 0x404040 );
-		this.scene.add( ambientLight );*/
-        
-        /*const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-        dirLight.position.set( 0, 0, -50 );
-        this.scene.add( dirLight );*/
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.color.setHSL(0.1, 1, 0.95);
+        dirLight.position.set(10, 10, 500);
+        this.scene.add(dirLight);
     }
 
     render () {

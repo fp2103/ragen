@@ -174,18 +174,21 @@ class Circuit {
 
         // ----- THREE ------
         // MAIN VUE
-        const matGrey = new THREE.MeshBasicMaterial({color: 0x808080});
-        const matWhite = new THREE.MeshBasicMaterial({color: 0xFFFFFF});
-        const matBlue = new THREE.MeshBasicMaterial({color: 0x0000FF});
+        const matGrey = new THREE.MeshLambertMaterial({color: 0xffffff});
+        matGrey.color.setHSL(0.1, 0.06, 0.33);
+        const matWhite = new THREE.MeshLambertMaterial({color: 0xffffff});
         const matLineBlue = new THREE.LineBasicMaterial({color: 0x0000ff});
         const matLineWhite = new THREE.LineBasicMaterial({color: 0xffffff});
 
         // margin mesh
-        const inMarginMesh = new THREE.Mesh(new THREE.BufferGeometry().setFromPoints(marginInVertices),
-                                            matWhite);
+        const inMaginGeo = new THREE.BufferGeometry().setFromPoints(marginInVertices);
+        inMaginGeo.computeVertexNormals(); 
+        const inMarginMesh = new THREE.Mesh(inMaginGeo, matWhite);
         inMarginMesh.position.z += VERY_SMALL_GAP;
-        const outMarginMesh = new THREE.Mesh(new THREE.BufferGeometry().setFromPoints(marginExtVertices), 
-                                             matWhite);
+
+        const outMarginGeo = new THREE.BufferGeometry().setFromPoints(marginExtVertices);
+        outMarginGeo.computeVertexNormals();
+        const outMarginMesh = new THREE.Mesh(outMarginGeo, matWhite);
         outMarginMesh.position.z += VERY_SMALL_GAP;
 
         // starting line mesh
@@ -209,12 +212,15 @@ class Circuit {
         // main mesh
         this.mesh = new THREE.Mesh(cir.geo, matGrey);
         this.mesh.add(inMarginMesh, outMarginMesh, this.slMesh, this.cp1Mesh, this.cp2Mesh);
+        this.mesh.receiveShadow = true;
         this.mesh.position.z = conf.Z;
         
         // MINIMAP VUE
+        const matBlue = new THREE.MeshBasicMaterial({color: 0x0000FF});
+        const matWhite_minimap = new THREE.MeshBasicMaterial({color: 0xffffff});
         const startingLineMinimapMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, 10,
                                                                                 false, conf.width+1).geo,
-                                                       matWhite);
+                                                       matWhite_minimap);
         startingLineMinimapMesh.position.z += SMALL_GAP;
         this.minimapMesh = new THREE.Mesh(cir.geo, matBlue);
         this.minimapMesh.add(startingLineMinimapMesh);
@@ -230,7 +236,6 @@ class Circuit {
         let motionState = new Ammo.btDefaultMotionState(t);
 
         let localInertia = new Ammo.btVector3(0, 0, 0);
-		//cirShape.calculateLocalInertia(mass, localInertia);
 
         let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, cirShape, localInertia);
         this.body = new Ammo.btRigidBody(rbInfo);

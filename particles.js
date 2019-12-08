@@ -1,41 +1,28 @@
 'use strict';
 
-class Particles {
+class Particle {
 
-    constructor (number, size, color, time) {
+    constructor (size, color, time) {
         // Object3D
-        this.meshes = [];
-
         this.geo = new THREE.PlaneBufferGeometry(size.x, size.y);
         this.mat = new THREE.MeshBasicMaterial({color});
-
-        for (var i = 0; i < number; i++) {
-            this.meshes.push(new THREE.Mesh(this.geo, this.mat));
-        }
+        this.mesh = new THREE.Mesh(this.geo, this.mat);
 
         // Time
         this.clock = new THREE.Clock();
         this.maxTime = time;
-
-        this.killed = false;
     }
 
     alive () {
-        return !this.killed && this.clock.getElapsedTime() < this.maxTime;
+        return this.clock.getElapsedTime() < this.maxTime;
     }
 
     initPosition (pos, quat) {
-        for (var i = 0; i < this.meshes.length; i++) {
-            this.meshes[i].position.set(pos.x, pos.y, pos.z);
-            this.meshes[i].quaternion.set(quat.x, quat.y, quat.z, quat.w);
-        }
+        this.mesh.position.set(pos.x, pos.y, pos.z);
+        this.mesh.quaternion.set(quat.x, quat.y, quat.z, quat.w);
     }
 
     update () {}
-
-    kill () {
-        this.killed = true;
-    }
 
     dispose () {
         this.geo.dispose();
@@ -45,38 +32,45 @@ class Particles {
 
 class ParticlesManager {
 
-    constructor (scene) {
+    constructor (scene, limit) {
         this.scene = scene;
+        this.limit = limit;
         
         this.list = [];
     }
 
-    add (particles) {
-        for (var i = 0; i < particles.meshes.length; i++) {
-            this.scene.add(particles.meshes[i]);
+    add (particle) {
+        while (this.list.length >= this.limit) {
+            let p = this.list.pop();
+            this.scene.remove(p.mesh);
+            p.dispose();
         }
-        this.list.push(particles);
+
+        this.scene.add(particle.mesh);
+        this.list.unshift(particle);
     }
     
     reset () {
-        for (var i = 0; i < this.list.length; i++) {
-            this.list[i].kill();
-        }   
-        this.update()
+        while (this.list.length > 0) {
+            let p = this.list.pop();
+            this.scene.remove(p.mesh);
+            p.dispose();
+        }  
     }
 
     update () {
+        const nlist = [];
         for (var i = 0; i < this.list.length; i++) {
-            let ps = this.list[i];
+            let p = this.list[i];
 
-            if (ps.alive()) {
-                ps.update();
+            if (p.alive()) {
+                p.update();
+                nlist.push(p);
             } else {
-                for (var j = 0; j < ps.meshes.length; j++) {
-                    this.scene.remove(ps.meshes[j]);
-                }
-                ps.dispose();
+                this.scene.remove(p.mesh);
+                p.dispose();
             }
         }
+        this.list = nlist;
     }
 }

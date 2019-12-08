@@ -56,11 +56,14 @@ class Car {
         ];
 
         const geo = new THREE.BufferGeometry().setFromPoints(carVertices);
+        geo.computeVertexNormals();
         const edges = new THREE.EdgesGeometry(geo);
         const lineMesh = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
 
-        const material = new THREE.MeshBasicMaterial({color : this.currentColor});
+        const material = new THREE.MeshLambertMaterial({color : this.currentColor});
         this.chassisMesh = new THREE.Mesh(geo, material);
+        //this.chassisMesh.castShadow = true;
+        //this.chassisMesh.receiveShadow = true;
         this.chassisMesh.add(lineMesh);
 
         // Camera
@@ -219,7 +222,7 @@ class Car {
     createParticleMarkGrass (idWheel, speed) {
         let pos = this.wheelMeshes[idWheel].position.clone();
         let y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
-        let part = new Particles(1, new THREE.Vector2(this._wheelRadius/1.5, y), 0x87B982, 2);
+        let part = new Particle(new THREE.Vector2(this._wheelRadius/1.5, y), 0x87B982, 2);
         
         pos.z -= this._wheelRadius;
         let rot = this.chassisMesh.rotation.clone();
