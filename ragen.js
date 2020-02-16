@@ -195,6 +195,7 @@ function tick() {
     requestAnimationFrame(tick);
 
     df += clock.getDelta() * FPS;    
+    if (df > FPS) { df = 1; }
     while (df >= 1) {
         physics.world.stepSimulation(1/FPS, 1);
         gameplay.update();

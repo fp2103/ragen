@@ -35,6 +35,11 @@ function keydown(e) {
 
 window.addEventListener('keydown', keydown);
 window.addEventListener('keyup', keyup);
+window.addEventListener('blur', () => { actions['acceleration'] = false;
+                                        actions['braking'] = false;
+                                        actions['left'] = false;
+                                        actions['right'] = false;
+                                        actions['reset'] = false;});
 
 // Gameplay and Menu
 class Gameplay {
