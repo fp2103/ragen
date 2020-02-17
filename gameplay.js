@@ -73,6 +73,8 @@ class Gameplay {
         this.maxBreakingForce = conf.carPhysics.maxBreakingForce;
         this.maxSpeed = conf.carPhysics.maxSpeed;
         this.maxReverseSpeed = conf.carPhysics.maxReverseSpeed;
+        this.defaultDrag = conf.carPhysics.defaultDrag;
+        this.grassDrag = conf.carPhysics.grassDrag;
 
         // Time
         this.clock = new THREE.Clock(false)
@@ -175,7 +177,7 @@ class Gameplay {
         this.htmlelements.speed.innerHTML = speedtext;
 
         // Update engine force
-        let breakingForce = 3;
+        let breakingForce = this.defaultDrag;
         let engineForce = 0;
         let wheelOffside = 0;
         let nextcpcrossed = false;
@@ -186,7 +188,7 @@ class Gameplay {
                                                 new THREE.Vector3(0,0,-1), 0, 5);
             let intercir = raycaster.intersectObject(this.circuit.mesh);
             if (intercir.length == 0) {
-                breakingForce = 60;
+                breakingForce = this.grassDrag;
                 wheelOffside += 1;
 
                 // Particles

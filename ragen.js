@@ -10,7 +10,7 @@ const GAMECONF = {
         Xsize: 1000,
         Ysize: 1000,
         Zsize: 1,
-        color: 0x2f7f4d
+        colorHSL: [0.38, 0.50, 0.25]
     },
 
     circuit: {
@@ -23,14 +23,21 @@ const GAMECONF = {
         width: 12.5,
         margin: 0.5,
         pointResolution: 200,
-        Z: 0.6
+        Z: 0.6,
+        colorHSL: [0.1, 0.06, 0.33],
+        colorMargin: 0xffffff,
+        colorCP: 0x0000ff,
+        colorMinimap: 0x0000FF
     },
 
     car: {
         width: 1.8,
         length: 4,
         cameraPosition: new THREE.Vector3(0, -5, 3.5),
-        Zinit: 2
+        Zinit: 2,
+        defaultColor: 0x00ffff,
+        colorOuterMinimap: 0xffff00,
+        colorGrassParticle: 0x87B982
     },
 
     carPhysics: {
@@ -45,7 +52,9 @@ const GAMECONF = {
         maxEngineForce: 3000,
         maxBreakingForce: 100,
         maxSpeed: 250,
-        maxReverseSpeed: -30
+        maxReverseSpeed: -30,
+        defaultDrag: 3,
+        grassDrag: 60
     },
 
     misc: {
@@ -181,7 +190,7 @@ function init() {
 
     // Gameplay
     gameplay = new Gameplay(GAMECONF, circuit, driver, mainVue.camera, 
-                                  particlesManager, HTMLELEMENTS, leaderboard);
+                            particlesManager, HTMLELEMENTS, leaderboard);
 
     // Menu
     menu = new Menu(HTMLELEMENTS, driver, gameplay, generateRandomSeed, initCircuit, seed);
@@ -209,10 +218,10 @@ tick();
 
 // todo clean code (= small code (especially js way...))
 /*
-TODO:
--abc... . clean code
+TODO: 
+-> switch to server mode
 -d. multi!
--dbis. ecart
+-dbis. gap between times (and at end of lap)
 -e. responsive
--f. prettify (code&game)
+-f. prettify (code&game): car, loading screen, trees, stands, sound...
 */

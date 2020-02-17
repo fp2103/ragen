@@ -5,7 +5,7 @@ class Terrain {
         // Three
         const map = new THREE.BoxBufferGeometry(conf.Xsize, conf.Ysize, conf.Zsize);
         const mapMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
-        mapMaterial.color.setHSL(0.38, 0.50, 0.25);
+        mapMaterial.color.setHSL(conf.colorHSL[0], conf.colorHSL[1], conf.colorHSL[2]);
         this.mesh = new THREE.Mesh(map, mapMaterial);
         this.mesh.receiveShadow = true;
 

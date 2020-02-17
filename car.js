@@ -28,8 +28,9 @@ class Car {
         this.chassisBody = undefined;
         this.vehiclePhysics = undefined;
 
-        this.currentColor = new THREE.Color("#00ffff");
-        this.minimapOuterColor = new THREE.Color(0xffff00);
+        this.currentColor = new THREE.Color(conf.defaultColor);
+        this.minimapOuterColor = new THREE.Color(conf.colorOuterMinimap);
+        this.colorGrassParticle = conf.colorGrassParticle;
     }
 
     initVue (scene) {
@@ -222,7 +223,7 @@ class Car {
     createParticleMarkGrass (idWheel, speed) {
         let pos = this.wheelMeshes[idWheel].position.clone();
         let y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
-        let part = new Particle(new THREE.Vector2(this._wheelRadius/1.5, y), 0x87B982, 2);
+        let part = new Particle(new THREE.Vector2(this._wheelRadius/1.5, y), this.colorGrassParticle, 2);
         
         pos.z -= this._wheelRadius;
         let rot = this.chassisMesh.rotation.clone();

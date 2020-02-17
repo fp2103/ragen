@@ -175,10 +175,10 @@ class Circuit {
         // ----- THREE ------
         // MAIN VUE
         const matGrey = new THREE.MeshLambertMaterial({color: 0xffffff});
-        matGrey.color.setHSL(0.1, 0.06, 0.33);
-        const matWhite = new THREE.MeshLambertMaterial({color: 0xffffff});
-        const matLineBlue = new THREE.LineBasicMaterial({color: 0x0000ff});
-        const matLineWhite = new THREE.LineBasicMaterial({color: 0xffffff});
+        matGrey.color.setHSL(conf.colorHSL[0], conf.colorHSL[1], conf.colorHSL[2]);
+        const matWhite = new THREE.MeshLambertMaterial({color: conf.colorMargin});
+        const matLineBlue = new THREE.LineBasicMaterial({color: conf.colorCP});
+        const matLineWhite = new THREE.LineBasicMaterial({color: conf.colorMargin});
 
         // margin mesh
         const inMaginGeo = new THREE.BufferGeometry().setFromPoints(marginInVertices);
@@ -216,8 +216,8 @@ class Circuit {
         this.mesh.position.z = conf.Z;
         
         // MINIMAP VUE
-        const matBlue = new THREE.MeshBasicMaterial({color: 0x0000FF});
-        const matWhite_minimap = new THREE.MeshBasicMaterial({color: 0xffffff});
+        const matBlue = new THREE.MeshBasicMaterial({color: conf.colorMinimap});
+        const matWhite_minimap = new THREE.MeshBasicMaterial({color: conf.colorMargin});
         const startingLineMinimapMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, 10,
                                                                                 false, conf.width+1).geo,
                                                        matWhite_minimap);
