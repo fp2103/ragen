@@ -53,7 +53,7 @@ echo "CSS done"
 # Libs
 mkdir $OUTPUTDIRLIBS
 for l in $LIBS; do
-    echo "Searching lib $l"
+    echo "Loading lib $l"
     # Libs with a / 
     p=( $( echo $l | tr "/" "\n" ))
     d=${p[0]}
@@ -91,3 +91,4 @@ fi;
 
 echo "JS done"
 echo "End build"
+echo
