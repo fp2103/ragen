@@ -40,6 +40,9 @@ CSSDIR="views"
 # ---- BUILDING SCRIPT ----
 echo "Start build"
 
+rm -r $OUTPUTDIR
+mkdir $OUTPUTDIR
+
 # STYLESHEETS
 # TODO minify css
 # for now just copy the file
@@ -48,7 +51,6 @@ echo "CSS done"
 
 # SCRIPTS
 # Libs
-rm -r $OUTPUTDIRLIBS
 mkdir $OUTPUTDIRLIBS
 for l in $LIBS; do
     echo "Searching lib $l"
