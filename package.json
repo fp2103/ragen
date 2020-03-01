@@ -15,7 +15,7 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "work": "nodemon --ext js,json,sh --ignore public/ragen.js --exec \"./build.sh && node server/ragen_serv.js\"",
+    "work": "nodemon --ext js,json,sh --ignore public/ --exec \"./build.sh && node server/ragen_serv.js\"",
     "prod": "PROD_ENABLED=1 ./build.sh && node server/ragen_serv.js"
   },
   "repository": {
