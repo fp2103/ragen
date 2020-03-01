@@ -1,14 +1,18 @@
 
 class Menu {
-    constructor (htmlelements, player, gameplay, trackidGenerator, circuitInit, currentTrackId) {
+    constructor (htmlelements, conf, player, gameplay, seedGenerator, circuitInit, currentTrackId, client) {
         this.htmlelements = htmlelements;
+        this.conf = conf;
         this.player = player;
         this.gameplay = gameplay;
 
         // Circuit
-        this.trackidGenerator = trackidGenerator;
+        this.seedGenerator = seedGenerator;
         this.circuitInit = circuitInit;
         this.currentTrackId = currentTrackId;
+
+        // Client multi
+        this.client = client;
 
         // Starting app
         this.htmlelements.menu.style.display = "block";
@@ -25,6 +29,9 @@ class Menu {
 
         this.htmlelements.menu_random.addEventListener("click", this.onRandomMenu.bind(this), false);
         this.htmlelements.random.addEventListener("click", this.onRandomScoreboard.bind(this), false);
+
+        this.htmlelements.session_random.addEventListener("click", this.onSessionRandomMenu.bind(this), false);
+        this.htmlelements.session_go.addEventListener("click", this.onSessionGoMenu.bind(this), false);
     }
 
     updatePlayerName () {
@@ -42,20 +49,29 @@ class Menu {
         this.htmlelements.game_elements.style.display = "none";
     }
 
-    onGoMenu () {
+    hideMenu () {
         this.htmlelements.menu.style.display = "none";
         this.htmlelements.game_elements.style.display = "block";
 
         this.gameplay.hideMenu();
-        this.trackChange(this.htmlelements.menu_seed.value);
+    }
+
+    onGoMenu () {
+        this.hideMenu();
+        this.loadTrack(this.htmlelements.menu_seed.value);
     }
 
     onGoScoreboard () {
         this.gameplay.setCameraLerpFast();
-        this.trackChange(this.htmlelements.seed.value);
+        this.loadTrack(this.htmlelements.seed.value);
     }
 
-    trackChange (trackId) {
+    loadTrack (trackId) {
+        // Local track so disconnet session
+        if (this.client.isConnected()) {
+            this.client.disconnect();
+        }
+
         if (trackId == this.currentTrackId) {
             this.gameplay.reset();
         } else {
@@ -66,11 +82,29 @@ class Menu {
 
     onRandomScoreboard () {
         this.gameplay.setCameraLerpFast();
-        this.trackChange(this.trackidGenerator());
+        this.loadTrack(this.seedGenerator(this.conf.trackidRandSize));
     }
 
     onRandomMenu () {
-        this.trackChange(this.trackidGenerator());
+        this.loadTrack(this.seedGenerator(this.conf.trackidRandSize));
+    }
+
+    onSessionRandomMenu () {
+        this.htmlelements.session_id.value = this.seedGenerator(this.conf.sessionRandSize);
+    }
+
+    onSessionGoMenu () {
+        if (this.client.isConnected()
+            && this.client.sessionid == this.htmlelements.session_id.value.toUpperCase()) {
+            this.hideMenu();
+            this.gameplay.reset();
+            return;
+        } else if (this.client.isConnected()) {
+            this.client.disconnect();
+        }
+
+        this.hideMenu();
+        this.client.connect(this.htmlelements.session_id.value, this.htmlelements.session_tobelisted.checked);
     }
 
 }

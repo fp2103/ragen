@@ -304,15 +304,17 @@ class Gameplay {
         return sector_id;
     }
 
-    displayMenu () {
-        this.reset();
-
+    resetCamera () {
         this.camera.position.set(0, 0, 300);
         this.cameraLookAt = new THREE.Vector3(0,0,0);
         this.camera.up = new THREE.Vector3(0,1,0);
         this.camera.lookAt(this.cameraLookAt);
         this.cameraLerp = this.lerpSlow;
+    }
 
+    displayMenu () {
+        this.reset();
+        this.resetCamera();
         this.onMenu = true;
         this.player.makeUnvisible();
     }

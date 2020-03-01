@@ -19,6 +19,7 @@ circuit.js
 car.js
 driver.js
 gameplay.js
+client.js
 menu.js
 mainVue.js
 minimap.js

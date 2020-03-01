@@ -1,7 +1,4 @@
 
-// test
-var socket = io.connect('http://localhost:3000');
-
 // Configuration
 const GAMECONF = {
     mainvue: {
@@ -62,6 +59,15 @@ const GAMECONF = {
     misc: {
         lerpFast: 0.15,
         lerpSlow: 0.02
+    },
+
+    menu: {
+        trackidRandSize: 6,
+        sessionRandSize: 4
+    },
+
+    multi: {
+        server: "http://localhost:3000"
     }
 }
 
@@ -92,18 +98,24 @@ const HTMLELEMENTS = {
     menu_go: document.getElementById("menu_go"),
     menu_random: document.getElementById("menu_random"),
     name: document.getElementById("name"),
-    color: document.getElementById("color")
+    color: document.getElementById("color"),
+
+    // multi menu elements
+    session_id: document.getElementById("session_id"),
+    session_random: document.getElementById("session_random"),
+    session_go: document.getElementById("session_go"),
+    session_tobelisted: document.getElementById("session_tobelisted")
 }
 
 // ---------- Main --------------
 
-let physics, gameplay, menu, currCircuit;
+let physics, gameplay, menu, client, currCircuit;
 
 // Generate Seed
-function generateRandomSeed () {
+function generateRandomSeed (size) {
     const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let seed = "";
-    for (var i = 0; i < 6; i++) {
+    for (var i = 0; i < size; i++) {
         let j = Math.floor(Math.random() * (ascii.length));
         seed += ascii.charAt(j);
     }
@@ -172,7 +184,7 @@ function init() {
     physics.world.addRigidBody(terrain.body);
 
     // Circuit
-    const seed = generateRandomSeed()
+    const seed = generateRandomSeed(GAMECONF.menu.trackidRandSize)
     const circuit = initCircuit(seed);
 
     // Car
@@ -194,8 +206,12 @@ function init() {
     gameplay = new Gameplay(GAMECONF, circuit, driver, mainVue.camera, 
                             particlesManager, HTMLELEMENTS, leaderboard);
 
+    // Multiplayer client
+    client = new Client(GAMECONF.multi, gameplay, initCircuit)
+    HTMLELEMENTS.session_id.value = generateRandomSeed(GAMECONF.menu.sessionRandSize);
+
     // Menu
-    menu = new Menu(HTMLELEMENTS, driver, gameplay, generateRandomSeed, initCircuit, seed);
+    menu = new Menu(HTMLELEMENTS, GAMECONF.menu, driver, gameplay, generateRandomSeed, initCircuit, seed, client);
 }
 
 
@@ -221,9 +237,9 @@ tick();
 // todo clean code (= small code (especially js way...))
 /*
 TODO: 
--> switch to server mode
--d. multi!
--dbis. gap between times (and at end of lap)
--e. responsive
--f. prettify (code&game): car, loading screen, trees, stands, sound...
+- multi!
+- gap between curr time and best (and at end of lap)
+- wait 2 seconds before moving camera...
+- responsive
+- prettify (code&game): car, loading screen, trees, stands, sound...
 */

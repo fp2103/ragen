@@ -10,21 +10,26 @@
     <div id="container">
         <div id="menu" style="display: none;">
             <h3>Menu</h3>
-            <span>Driver Name: </span>
-            <input type="text" name="name" id="name" maxlength="10" value="anon">
+            <label for="name">Driver Name:</label>
+            <input type="text" id="name" maxlength="10" value="anon">
             <input type="color" id="color" value="#00ffff">
 
             <h4>Solo</h4>
-            <span>Track: </span>
-            <input type="text" name="menu_seed" id="menu_seed" maxlength="10">
+            <label for="menu_seed">Track:</label>
+            <input type="text" id="menu_seed" maxlength="10">
             <input type="button" value="Random" id="menu_random">
             <input type="button" value="Go" id="menu_go">
             
-
             <h4>Multi</h4>
-            <span>Session ID: </span>
-            <input type="text" name="sessionid" id="sessionid" maxlength="4">
-            <input type="button" value="Join/Create">
+            <label for="session_id">Session ID:</label>
+            <input list="session_id" style="width: 20%; text-transform: uppercase;"
+                   id="session_id" maxlength="4">
+            <datalist id="session_id"></datalist>
+            <input type="button" value="Random" id="session_random">
+            <input type="button" value="Join/Create" id="session_go">
+            <br>
+            <label for="session_tobelisted">list new session:</label>
+            <input type="checkbox" id="session_tobelisted" checked>
         </div>
 
         <div id="game_elements" style="display: none;">
@@ -35,7 +40,7 @@
                     <input type="button" value="Random" id="random">
                     <input type="button" value="Go" id="go">
                 </div>
-                <table id="leaderboard">
+                <table id="leaderboard" class="leaderboard">
                     <tr>
                         <td>Leaderboard</td>
                         <th>Name</th>
