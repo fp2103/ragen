@@ -1,0 +1,31 @@
+{
+  "name": "ragen",
+  "version": "1.0.0",
+  "description": "threejs & ammojs race car game with random generated track",
+  "main": "server/ragen_serv.js",
+  "dependencies": {
+    "ejs": "^3.0.1",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.2",
+    "seedrandom": "^3.0.3",
+    "socket.io": "^2.3.0",
+    "three": "^0.107.0",
+    "uglify-es": "^3.3.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "work": "nodemon --ext js,json,sh --ignore public/ragen.js --exec \"./build.sh && node server/ragen_serv.js\"",
+    "prod": "PROD_ENABLED=1 ./build.sh && node server/ragen_serv.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fp2103/ragen.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fp2103/ragen/issues"
+  },
+  "homepage": "https://github.com/fp2103/ragen#readme"
+}
