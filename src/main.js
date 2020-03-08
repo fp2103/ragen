@@ -101,7 +101,8 @@ const HTMLELEMENTS = {
     color: document.getElementById("color"),
 
     // multi menu elements
-    session_id: document.getElementById("session_id"),
+    session_id_input: document.getElementsByName("session_id")[0],
+    session_id_list: document.getElementById("session_id"),
     session_random: document.getElementById("session_random"),
     session_go: document.getElementById("session_go"),
     session_tobelisted: document.getElementById("session_tobelisted"),
@@ -214,7 +215,6 @@ function init() {
     const htmlSessionElements = {session_span: HTMLELEMENTS.session_span,
                                  remaining_time: HTMLELEMENTS.remaining_time}
     client = new Client(GAMECONF.multi, gameplay, initCircuit, htmlSessionElements);
-    HTMLELEMENTS.session_id.value = generateRandomSeed(GAMECONF.menu.sessionRandSize);
 
     // Menu
     menu = new Menu(HTMLELEMENTS, GAMECONF.menu, driver, gameplay, generateRandomSeed, initCircuit, seed, client);

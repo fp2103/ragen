@@ -25,17 +25,6 @@ const app = express();
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
-// routes
-app.get('/', (req, res) => {
-	res.render('index');
-});
-
-// Listen on port PORT
-const server = app.listen(PORT);
-console.log("Starting Server on port", PORT);
-
-const io = require("socket.io")(server);
-
 // Sessions
 class Session {
     constructor (id, listed) {
@@ -67,17 +56,36 @@ class Session {
 const sessions = new Map();
 const socket_session = new Map();
 
-// Clean empty sessions
+// Render the page
+app.get('/', (req, res) => {
+    res.render('index');
+});
+app.get('/sessions_list', (req,res) => {
+    let sessions_list = [];
+    for (let [sid, s] of sessions.entries()) {
+        if (s.listed) { sessions_list.push(sid); }
+    }
+    res.render('sessions_list', {sessions: sessions_list});
+});
+
+// Clean old empty sessions
 setInterval(() => {
     const toDel = [];
     for (let [k, s] of sessions.entries()) {
         if (s.is_inactive()) { toDel.push(k); }
     }
-    console.log("Cleaning old sessions:", toDel)
+    if (toDel.length > 0) {
+        console.log("Cleaning old sessions:", toDel);
+    }
     toDel.forEach(d => { sessions.delete(d); });
 }, CLEANINGFREQUENCE);
 
+// Listen on port PORT
+const server = app.listen(PORT);
+console.log("Starting Server on port", PORT);
+
 // communication function 
+const io = require("socket.io")(server);
 io.on('connection', (socket) => {
     console.log('New User connected', socket.id);
     socket.emit('session_please');

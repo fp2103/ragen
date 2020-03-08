@@ -1,4 +1,8 @@
 
+function loadMenu () {
+    
+}
+
 class Menu {
     constructor (htmlelements, conf, player, gameplay, seedGenerator, circuitInit, currentTrackId, client) {
         this.htmlelements = htmlelements;
@@ -15,8 +19,7 @@ class Menu {
         this.client = client;
 
         // Starting app
-        this.htmlelements.menu.style.display = "block";
-        this.htmlelements.game_elements.style.display = "none";
+        this.displayMenu();
 
         // Link with action
         this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
@@ -44,10 +47,17 @@ class Menu {
  
     displayMenu () {
         this.gameplay.displayMenu();
-
+        this.loadSessionsList();        
         this.htmlelements.menu.style.display = "block";
         this.htmlelements.game_elements.style.display = "none";
     }
+
+    loadSessionsList () {
+        fetch('http://localhost:3000/sessions_list')
+        .then((res) => { return res.text(); })
+        .then((data) => { this.htmlelements.session_id_list.innerHTML = data; })
+        .catch((err) => { console.log("error getting sessions_list", err); });
+    } 
 
     hideMenu () {
         this.htmlelements.menu.style.display = "none";
@@ -96,12 +106,16 @@ class Menu {
     }
 
     onSessionRandomMenu () {
-        this.htmlelements.session_id.value = this.seedGenerator(this.conf.sessionRandSize);
+        this.htmlelements.session_id_input.value = this.seedGenerator(this.conf.sessionRandSize);
     }
 
     onSessionGoMenu () {
+        if (!this.htmlelements.session_id_input.value) {
+            return;
+        }
+
         if (this.client.isConnected()
-            && this.client.sessionid == this.htmlelements.session_id.value.toUpperCase()) {
+            && this.client.sessionid == this.htmlelements.session_id_input.value.toUpperCase()) {
             this.hideMenu();
             this.gameplay.reset();
             return;
@@ -114,7 +128,7 @@ class Menu {
         this.htmlelements.random.disabled = true;
         this.htmlelements.go.disabled = true;
         
-        this.client.connect(this.htmlelements.session_id.value, this.htmlelements.session_tobelisted.checked);
+        this.client.connect(this.htmlelements.session_id_input.value, this.htmlelements.session_tobelisted.checked);
     }
 
 }
