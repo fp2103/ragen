@@ -74,16 +74,30 @@ class Leaderboard {
         this.current = [undefined, undefined, undefined];
     }
 
-    clearRows () {
-        while (this.rows.length != 1) {
-            this.rows.pop();
-            this.drivers.pop();
+    clearSession () {
+        while (this.htmltable.rows.length > 2) {
+            this.htmltable.deleteRow(-1);
         }
+
+        this.drivers = [];
+        this.rows = [new Row(this.htmltable)];
+
+        this.addDriver(this.mainDriver);
     }
 
     addDriver (driver) {
         this.drivers.push(driver);
         this.rows.push(new Row(this.htmltable));        
+    }
+
+    delDriver (driverid) {
+        for (var i = 0; i < this.drivers.length; i++) {
+            if (this.drivers[i].id == driverid) {
+                this.drivers.splice(i, 1);
+            }
+        }
+        this.rows.pop();
+        this.htmltable.deleteRow(-1);
     }
 
     sortDrivers () {
@@ -142,7 +156,10 @@ class Leaderboard {
         // fill table drivers
         this.sortDrivers();
         for (i = 0; i < this.drivers.length; i++) {
-            const l = this.drivers[i].position + " . " + this.drivers[i].name;
+            let l = this.drivers[i].position + " . " + this.drivers[i].name;
+            if (this.drivers.length > 1 && this.drivers[i].id == 0) {
+                l += " (you)";
+            }
             this.fillRow(i, l, this.drivers[i].car.currentColor.getHexString(), this.drivers[i].currTime);
         }
 

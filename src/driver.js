@@ -1,10 +1,11 @@
 
 class Driver {
 
-    constructor (name, car, vuesCb) {
+    constructor (name, car, vuesCb, id) {
         this.name = name;
         this.car = car;
         this.vuesCb = vuesCb;
+        this.id = id;
 
         this.position = "-";
         this.bestTime = [undefined, undefined, undefined];

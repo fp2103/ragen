@@ -74,6 +74,11 @@ class Session {
     reload_circuit () {
         this.circuit = generateRandomSeed(6);
         this.circuitStartTime = Date.now();
+        // Reset players time
+        for (let p of this.players.values()) {
+            p.currTime = [undefined, undefined, undefined];
+        }
+        // Send new session info to players
         for (let p of this.players.values()) {
             p.socket.emit('load_session', this.getData(p.socket.id));
         }

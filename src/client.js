@@ -69,12 +69,13 @@
         if (data.cid != this.current_circuit) {
             this.gameplay.reloadCircuit(this.circuitInit(data.cid));
         }
+        this.current_circuit = data.cid;
         this.htmlSessionElements.session_span.innerHTML = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
 
-        // Build learderboard
-        //this.leaderboard.clearDrivers();
+        // Rebuild learderboard
+        this.leaderboard.clearSession();
         for (let p of data.players) {
             this.add_user(p);
         }
@@ -101,9 +102,15 @@
     
     add_user (data) {
         console.log("ADD", data);
+        let c = new Car({cameraPosition: new THREE.Vector3(0,0,0),
+                         defaultColor: "#" + data.color,
+                         colorOuterMinimap: "white"});
+        let d = new Driver(data.name, c, undefined, data.id);
+        this.leaderboard.addDriver(d);
     }
 
     del_user (data) {
         console.log("DEL", data);
+        this.leaderboard.delDriver(data.id);
     }
  }

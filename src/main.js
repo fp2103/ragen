@@ -202,7 +202,7 @@ function init() {
     const particlesManager = new ParticlesManager(mainVue.scene, 50);
 
     // Driver
-    const driver = new Driver(HTMLELEMENTS.name.value, car, driverVuesCallback);
+    const driver = new Driver(HTMLELEMENTS.name.value, car, driverVuesCallback, 0);
 
     // Leaderboard
     const leaderboard = new Leaderboard(HTMLELEMENTS.leaderboard, HTMLELEMENTS.score_message, driver);
