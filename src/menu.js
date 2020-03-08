@@ -70,6 +70,12 @@ class Menu {
         // Local track so disconnet session
         if (this.client.isConnected()) {
             this.client.disconnect();
+
+            this.htmlelements.seed.disabled = false;
+            this.htmlelements.random.disabled = false;
+            this.htmlelements.go.disabled = false;
+            this.htmlelements.session_span.innerHTML = "N/A";
+            this.htmlelements.remaining_time.innerHTML = "&infin;";
         }
 
         if (trackId == this.currentTrackId) {
@@ -104,6 +110,10 @@ class Menu {
         }
 
         this.hideMenu();
+        this.htmlelements.seed.disabled = true;
+        this.htmlelements.random.disabled = true;
+        this.htmlelements.go.disabled = true;
+        
         this.client.connect(this.htmlelements.session_id.value, this.htmlelements.session_tobelisted.checked);
     }
 

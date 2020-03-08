@@ -104,7 +104,11 @@ const HTMLELEMENTS = {
     session_id: document.getElementById("session_id"),
     session_random: document.getElementById("session_random"),
     session_go: document.getElementById("session_go"),
-    session_tobelisted: document.getElementById("session_tobelisted")
+    session_tobelisted: document.getElementById("session_tobelisted"),
+
+    // Session info elements
+    session_span: document.getElementById("session_span"),
+    remaining_time: document.getElementById("remaining_time")
 }
 
 // ---------- Main --------------
@@ -130,7 +134,7 @@ const container = document.querySelector('#container');
 const stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.bottom = '0px';
-container.appendChild( stats.domElement );
+//container.appendChild( stats.domElement );
 
 
 // Main Vue
@@ -207,7 +211,9 @@ function init() {
                             particlesManager, HTMLELEMENTS, leaderboard);
 
     // Multiplayer client
-    client = new Client(GAMECONF.multi, gameplay, initCircuit)
+    const htmlSessionElements = {session_span: HTMLELEMENTS.session_span,
+                                 remaining_time: HTMLELEMENTS.remaining_time}
+    client = new Client(GAMECONF.multi, gameplay, initCircuit, htmlSessionElements);
     HTMLELEMENTS.session_id.value = generateRandomSeed(GAMECONF.menu.sessionRandSize);
 
     // Menu
