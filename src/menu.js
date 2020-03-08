@@ -127,8 +127,10 @@ class Menu {
         this.htmlelements.seed.disabled = true;
         this.htmlelements.random.disabled = true;
         this.htmlelements.go.disabled = true;
+        this.currentTrackId = undefined;
         
-        this.client.connect(this.htmlelements.session_id_input.value, this.htmlelements.session_tobelisted.checked);
+        this.client.connect(this.htmlelements.session_id_input.value, 
+                            this.htmlelements.session_tobelisted.checked);
     }
 
 }

@@ -74,6 +74,13 @@ class Leaderboard {
         this.current = [undefined, undefined, undefined];
     }
 
+    clearRows () {
+        while (this.rows.length != 1) {
+            this.rows.pop();
+            this.drivers.pop();
+        }
+    }
+
     addDriver (driver) {
         this.drivers.push(driver);
         this.rows.push(new Row(this.htmltable));        
@@ -104,7 +111,7 @@ class Leaderboard {
         const row = this.rows[indice];
 
         row.clabel.innerHTML = label;
-        if (labelColor != undefined) row.clabel.style.color = labelColor;
+        if (labelColor != undefined) row.clabel.style.color = "#" + labelColor;
 
         for (var j = 0; j < 3; j++) {
             let c = row.csectors[j];
