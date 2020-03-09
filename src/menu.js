@@ -39,10 +39,12 @@ class Menu {
 
     updatePlayerName () {
         this.player.updateName(this.htmlelements.name.value);
+        this.client.mainDriverUpdate();
     }
 
     updateCarColor () {
         this.player.car.updateColor(this.htmlelements.color.value);
+        this.client.mainDriverUpdate();
     }
  
     displayMenu () {

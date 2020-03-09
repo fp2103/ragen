@@ -27,9 +27,9 @@ app.use(express.static('public'));
 
 // Each individual player
 class Player {
-    constructor (socket, sessionid, name, color, currTime) {
+    constructor (socket, session, name, color, currTime) {
         this.socket = socket;
-        this.sessionid = sessionid;
+        this.session = session;
         this.name = name;
         this.color = color;
         this.currTime = currTime;
@@ -106,6 +106,14 @@ class Session {
             this.lastDisonnectedTS = Date.now();
         }
     }
+
+    update_user (user) {
+        for (let p of this.players.values()) {
+            if (p.socket.id != user.socket.id) {
+                p.socket.emit('update_user', user.getData());
+            }
+        }
+    }
 }
 const sessions = new Map();
 
@@ -148,16 +156,16 @@ io.on('connection', (socket) => {
         console.log("User", socket.id, "Joining session", sid);
         console.log(data.user);
         
-        // Create new Player
-        let p = new Player(socket, sid, data.user.name, data.user.color, data.user.currTime);
-        socket_player.set(socket.id, p);
-
         // Retreive session or create a new one
         let session = sessions.get(sid);
         if (session == undefined) {
             session = new Session(sid, data.tbl);
             sessions.set(sid, session);
         }
+
+        // Create new Player
+        let p = new Player(socket, session, data.user.name, data.user.color, data.user.currTime);
+        socket_player.set(socket.id, p);
         session.new_user(p);
 
         socket.emit('load_session', session.getData(socket.id));
@@ -167,12 +175,19 @@ io.on('connection', (socket) => {
         console.log("User disconnected", socket.id);
         let player = socket_player.get(socket.id);
         if (player != undefined) {
-            let session = sessions.get(player.sessionid);
-            if (session != undefined) {
-                session.remove_user(socket.id);
-            }
+            player.session.remove_user(socket.id);
         }
         socket_player.delete(socket.id);
+    });
+
+    socket.on('driver_update', (data) => {
+        let player = socket_player.get(socket.id);
+        if (player != undefined) {
+            player.name = data.name;
+            player.color = data.color;
+            player.currTime = data.currTime;
+            player.session.update_user(player);
+        }
     });
     
 });

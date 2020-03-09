@@ -12,6 +12,7 @@ class Driver {
         this.currTime = [undefined, undefined, undefined];
 
         this.lb_setLastCb = undefined;
+        this.client_updateCb = undefined;
     }
 
     updateName (newName) {
@@ -22,6 +23,7 @@ class Driver {
         this.position = "-";
         this.bestTime = [undefined, undefined, undefined];
         if (this.lb_setLastCb != undefined) this.lb_setLastCb(true);
+        if (this.client_updateCb != undefined) this.client_updateCb();
     }
 
     setToBest () {
@@ -62,6 +64,9 @@ class Driver {
                 this.setToBest();
             }
         }
+
+        // CB on client to update session
+        if (this.client_updateCb != undefined) this.client_updateCb();
     }
 
     makeUnvisible () {

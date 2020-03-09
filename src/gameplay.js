@@ -270,11 +270,13 @@ class Gameplay {
             if (this.nextcp >= 3) this.nextcp = 0;
         }
 
+        // Outside!
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
             const ic = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
             this.player.car.chassisMesh.material.color.copy(ic);
             this.validtime = false;
             this.driver.setToBest();
+            if (this.driver.client_updateCb != undefined) this.driver.client_updateCb();
         } else {
             this.player.car.chassisMesh.material.color.copy(this.player.car.currentColor);
         }

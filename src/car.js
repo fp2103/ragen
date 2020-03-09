@@ -234,7 +234,9 @@ class Car {
 
     updateColor (color) {
         this.currentColor = new THREE.Color(color);
-        this.chassisMesh.material.color.copy(this.currentColor);
-        this.minimapMeshInner.material.color.copy(this.currentColor);
+        if (this.chassisMesh != undefined && this.minimapMeshInner != undefined) { 
+            this.chassisMesh.material.color.copy(this.currentColor);
+            this.minimapMeshInner.material.color.copy(this.currentColor);
+        }
     }
 }
