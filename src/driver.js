@@ -7,7 +7,7 @@ class Driver {
         this.vuesCb = vuesCb;
         this.id = id;
 
-        this.position = "-";
+        this.bestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
 
@@ -20,16 +20,20 @@ class Driver {
     }
 
     resetTime () {
-        this.position = "-";
+        this.bestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
         if (this.lb_setLastCb != undefined) this.lb_setLastCb(true);
-        if (this.client_updateCb != undefined) this.client_updateCb();
     }
 
-    setToBest () {
+    setToBest (clientcb) {
+        let same = true;
         for (var i = 0; i < 3; i++) {
+            same = same && (this.currTime[i] == this.bestTime[i]);
             this.currTime[i] = this.bestTime[i];
         }
+        if (!same && clientcb && this.client_updateCb != undefined) {
+            this.client_updateCb();
+        } 
     }
 
     saveAsBest () {
@@ -51,17 +55,14 @@ class Driver {
 
         // full lap time
         if (sector == 2) {
-            // callback leaderboard to show last lap
-            if (this.lb_setLastCb != undefined) {
-                let pb = this.bestTime[2] == undefined || time < this.bestTime[2].time;
-                this.lb_setLastCb(false, this.currTime, pb);
-            }
-
             // Update best time
             if (this.bestTime[2] == undefined || time < this.bestTime[2].time) {
+                this.bestLapTime = time;
+                if (this.lb_setLastCb != undefined) this.lb_setLastCb(false, this.currTime, true);
                 this.saveAsBest();
             } else {
-                this.setToBest();
+                if (this.lb_setLastCb != undefined) this.lb_setLastCb(false, this.currTime, false);
+                this.setToBest(false);
             }
         }
 

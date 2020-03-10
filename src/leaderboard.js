@@ -66,6 +66,7 @@ class Leaderboard {
             if (personalBest) {
                 // TODO: different message if circuit best!!!
                 this.last.push("Personal Best");
+                this.sortDrivers();
             }
         }
     }
@@ -87,7 +88,8 @@ class Leaderboard {
 
     addDriver (driver) {
         this.drivers.push(driver);
-        this.rows.push(new Row(this.htmltable));        
+        this.sortDrivers();
+        this.rows.push(new Row(this.htmltable));
     }
 
     delDriver (driverid) {
@@ -101,12 +103,16 @@ class Leaderboard {
     }
 
     sortDrivers () {
-        // TODO
-        for (var i = 0; i < this.drivers.length; i++) {
-            if (this.drivers[i].bestTime[2] != undefined) {
-                this.drivers[i].position = "1";
+        this.drivers.sort((a, b) => {
+            if (a.bestLapTime == undefined && b.bestLapTime == undefined) {
+                return 0;
+            } else if (a.bestLapTime != undefined && b.bestLapTime == undefined) {
+                return -1;
+            } else if (a.bestLapTime == undefined && b.bestLapTime != undefined) {
+                return 1;
             }
-        }
+            return a.bestLapTime - b.bestLapTime;
+        });
     }
 
     convertTimeToString (time) {
@@ -154,9 +160,10 @@ class Leaderboard {
         this.htmlmessage.innerHTML = "";
         
         // fill table drivers
-        this.sortDrivers();
         for (i = 0; i < this.drivers.length; i++) {
-            let l = this.drivers[i].position + " . " + this.drivers[i].name;
+            let l = (i+1) + " . ";
+            if (this.drivers[i].bestLapTime == undefined) l = "- . ";
+            l += this.drivers[i].name;
             if (this.drivers.length > 1 && this.drivers[i].id == 0) {
                 l += " (you)";
             }

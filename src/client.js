@@ -17,11 +17,11 @@
  * 3. Other player join same game: share leaderboard infos.
  * 3b. update info (name/color)
  * 3c. update time
+ * -> TODO from leaderboard
  * 3d. Share car & car position
  * 
  * 4. session share, press papier...
  * 
- * 5. time reload circuit
  * 
  */
 
@@ -65,7 +65,8 @@
     get_user_data () {
         return {name: this.player.name,
                 color: this.player.car.currentColor.getHexString(),
-                currTime: this.player.currTime};
+                currTime: this.player.currTime,
+                blt: this.player.bestLapTime};
     }
 
     send_session_info () {
@@ -110,35 +111,36 @@
     }
     
     add_user (data) {
-        console.log("ADD", data);
         let c = new Car({cameraPosition: new THREE.Vector3(0,0,0),
                          defaultColor: "#" + data.color,
                          colorOuterMinimap: "white"});
         let d = new Driver(data.name, c, undefined, data.id);
+        d.currTime = data.currTime;
+        d.bestLapTime = data.blt;
         this.leaderboard.addDriver(d);
         this.otherDrivers.set(data.id, d);
     }
 
     del_user (data) {
-        console.log("DEL", data);
         this.leaderboard.delDriver(data.id);
         this.otherDrivers.delete(data.id);
     }
 
     mainDriverUpdate () {
         if (this.socket != undefined) {
-            console.log("send");
             this.socket.emit("driver_update", this.get_user_data());
         }
     }
 
     update_user (data) {
         let d = this.otherDrivers.get(data.id);
-        console.log("received", this.otherDrivers, data.id);
         if (d != undefined) {
             d.updateName(data.name);
             d.car.updateColor('#' + data.color);
             d.currTime = data.currTime;
+            let last_blt = d.bestLapTime;
+            d.bestLapTime = data.blt;
+            if (last_blt != data.blt) this.leaderboard.sortDrivers();
         }
     }
  }

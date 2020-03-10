@@ -27,19 +27,21 @@ app.use(express.static('public'));
 
 // Each individual player
 class Player {
-    constructor (socket, session, name, color, currTime) {
+    constructor (socket, session, name, color, currTime, blt) {
         this.socket = socket;
         this.session = session;
         this.name = name;
         this.color = color;
         this.currTime = currTime;
+        this.bestLapTime = blt;
     }
 
     getData () {
         return {id: this.socket.id,
                 name: this.name,
                 color: this.color,
-                currTime: this.currTime};
+                currTime: this.currTime,
+                blt: this.bestLapTime};
     }
 }
 const socket_player = new Map();
@@ -77,6 +79,7 @@ class Session {
         // Reset players time
         for (let p of this.players.values()) {
             p.currTime = [undefined, undefined, undefined];
+            p.bestLapTime = undefined;
         }
         // Send new session info to players
         for (let p of this.players.values()) {
@@ -186,6 +189,7 @@ io.on('connection', (socket) => {
             player.name = data.name;
             player.color = data.color;
             player.currTime = data.currTime;
+            player.bestLapTime = data.blt;
             player.session.update_user(player);
         }
     });
