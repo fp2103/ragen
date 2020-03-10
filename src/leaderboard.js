@@ -52,6 +52,8 @@ class Leaderboard {
 
         // Rows (filled with 1 current/last row)
         this.rows = [new Row(htmltable)];
+
+        this.bestSectorTime = [undefined, undefined, undefined];
     }
 
     setLast (reset, driverCurrTime, personalBest) {
@@ -64,15 +66,20 @@ class Leaderboard {
             }
 
             if (personalBest) {
-                // TODO: different message if circuit best!!!
-                this.last.push("Personal Best");
                 this.sortDrivers();
+                this.computeBestSectorTime();
+                if (this.drivers.length > 1 && this.last[2].time <= this.bestSectorTime[2]) {
+                    this.last.push("Session Best");
+                } else {
+                    this.last.push("Personal Best");
+                }
             }
         }
     }
 
     reset () {
         this.current = [undefined, undefined, undefined];
+        this.bestSectorTime = [undefined, undefined, undefined];
     }
 
     clearSession () {
@@ -127,7 +134,7 @@ class Leaderboard {
         return min + ":" + sec + ":" + milli;
     }
 
-    fillRow (indice, label, labelColor, sectors) {
+    fillRow (indice, label, labelColor, sectors, purplize) {
         const row = this.rows[indice];
 
         row.clabel.innerHTML = label;
@@ -137,10 +144,30 @@ class Leaderboard {
             let c = row.csectors[j];
             if (sectors[j] != undefined) {
                 c.innerHTML = this.convertTimeToString(sectors[j].time);
-                if (sectors[j].color != undefined) c.style.color = sectors[j].color; 
+                if (sectors[j].color != undefined) c.style.color = sectors[j].color;
+
+                // Change to purple for best overall time
+                if (purplize && this.bestSectorTime[j] != undefined 
+                    && sectors[j].color == "green" && sectors[j].time <= this.bestSectorTime[j]) {
+                    c.style.color = "purple";
+                }
             }
         }
-    } 
+    }
+    
+    computeBestSectorTime () {
+        for (var i = 0; i < 3; i++) {
+            let minSectorTime = undefined;
+            for (var j = 0; j < this.drivers.length; j++) {
+                if (this.drivers[j].currTime[i] != undefined) {
+                    if (minSectorTime == undefined || this.drivers[j].currTime[i].time < minSectorTime) {
+                        minSectorTime = this.drivers[j].currTime[i].time;
+                    }
+                }
+            }
+            this.bestSectorTime[i] = minSectorTime;
+        }
+    }
 
     updateDisplay (current_sector, time, valid) {
         // Update current time
@@ -160,6 +187,7 @@ class Leaderboard {
         this.htmlmessage.innerHTML = "";
         
         // fill table drivers
+        this.computeBestSectorTime();
         for (i = 0; i < this.drivers.length; i++) {
             let l = (i+1) + " . ";
             if (this.drivers[i].bestLapTime == undefined) l = "- . ";
@@ -167,7 +195,8 @@ class Leaderboard {
             if (this.drivers.length > 1 && this.drivers[i].id == 0) {
                 l += " (you)";
             }
-            this.fillRow(i, l, this.drivers[i].car.currentColor.getHexString(), this.drivers[i].currTime);
+            this.fillRow(i, l, this.drivers[i].car.currentColor.getHexString(), 
+                         this.drivers[i].currTime, this.drivers.length > 1);
         }
 
         // Add last row
@@ -188,7 +217,7 @@ class Leaderboard {
         }
 
         // Create table current/last
-        this.fillRow(i, lastRowLabel, undefined, TCvalue);
+        this.fillRow(i, lastRowLabel, undefined, TCvalue, showLast && this.drivers.length > 1);
         if (!showLast && !valid) this.rows[i].setColorAllRow("red");
     }
 }
