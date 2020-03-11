@@ -48,12 +48,13 @@ class Leaderboard {
 
         this.drivers = [];
         this.current = [undefined, undefined, undefined];
+        this.bestSectorTime = [undefined, undefined, undefined];
         this.last = undefined;
 
         // Rows (filled with 1 current/last row)
         this.rows = [new Row(htmltable)];
 
-        this.bestSectorTime = [undefined, undefined, undefined];
+        this.nonplayable = false;
     }
 
     setLast (reset, driverCurrTime, personalBest) {
@@ -87,10 +88,13 @@ class Leaderboard {
             this.htmltable.deleteRow(-1);
         }
 
+        this.rows = [];
         this.drivers = [];
-        this.rows = [new Row(this.htmltable)];
 
-        this.addDriver(this.mainDriver);
+        if(!this.nonplayable) {
+            this.rows.push(new Row(this.htmltable));
+            this.addDriver(this.mainDriver);
+        }
     }
 
     addDriver (driver) {
@@ -185,6 +189,7 @@ class Leaderboard {
             this.rows[i].reset();
         }
         this.htmlmessage.innerHTML = "";
+        if (this.nonplayable) this.htmlmessage.innerHTML = "Session full";
         
         // fill table drivers
         this.computeBestSectorTime();
@@ -199,6 +204,7 @@ class Leaderboard {
                          this.drivers[i].currTime, this.drivers.length > 1);
         }
 
+        if (this.nonplayable) return;
         // Add last row
         let lastRowLabel = "Current";
         let TCvalue = this.current;

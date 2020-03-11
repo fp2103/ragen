@@ -8,6 +8,8 @@ const CIRCUITRELOAD = 300000;
 const KEEPALIVETIME = 30000;
 const CLEANINGFREQUENCE = 10000;
 
+const MAXPLAYER = 12;
+
 // ---- Function Utils ----
 function generateRandomSeed (size) {
     const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -34,6 +36,7 @@ class Player {
         this.color = color;
         this.currTime = currTime;
         this.bestLapTime = blt;
+        this.isSpectator = false;
     }
 
     getData () {
@@ -58,19 +61,24 @@ class Session {
         this.circuitStartTime = Date.now();
 
         this.players = new Map();
+        this.activePlayerCount = 0;
     }
 
     getData (socketid_dest) {
         let otherPlayers = [];
+        let isSpectator = false;
         for (let p of this.players.values()) {
-            if (p.socket.id != socketid_dest) {
+            if (p.socket.id != socketid_dest && !p.isSpectator) {
                 otherPlayers.push(p.getData());
+            } else if (p.socket.id == socketid_dest) {
+                isSpectator = p.isSpectator;
             }
         } 
         return {id: this.id,
                 cid: this.circuit,
                 rt: this.circuitStartTime + CIRCUITRELOAD - Date.now(),
-                players: otherPlayers};
+                players: otherPlayers,
+                nonplayable: isSpectator};
     }
 
     reload_circuit () {
@@ -93,18 +101,41 @@ class Session {
     }
 
     new_user (player) {
-        for (let p of this.players.values()) {
-            p.socket.emit('add_user', player.getData());
+        if (this.activePlayerCount < MAXPLAYER) {
+            for (let p of this.players.values()) {
+                p.socket.emit('add_user', player.getData());
+            }
+            this.activePlayerCount += 1;
+        } else {
+            player.isSpectator = true;
         }
         this.players.set(player.socket.id, player);
         this.lastDisonnectedTS = undefined;
     }
 
     remove_user (userid) {
+        let player = this.players.get(userid);
+        // Remove from all other users
         this.players.delete(userid);
         for (let p of this.players.values()) {
             p.socket.emit('del_user', {id: userid});
         }
+
+        if (player != undefined && !player.isSpectator) {
+            this.activePlayerCount -= 1;
+
+            // Load another waiting player
+            for (let p of this.players.values()) {
+                if (p.isSpectator) {
+                    p.isSpectator = false;
+                    this.new_user(p);
+                    p.socket.emit('load_session', this.getData(p.socket.id));
+                    break;
+                }
+            }
+        }
+
+        // Flag session to be deleted if empty
         if (this.players.size == 0) {
             this.lastDisonnectedTS = Date.now();
         }

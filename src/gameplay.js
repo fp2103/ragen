@@ -97,6 +97,9 @@ class Gameplay {
         // menu
         this.onMenu = true;
         this.player.makeUnvisible();
+
+        // non playable mode
+        this.nonplayable = false;
     }
 
     initCarPosition () {
@@ -149,6 +152,16 @@ class Gameplay {
 
         if (this.onMenu) {
             return;
+        }
+
+        // Non playable mode
+        if (this.nonplayable) {
+            // Shutdown actions
+            actions['acceleration'] = false;
+            actions['braking'] = false;
+            actions['left'] = false;
+            actions['right'] = false;
+            actions['reset'] = false;
         }
 
         // Reset everything
@@ -247,6 +260,9 @@ class Gameplay {
 
         // Update leaderboard
         this.leaderboard.updateDisplay(this._get_sector_id(), this.laptime, this.validtime);
+
+        // Non playable doesn't need to update futher
+        if (this.nonplayable) return;
 
         // Apply the rules
         if (nextcpcrossed) {

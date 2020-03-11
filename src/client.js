@@ -77,12 +77,28 @@
 
     load_session (data) {
         if (data.cid != this.current_circuit) {
+            this.gameplay.resetCamera();
             this.gameplay.reloadCircuit(this.circuitInit(data.cid));
         }
         this.current_circuit = data.cid;
         this.htmlSessionElements.session_span.innerHTML = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
+
+        if (data.nonplayable) {
+            this.gameplay.nonplayable = true;
+            this.leaderboard.nonplayable = true;
+            this.player.makeUnvisible();
+            this.gameplay.htmlelements.speed.style.display = "none";
+        }
+        // Change in playability
+        if (!data.nonplayable && this.gameplay.nonplayable) {
+            this.gameplay.nonplayable = false;
+            this.leaderboard.nonplayable = false;
+            this.player.makeVisible();
+            this.gameplay.htmlelements.speed.style.display = "block";
+            this.gameplay.reset();
+        }
 
         // Rebuild learderboard
         this.leaderboard.clearSession();
@@ -98,11 +114,17 @@
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.socket = undefined;
+
+        // reset non playable
+        this.gameplay.nonplayable = false;
+        this.leaderboard.nonplayable = false;
+        this.gameplay.htmlelements.speed.style.display = "block";
     }
 
     updateRT () {
         if (this.circuit_change_date != undefined) { 
             let rts = Math.round((this.circuit_change_date - Date.now())/1000);
+            if (rts < 0) rts = 0;
             let rtMin = Math.floor(rts/60);
             let rtSec = rts % 60;
             if (rtSec < 10) { rtSec = "0" + rtSec; }
