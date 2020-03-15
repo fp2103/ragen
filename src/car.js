@@ -30,6 +30,9 @@ class Car {
         this.currentColor = new THREE.Color(conf.defaultColor);
         this.minimapOuterColor = new THREE.Color(conf.colorOuterMinimap);
         this.colorGrassParticle = conf.colorGrassParticle;
+
+        this.lerpPosition = undefined;
+        this.lerpQuaternion = undefined;
     }
 
     initVue (scene) {
@@ -71,9 +74,10 @@ class Car {
         this.cameraPosition.position.set(this.cameraX, this.cameraY, this.cameraZ);
         this.chassisMesh.add(this.cameraPosition);
 
-        scene.add(this.chassisMesh);
-
         // Wheels
+        const ww = (this._width/2);
+        const wl = (this._length/2)*0.80;
+        const wh = -0.3;
         const width = this._wheelRadius/1.5;
         const wheelGeo = new THREE.CylinderGeometry(this._wheelRadius, this._wheelRadius, width, 24, 1);
         wheelGeo.rotateZ(Math.PI/2);
@@ -81,9 +85,15 @@ class Car {
             let m = new THREE.Mesh(wheelGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
             m.add(new THREE.Mesh(new THREE.BoxGeometry(width * 1.5, this._wheelRadius * 1.75, this._wheelRadius*.25),
                                  new THREE.MeshBasicMaterial({color: 0xfff000})));
+            if (i == this.FRONTLEFT) m.position.set(-ww, wl, wh);
+            if (i == this.FRONTRIGHT) m.position.set(ww, wl, wh);
+            if (i == this.BACKLEFT) m.position.set(-ww, -wl, wh);
+            if (i == this.BACKRIGHT) m.position.set(ww, -wl, wh);
             this.wheelMeshes[i] = m;
-            scene.add(m);
+            this.chassisMesh.add(m);
         }
+
+        scene.add(this.chassisMesh);
 
         // Minimap
         const minimapgeo = new THREE.PlaneBufferGeometry(30,30);
@@ -239,4 +249,21 @@ class Car {
             this.minimapMeshInner.material.color.copy(this.currentColor);
         }
     }
+
+    setLerpPosition (pos, quat) {
+        this.lerpPosition = pos;
+        this.lerpQuaternion = quat;
+    }
+
+    updateLerpPosition () {
+        if (this.lerpPosition != undefined && this.lerpQuaternion != undefined) {
+            this.minimapMesh.position.lerp(this.lerpPosition, 0.2);
+            
+            this.chassisMesh.position.lerp(this.lerpPosition, 0.2);
+            this.chassisMesh.quaternion.set(this.lerpQuaternion.x,
+                                            this.lerpQuaternion.y,
+                                            this.lerpQuaternion.z,
+                                            this.lerpQuaternion.w);
+        }
+    } 
 }

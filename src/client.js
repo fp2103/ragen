@@ -27,18 +27,21 @@
 
 
  class Client {
-    constructor (conf, gameplay, circuitInit, htmlSessionElements, player, leaderboard) {
+    constructor (conf, carconf, gameplay, circuitInit, htmlSessionElements, player, leaderboard, scenes) {
         this.server = conf.server;
+        this.carconf = carconf;
         this.gameplay = gameplay;
         this.circuitInit = circuitInit;
         this.htmlSessionElements = htmlSessionElements;
         this.player = player;
         this.leaderboard = leaderboard;
+        this.scenes = scenes;
 
         this.current_circuit = undefined;
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.socket = undefined;
+        this.sendPosInter = undefined;
         window.addEventListener("beforeunload", this.disconnect.bind(this), false);
         setInterval(this.updateRT.bind(this), 1000);
 
@@ -60,6 +63,8 @@
         this.socket.on("add_user", (data) => this.add_user(data));
         this.socket.on("del_user", (data) => this.del_user(data));
         this.socket.on("update_user", (data) => this.update_user(data));
+        this.socket.on("update_positions", (data) => this.update_positions(data));
+        this.sendPosInter = setInterval(this.send_position.bind(this), 100);
     }
 
     get_user_data () {
@@ -114,11 +119,24 @@
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.socket = undefined;
+        clearInterval(this.sendPosInter);
+        this.sendPosInter = undefined;
 
         // reset non playable
         this.gameplay.nonplayable = false;
         this.leaderboard.nonplayable = false;
         this.gameplay.htmlelements.speed.style.display = "block";
+
+        this.leaderboard.clearSession();
+        this.otherDrivers.clear();
+        for (let c of this.gameplay.otherCars.values()) {
+            this.scenes[1].remove(c.minimapMesh);
+            this.scenes[0].remove(c.chassisMesh);
+            for (var i = 0; i < c.WHEELSNUMBER; i++) {
+                this.scenes[0].remove(c.wheelMeshes[i]);
+            }
+        }
+        this.gameplay.otherCars.clear();
     }
 
     updateRT () {
@@ -133,19 +151,37 @@
     }
     
     add_user (data) {
-        let c = new Car({cameraPosition: new THREE.Vector3(0,0,0),
-                         defaultColor: "#" + data.color,
-                         colorOuterMinimap: "white"});
+        // Create car & add it to the scene
+        let carconf_tmp = Object.assign({}, this.carconf);
+        carconf_tmp.defaultColor = "#" + data.color;
+        carconf_tmp.colorOuterMinimap = "white";
+        let c = new Car(carconf_tmp);
+        c.initVue(this.scenes[0]);
+        this.scenes[1].add(c.minimapMesh);
+
         let d = new Driver(data.name, c, undefined, data.id);
         d.currTime = data.currTime;
         d.bestLapTime = data.blt;
         this.leaderboard.addDriver(d);
         this.otherDrivers.set(data.id, d);
+
+        this.gameplay.otherCars.set(data.id, c);
     }
 
     del_user (data) {
-        this.leaderboard.delDriver(data.id);
-        this.otherDrivers.delete(data.id);
+        let driver = this.otherDrivers.get(data.id);
+        if (driver != undefined) {
+            // remove meshes
+            this.scenes[1].remove(driver.car.minimapMesh);
+            this.scenes[0].remove(driver.car.chassisMesh);
+            for (var i = 0; i < driver.car.WHEELSNUMBER; i++) {
+                this.scenes[0].remove(driver.car.wheelMeshes[i]);
+            }
+
+            this.leaderboard.delDriver(data.id);
+            this.otherDrivers.delete(data.id);
+        }
+        this.gameplay.otherCars.delete(data.id);
     }
 
     mainDriverUpdate () {
@@ -164,5 +200,25 @@
             d.bestLapTime = data.blt;
             if (last_blt != data.blt) this.leaderboard.sortDrivers();
         }
+    }
+
+    update_positions (data) {
+        for (let d of data.table) {
+            let c = this.gameplay.otherCars.get(d.id);
+            if (c != undefined) {
+                c.setLerpPosition(d.p, d.q);
+            }
+        }
+    }
+
+    send_position() {
+        let p = {x: this.player.car.chassisMesh.position.x,
+                 y: this.player.car.chassisMesh.position.y,
+                 z: this.player.car.chassisMesh.position.z};
+        let q = {x: this.player.car.chassisMesh.quaternion.x,
+                 y: this.player.car.chassisMesh.quaternion.y,
+                 z: this.player.car.chassisMesh.quaternion.z,
+                 w: this.player.car.chassisMesh.quaternion.w};
+        this.socket.emit("update_position", {p: p, q: q});
     }
  }

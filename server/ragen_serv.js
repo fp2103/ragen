@@ -37,6 +37,9 @@ class Player {
         this.currTime = currTime;
         this.bestLapTime = blt;
         this.isSpectator = false;
+
+        this.position = undefined;
+        this.quaternion = undefined;
     }
 
     getData () {
@@ -62,6 +65,8 @@ class Session {
 
         this.players = new Map();
         this.activePlayerCount = 0;
+
+        this.emitPosInter = setInterval(this.emitPositions.bind(this), 100);
     }
 
     getData (socketid_dest) {
@@ -148,6 +153,18 @@ class Session {
             }
         }
     }
+
+    emitPositions () {
+        // Create table of all players position
+        const table = [];
+        for (let p of this.players.values()) {
+            table.push({id: p.socket.id, p: p.position, q: p.quaternion});
+        }
+        // Emit table to all players
+        for (let p of this.players.values()) {
+            p.socket.emit("update_positions", {table: table});
+        }
+    }
 }
 const sessions = new Map();
 
@@ -167,7 +184,10 @@ app.get('/sessions_list', (req,res) => {
 setInterval(() => {
     const toDel = [];
     for (let [k, s] of sessions.entries()) {
-        if (s.is_inactive()) { toDel.push(k); }
+        if (s.is_inactive()) {
+            toDel.push(k);
+            clearInterval(s.emitPosInter);
+        }
     }
     if (toDel.length > 0) {
         console.log("Cleaning old sessions:", toDel);
@@ -224,5 +244,12 @@ io.on('connection', (socket) => {
             player.session.update_user(player);
         }
     });
-    
+
+    socket.on('update_position', (data) => {
+        let player = socket_player.get(socket.id);
+        if (player != undefined) {
+            player.position = data.p;
+            player.quaternion = data.q;
+        }
+    });
 });

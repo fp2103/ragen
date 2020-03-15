@@ -214,7 +214,9 @@ function init() {
     // Multiplayer client
     const htmlSessionElements = {session_span: HTMLELEMENTS.session_span,
                                  remaining_time: HTMLELEMENTS.remaining_time}
-    client = new Client(GAMECONF.multi, gameplay, initCircuit, htmlSessionElements, driver, leaderboard);
+    client = new Client(GAMECONF.multi, GAMECONF.car, gameplay, initCircuit,
+                        htmlSessionElements, driver, leaderboard,
+                        [mainVue.scene, minimap.scene]);
 
     // Menu
     menu = new Menu(HTMLELEMENTS, GAMECONF.menu, driver, gameplay, generateRandomSeed, initCircuit, seed, client);

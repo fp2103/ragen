@@ -100,6 +100,9 @@ class Gameplay {
 
         // non playable mode
         this.nonplayable = false;
+
+        // Other cars
+        this.otherCars = new Map();
     }
 
     initCarPosition () {
@@ -149,6 +152,11 @@ class Gameplay {
     }
 
     update () {
+
+        // Update other cars position
+        for (let c of this.otherCars.values()) {
+            c.updateLerpPosition();
+        }
 
         if (this.onMenu) {
             return;
