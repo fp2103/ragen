@@ -67,7 +67,8 @@ const GAMECONF = {
     },
 
     multi: {
-        server: "http://localhost:3000"
+        server: "http://localhost:3000",
+        posRefreshRate: 50
     }
 }
 

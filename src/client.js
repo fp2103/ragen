@@ -3,24 +3,8 @@
  * 
  * all functions for multiplayer
  * 
- * join(gameid): create/join a game
- * 
- * listen on driver creation/deletion/update
- * 
- * How to start:
- * 1. Function to join a game
- *        server return a seed
- *        access this circuit...
- *        when you click on menu
- * 2. disconnect from game
- * 
- * 3. Other player join same game: share leaderboard infos.
- * 3b. update info (name/color)
- * 3c. update time
- * -> TODO from leaderboard
- * 3d. Share car & car position
- * 
- * 4. session share, press papier...
+ * TODO: clean code
+ * . session share, press papier...
  * 
  * 
  */
@@ -29,6 +13,7 @@
  class Client {
     constructor (conf, carconf, gameplay, circuitInit, htmlSessionElements, player, leaderboard, scenes) {
         this.server = conf.server;
+        this.posRefreshRate = conf.posRefreshRate; 
         this.carconf = carconf;
         this.gameplay = gameplay;
         this.circuitInit = circuitInit;
@@ -64,7 +49,7 @@
         this.socket.on("del_user", (data) => this.del_user(data));
         this.socket.on("update_user", (data) => this.update_user(data));
         this.socket.on("update_positions", (data) => this.update_positions(data));
-        this.sendPosInter = setInterval(this.send_position.bind(this), 100);
+        this.sendPosInter = setInterval(this.send_position.bind(this), this.posRefreshRate);
     }
 
     get_user_data () {
@@ -105,11 +90,24 @@
             this.gameplay.reset();
         }
 
-        // Rebuild learderboard
-        this.leaderboard.clearSession();
+        // Rebuild other users
+        this.destroyOtherUser();
         for (let p of data.players) {
             this.add_user(p);
         }
+    }
+
+    destroyOtherUser () {
+        this.leaderboard.clearSession();
+        this.otherDrivers.clear();
+        for (let c of this.gameplay.otherCars.values()) {
+            this.scenes[1].remove(c.minimapMesh);
+            this.scenes[0].remove(c.chassisMesh);
+            for (var i = 0; i < c.WHEELSNUMBER; i++) {
+                this.scenes[0].remove(c.wheelMeshes[i]);
+            }
+        }
+        this.gameplay.otherCars.clear();
     }
 
     disconnect () {
@@ -127,16 +125,7 @@
         this.leaderboard.nonplayable = false;
         this.gameplay.htmlelements.speed.style.display = "block";
 
-        this.leaderboard.clearSession();
-        this.otherDrivers.clear();
-        for (let c of this.gameplay.otherCars.values()) {
-            this.scenes[1].remove(c.minimapMesh);
-            this.scenes[0].remove(c.chassisMesh);
-            for (var i = 0; i < c.WHEELSNUMBER; i++) {
-                this.scenes[0].remove(c.wheelMeshes[i]);
-            }
-        }
-        this.gameplay.otherCars.clear();
+        this.destroyOtherUser();
     }
 
     updateRT () {

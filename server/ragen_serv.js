@@ -10,6 +10,8 @@ const CLEANINGFREQUENCE = 10000;
 
 const MAXPLAYER = 12;
 
+const POSTIONSREFRESH = 55;
+
 // ---- Function Utils ----
 function generateRandomSeed (size) {
     const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -66,7 +68,7 @@ class Session {
         this.players = new Map();
         this.activePlayerCount = 0;
 
-        this.emitPosInter = setInterval(this.emitPositions.bind(this), 100);
+        this.emitPosInter = setInterval(this.emitPositions.bind(this), POSTIONSREFRESH);
     }
 
     getData (socketid_dest) {
@@ -108,7 +110,9 @@ class Session {
     new_user (player) {
         if (this.activePlayerCount < MAXPLAYER) {
             for (let p of this.players.values()) {
-                p.socket.emit('add_user', player.getData());
+                if (p.socket.id != player.socket.id) {
+                    p.socket.emit('add_user', player.getData());
+                }
             }
             this.activePlayerCount += 1;
         } else {
