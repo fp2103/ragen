@@ -1,14 +1,7 @@
 
 /**
- * 
  * all functions for multiplayer
- * 
- * TODO: clean code
- * . session share, press papier...
- * 
- * 
- */
-
+ **/
 
  class Client {
     constructor (conf, carconf, gameplay, circuitInit, htmlSessionElements, player, leaderboard, scenes) {

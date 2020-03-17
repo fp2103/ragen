@@ -55,6 +55,9 @@ class Leaderboard {
         this.rows = [new Row(htmltable)];
 
         this.nonplayable = false;
+
+        this.SESSIONBEST = "Session Best";
+        this.PERSONALBEST = "Personal Best";
     }
 
     setLast (reset, driverCurrTime, personalBest) {
@@ -70,9 +73,9 @@ class Leaderboard {
                 this.sortDrivers();
                 this.computeBestSectorTime();
                 if (this.drivers.length > 1 && this.last[2].time <= this.bestSectorTime[2]) {
-                    this.last.push("Session Best");
+                    this.last.push(this.SESSIONBEST);
                 } else {
-                    this.last.push("Personal Best");
+                    this.last.push(this.PERSONALBEST);
                 }
             }
         }
@@ -126,8 +129,9 @@ class Leaderboard {
         });
     }
 
-    convertTimeToString (time) {
+    convertTimeToString (time, forceMin) {
         let min = Math.floor(time/60);
+        let showMin = forceMin || min > 0;
         let sec = Math.floor(time) % 60;
         let milli = Math.round((time - Math.floor(time)) * 1000)
         if (min < 10) min = "0" + min;
@@ -135,7 +139,8 @@ class Leaderboard {
         if (milli < 10) milli = "00" + milli;
         else if (milli < 100) milli = "0" + milli;
 
-        return min + ":" + sec + ":" + milli;
+        if (showMin) return min + ":" + sec + ":" + milli;
+        else return sec + ":" + milli;
     }
 
     fillRow (indice, label, labelColor, sectors, purplize) {
@@ -147,7 +152,7 @@ class Leaderboard {
         for (var j = 0; j < 3; j++) {
             let c = row.csectors[j];
             if (sectors[j] != undefined) {
-                c.innerHTML = this.convertTimeToString(sectors[j].time);
+                c.innerHTML = this.convertTimeToString(sectors[j].time, true);
                 if (sectors[j].color != undefined) c.style.color = sectors[j].color;
 
                 // Change to purple for best overall time
@@ -217,6 +222,16 @@ class Leaderboard {
             // show message
             if (this.last.length > 3) {
                 this.htmlmessage.innerHTML = this.last[3];
+            }
+            let timeGap = 0;
+            if (this.bestSectorTime[2] != undefined) {
+                timeGap = this.last[2].time - this.bestSectorTime[2];
+            }
+            if (timeGap > 0 && this.htmlmessage.innerHTML != "") {
+                this.htmlmessage.innerHTML += "<br/>";
+            }
+            if (timeGap > 0) {
+                this.htmlmessage.innerHTML += "+ " + this.convertTimeToString(timeGap, false);
             }
         } else {
             this.last = undefined;

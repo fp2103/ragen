@@ -10,7 +10,7 @@ const CLEANINGFREQUENCE = 10000;
 
 const MAXPLAYER = 12;
 
-const POSTIONSREFRESH = 55;
+const POSITIONSREFRESH = 55;
 
 // ---- Function Utils ----
 function generateRandomSeed (size) {
@@ -68,7 +68,7 @@ class Session {
         this.players = new Map();
         this.activePlayerCount = 0;
 
-        this.emitPosInter = setInterval(this.emitPositions.bind(this), POSTIONSREFRESH);
+        this.emitPosInter = setInterval(this.emitPositions.bind(this), POSITIONSREFRESH);
     }
 
     getData (socketid_dest) {
