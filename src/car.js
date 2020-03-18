@@ -33,6 +33,9 @@ class Car {
 
         this.lerpPosition = undefined;
         this.lerpQuaternion = undefined;
+        this.clientSpeed = undefined;
+        this.clientSteeringVal = undefined;
+        this.lastSteeringVal = 0;
     }
 
     initVue (scene) {
@@ -250,13 +253,16 @@ class Car {
         }
     }
 
-    setLerpPosition (pos, quat) {
+    setLerpPosition (pos, quat, speed, steeringVal) {
         this.lerpPosition = pos;
         this.lerpQuaternion = quat;
+        this.clientSpeed = speed;
+        this.clientSteeringVal = steeringVal;
     }
 
     updateLerpPosition () {
-        if (this.lerpPosition != undefined && this.lerpQuaternion != undefined) {
+        if (this.lerpPosition != undefined && this.lerpQuaternion != undefined
+            && this.clientSpeed != undefined && this.clientSteeringVal != undefined) {
             this.minimapMesh.position.lerp(this.lerpPosition, 0.2);
             
             this.chassisMesh.position.lerp(this.lerpPosition, 0.2);
@@ -264,6 +270,18 @@ class Car {
                                             this.lerpQuaternion.y,
                                             this.lerpQuaternion.z,
                                             this.lerpQuaternion.w);
+
+            // rotate the wheel at the speed of the car
+            let dd = this.clientSpeed*(1/FPS);
+            let rad = dd/this._wheelRadius;
+            for (var i = 0; i < this.WHEELSNUMBER; i++) {
+                this.wheelMeshes[i].rotateX(-rad);
+            }
+
+            let dsv = this.clientSteeringVal - this.lastSteeringVal;
+            this.lastSteeringVal = this.clientSteeringVal;
+            this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
+            this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
         }
     } 
 }

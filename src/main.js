@@ -246,10 +246,9 @@ tick();
 // todo clean code (= small code (especially js way...))
 /*
 TODO: 
-- wheels turning on other cars
 - podium screen
 - loading screen + wait 2 seconds before moving camera...
 - session share
 - responsive
-- prettify (code&game): car, loading screen, trees, stands, sound...
+- prettify (code&game): car, trees, stands, sound...
 */

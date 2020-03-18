@@ -42,6 +42,8 @@ class Player {
 
         this.position = undefined;
         this.quaternion = undefined;
+        this.speed = undefined;
+        this.steeringValue = undefined;
     }
 
     getData () {
@@ -162,7 +164,8 @@ class Session {
         // Create table of all players position
         const table = [];
         for (let p of this.players.values()) {
-            table.push({id: p.socket.id, p: p.position, q: p.quaternion});
+            table.push({id: p.socket.id, p: p.position, q: p.quaternion, 
+                        s: p.speed, sv: p.steeringValue});
         }
         // Emit table to all players
         for (let p of this.players.values()) {
@@ -254,6 +257,8 @@ io.on('connection', (socket) => {
         if (player != undefined) {
             player.position = data.p;
             player.quaternion = data.q;
+            player.speed = data.s;
+            player.steeringValue = data.sv;
         }
     });
 });

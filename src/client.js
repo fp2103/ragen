@@ -188,7 +188,7 @@
         for (let d of data.table) {
             let c = this.gameplay.otherCars.get(d.id);
             if (c != undefined) {
-                c.setLerpPosition(d.p, d.q);
+                c.setLerpPosition(d.p, d.q, d.s, d.sv);
             }
         }
     }
@@ -201,6 +201,8 @@
                  y: this.player.car.chassisMesh.quaternion.y,
                  z: this.player.car.chassisMesh.quaternion.z,
                  w: this.player.car.chassisMesh.quaternion.w};
-        this.socket.emit("update_position", {p: p, q: q});
+        let s = this.player.car.vehiclePhysics.getCurrentSpeedKmHour()/3.6;
+        let sv = this.player.car.vehiclePhysics.getSteeringValue(0);
+        this.socket.emit("update_position", {p: p, q: q, s: s, sv: sv});
     }
  }
