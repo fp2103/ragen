@@ -58,32 +58,37 @@ class Leaderboard {
 
         this.SESSIONBEST = "Session Best";
         this.PERSONALBEST = "Personal Best";
+
+        this.timegap = undefined;
+        this.MESSAGESHOWINGTIME = 3;
     }
 
-    setLast (reset, driverCurrTime, personalBest) {
-        if (reset) {
-            this.last = undefined;
-        } else {
-            this.last = [];
-            for (var i = 0; i < 3; i++) {
-                this.last.push(driverCurrTime[i]);
-            }
+    reset () {
+        this.resetCurrent();
+        this.last = undefined;
+        this.bestSectorTime = [undefined, undefined, undefined];
+        this.timegap = undefined;
+    }
 
-            if (personalBest) {
-                this.sortDrivers();
-                this.computeBestSectorTime();
-                if (this.drivers.length > 1 && this.last[2].time <= this.bestSectorTime[2]) {
-                    this.last.push(this.SESSIONBEST);
-                } else {
-                    this.last.push(this.PERSONALBEST);
-                }
+    setLast (driverCurrTime, personalBest) {
+        this.last = [];
+        for (var i = 0; i < 3; i++) {
+            this.last.push(driverCurrTime[i]);
+        }
+
+        if (personalBest) {
+            this.sortDrivers();
+            this.computeBestSectorTime();
+            if (this.drivers.length > 1 && this.last[2].time <= this.bestSectorTime[2]) {
+                this.last.push(this.SESSIONBEST);
+            } else {
+                this.last.push(this.PERSONALBEST);
             }
         }
     }
 
-    reset () {
+    resetCurrent () {
         this.current = [undefined, undefined, undefined];
-        this.bestSectorTime = [undefined, undefined, undefined];
     }
 
     clearSession () {
@@ -165,6 +170,10 @@ class Leaderboard {
     }
     
     computeBestSectorTime () {
+        // reset
+        this.bestSectorTime = [undefined, undefined, undefined];
+
+        // compute
         for (var i = 0; i < 3; i++) {
             let minSectorTime = undefined;
             for (var j = 0; j < this.drivers.length; j++) {
@@ -178,6 +187,55 @@ class Leaderboard {
         }
     }
 
+    computeTimeGap (current_sector, time, valid) {
+        const past_sector = current_sector - 1;
+        const showing = this.timegap != undefined;
+
+        // reset
+        this.timegap = undefined;
+        
+        // Show timegap for only 4 sec after sector change
+        if ((past_sector >= 0 && (this.current[past_sector] == undefined
+            || time - this.current[past_sector].time > this.MESSAGESHOWINGTIME))
+            || (past_sector < 0 && time > this.MESSAGESHOWINGTIME)) {
+            return;
+        }
+
+        // Compute best sector time through all drivers
+        let ps = past_sector;
+        if (ps < 0) ps = 2;
+        const sectorTimes = [];
+        for (let d of this.drivers) {
+            if (d.id == 0 && past_sector < 0) { 
+                if (d.lastLapBestLapTime != undefined) sectorTimes.push(d.lastLapBestLapTime);
+            } else if (d.bestTime[ps] != undefined) {
+                sectorTimes.push(d.bestTime[ps].time);
+            }
+        }
+        sectorTimes.sort((a, b) => { return a - b; });
+
+        // compute gap between time and best sector time
+        let tg = undefined;
+        if (sectorTimes.length > 0 && (showing || valid) && past_sector >= 0) {
+            tg = this.current[past_sector].time - sectorTimes[0];
+        } else if (sectorTimes.length > 0 && past_sector < 0 && this.last != undefined) {
+            tg = this.last[2].time - sectorTimes[0];
+        }
+
+        // Show timegap
+        if (tg != undefined) {
+            if (tg > 0) {
+                this.timegap = '<span style="color: red;">+ ';
+                this.timegap += this.convertTimeToString(tg, false);
+                this.timegap += '</span>';
+            } else {
+                this.timegap = '<span style="color: blue;">- ';
+                this.timegap += this.convertTimeToString(Math.abs(tg), false);
+                this.timegap += '</span>';
+            }
+        }
+    }
+
     updateDisplay (current_sector, time, valid) {
         // Update current time
         if (time > 0) {
@@ -187,6 +245,7 @@ class Leaderboard {
                 this.current[current_sector] = new TimeColor(time);
             }
         }
+        this.computeTimeGap(current_sector, time, valid);
 
         // reset all rows & message
         let i = 0;
@@ -214,7 +273,7 @@ class Leaderboard {
         let lastRowLabel = "Current";
         let TCvalue = this.current;
         let showLast = false;
-        if (time < 4 && this.last != undefined) {
+        if (time <= this.MESSAGESHOWINGTIME && this.last != undefined) {
             lastRowLabel = "Last";
             TCvalue = this.last;
             showLast = true;
@@ -223,16 +282,6 @@ class Leaderboard {
             if (this.last.length > 3) {
                 this.htmlmessage.innerHTML = this.last[3];
             }
-            let timeGap = 0;
-            if (this.bestSectorTime[2] != undefined) {
-                timeGap = this.last[2].time - this.bestSectorTime[2];
-            }
-            if (timeGap > 0 && this.htmlmessage.innerHTML != "") {
-                this.htmlmessage.innerHTML += "<br/>";
-            }
-            if (timeGap > 0) {
-                this.htmlmessage.innerHTML += "+ " + this.convertTimeToString(timeGap, false);
-            }
         } else {
             this.last = undefined;
         }
@@ -240,5 +289,11 @@ class Leaderboard {
         // Create table current/last
         this.fillRow(i, lastRowLabel, undefined, TCvalue, showLast && this.drivers.length > 1);
         if (!showLast && !valid) this.rows[i].setColorAllRow("red");
+
+        // show time gap
+        if (this.timegap != undefined) {
+            if (this.htmlmessage.innerHTML != "") this.htmlmessage.innerHTML += "<br/>";
+            this.htmlmessage.innerHTML += this.timegap;
+        }
     }
 }

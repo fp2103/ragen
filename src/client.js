@@ -61,7 +61,12 @@
     load_session (data) {
         if (data.cid != this.current_circuit) {
             this.gameplay.resetCamera();
-            this.gameplay.reloadCircuit(this.circuitInit(data.cid));
+            this.circuitInit(data.cid).then(v => {
+                if (this.gameplay.onMenu && this.gameplay.circuit == undefined) {
+                    this.gameplay.hideMenu();
+                }
+                this.gameplay.reloadCircuit(v);
+            });
         }
         this.current_circuit = data.cid;
         this.htmlSessionElements.session_span.innerHTML = data.id;
@@ -128,7 +133,9 @@
             let rtMin = Math.floor(rts/60);
             let rtSec = rts % 60;
             if (rtSec < 10) { rtSec = "0" + rtSec; }
-            this.htmlSessionElements.remaining_time.innerHTML = rtMin + ":" + rtSec;
+            let innerhtml = rtMin + ":" + rtSec;
+            if (rts <= 60) innerhtml = "<b>" + innerhtml + "</b>";
+            this.htmlSessionElements.remaining_time.innerHTML = innerhtml;
         }
     }
     

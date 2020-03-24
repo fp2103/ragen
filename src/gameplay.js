@@ -43,9 +43,9 @@ window.addEventListener('blur', () => { actions['acceleration'] = false;
 // Gameplay and Menu
 class Gameplay {
 
-    constructor (conf, circuit, player, camera,
+    constructor (conf, circuitPromise, player, camera,
                  particlesManager, htmlelements, leaderboard) {
-        this.circuit = circuit;
+        this.circuit = undefined;
         this.player = player;
         this.driver = player;
         this.camera = camera;
@@ -53,9 +53,7 @@ class Gameplay {
         this.htmlelements = htmlelements;
         this.leaderboard = leaderboard;
 
-        // Init car position
         this._circuitMargin = conf.circuit.margin;
-        this.initCarPosition();
 
         // Init camera position
         this.camera.position.set(0, 0, 300);
@@ -63,6 +61,7 @@ class Gameplay {
         this.lerpSlow = conf.misc.lerpSlow;
         this.lerpFast = conf.misc.lerpFast;
         this.cameraLerp = this.lerpSlow;
+        this.cameraStartDate = Date.now();
 
         // driving parameter        
         this.steeringIncrement = conf.carPhysics.steeringIncrement;
@@ -83,9 +82,7 @@ class Gameplay {
         this.validtime = true;
 
         // Circuit checkpoints
-        this.checkpoints = [this.circuit.slMesh,
-                            this.circuit.cp1Mesh,
-                            this.circuit.cp2Mesh];
+        this.checkpoints = [undefined, undefined, undefined];
         this.nextcp = 0;
 
         // Init leaderboard
@@ -103,6 +100,10 @@ class Gameplay {
 
         // Other cars
         this.otherCars = new Map();
+
+        circuitPromise.then(value => {
+            this.reloadCircuit(value);
+        });
     }
 
     initCarPosition () {
@@ -136,7 +137,6 @@ class Gameplay {
         // driver & leaderboard times
         this.driver.setToBest(true);
         this.leaderboard.reset();
-        this.leaderboard.setLast(true);
 
         // particles
         this.particlesManager.reset()
@@ -152,6 +152,11 @@ class Gameplay {
     }
 
     update () {
+
+        // Circuit promise not yet resolved, nothing to do
+        if (this.circuit == undefined) {
+            return;
+        }
 
         // Update other cars position
         for (let c of this.otherCars.values()) {
@@ -286,7 +291,7 @@ class Gameplay {
                 } else {
                     this.laptime = 0;
                     this.validtime = true;
-                    this.leaderboard.reset();
+                    this.leaderboard.resetCurrent();
                 }
             }
 
@@ -311,13 +316,15 @@ class Gameplay {
         if (this.cameraLerp == this.lerpSlow && (actions.acceleration || actions.braking)) {
             this.cameraLerp = this.lerpFast;
         }
-        let t = new THREE.Vector3();
-        this.player.car.cameraPosition.getWorldPosition(t);
-        this.camera.position.lerp(t, this.cameraLerp);
-        this.cameraLookAt.lerp(this.player.car.chassisMesh.position, this.cameraLerp);
-        
-        this.camera.up.lerp(new THREE.Vector3(0,0,1), this.lerpFast);
-        this.camera.lookAt(this.cameraLookAt);
+        if (this.cameraLerp != this.lerpSlow || Date.now() - this.cameraStartDate >= 1000) {
+            let t = new THREE.Vector3();
+            this.player.car.cameraPosition.getWorldPosition(t);
+            this.camera.position.lerp(t, this.cameraLerp);
+            this.cameraLookAt.lerp(this.player.car.chassisMesh.position, this.cameraLerp);
+            
+            this.camera.up.lerp(new THREE.Vector3(0,0,1), this.lerpFast);
+            this.camera.lookAt(this.cameraLookAt);
+        }
 
         // Update particles
         this.particlesManager.update();
@@ -335,6 +342,7 @@ class Gameplay {
         this.camera.up = new THREE.Vector3(0,1,0);
         this.camera.lookAt(this.cameraLookAt);
         this.cameraLerp = this.lerpSlow;
+        this.cameraStartDate = Date.now();
     }
 
     displayMenu () {
@@ -358,6 +366,7 @@ class Gameplay {
         this.checkpoints = [this.circuit.slMesh,
                             this.circuit.cp1Mesh,
                             this.circuit.cp2Mesh];
+        this.leaderboard.reset();
         this.driver.resetTime();
         this.reset();
     }

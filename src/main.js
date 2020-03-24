@@ -155,13 +155,20 @@ function initCircuit (seed) {
         physics.world.removeCollisionObject(currCircuit.body);
     }
 
-    const newCircuit = new Circuit(GAMECONF.circuit, new Math.seedrandom(seed));
-    mainVue.scene.add(newCircuit.mesh);
-    minimap.scene.add(newCircuit.minimapMesh);
-    physics.world.addRigidBody(newCircuit.body);
+    const circuitPromise = new Promise(resolve => {
+        resolve(new Circuit(GAMECONF.circuit, new Math.seedrandom(seed)));
+    })
+    
+    // loader...
 
-    currCircuit = newCircuit;
-    return newCircuit;
+    circuitPromise.then(value => {
+        mainVue.scene.add(value.mesh);
+        minimap.scene.add(value.minimapMesh);
+        physics.world.addRigidBody(value.body);
+        currCircuit = value;
+        // remove loader
+    });
+    return circuitPromise;
 }
 
 function driverVuesCallback (visible, mainVueMeshes, minimapMesh) {
@@ -191,7 +198,7 @@ function init() {
 
     // Circuit
     const seed = generateRandomSeed(GAMECONF.menu.trackidRandSize)
-    const circuit = initCircuit(seed);
+    const circuitP = initCircuit(seed);
 
     // Car
     const car = new Car(GAMECONF.car);
@@ -209,7 +216,7 @@ function init() {
     const leaderboard = new Leaderboard(HTMLELEMENTS.leaderboard, HTMLELEMENTS.score_message, driver);
 
     // Gameplay
-    gameplay = new Gameplay(GAMECONF, circuit, driver, mainVue.camera, 
+    gameplay = new Gameplay(GAMECONF, circuitP, driver, mainVue.camera, 
                             particlesManager, HTMLELEMENTS, leaderboard);
 
     // Multiplayer client
@@ -221,6 +228,11 @@ function init() {
 
     // Menu
     menu = new Menu(HTMLELEMENTS, GAMECONF.menu, driver, gameplay, generateRandomSeed, initCircuit, seed, client);
+    
+    // Starting app
+    circuitP.then(v => {
+        menu.displayMenu();
+    });
 }
 
 
@@ -246,9 +258,9 @@ tick();
 // todo clean code (= small code (especially js way...))
 /*
 TODO: 
-- podium screen
-- loading screen + wait 2 seconds before moving camera...
+- go through all call and callback to fix architecture nonsense
 - session share
+- podium screen
 - responsive
 - prettify (code&game): car, trees, stands, sound...
 */

@@ -8,6 +8,7 @@ class Driver {
         this.id = id;
 
         this.bestLapTime = undefined;
+        this.lastLapBestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
 
@@ -21,8 +22,8 @@ class Driver {
 
     resetTime () {
         this.bestLapTime = undefined;
+        this.lastLapBestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
-        if (this.lb_setLastCb != undefined) this.lb_setLastCb(true);
     }
 
     setToBest (clientcb) {
@@ -55,13 +56,14 @@ class Driver {
 
         // full lap time
         if (sector == 2) {
+            this.lastLapBestLapTime = this.bestLapTime;
             // Update best time
             if (this.bestTime[2] == undefined || time < this.bestTime[2].time) {
                 this.bestLapTime = time;
-                if (this.lb_setLastCb != undefined) this.lb_setLastCb(false, this.currTime, true);
+                if (this.lb_setLastCb != undefined) this.lb_setLastCb(this.currTime, true);
                 this.saveAsBest();
             } else {
-                if (this.lb_setLastCb != undefined) this.lb_setLastCb(false, this.currTime, false);
+                if (this.lb_setLastCb != undefined) this.lb_setLastCb(this.currTime, false);
                 this.setToBest(false);
             }
         }

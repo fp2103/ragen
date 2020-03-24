@@ -18,9 +18,6 @@ class Menu {
         // Client multi
         this.client = client;
 
-        // Starting app
-        this.displayMenu();
-
         // Link with action
         this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
 
@@ -61,20 +58,20 @@ class Menu {
         .catch((err) => { console.log("error getting sessions_list", err); });
     } 
 
-    hideMenu () {
+    hideMenu (cbGp) {
         this.htmlelements.menu.style.display = "none";
         this.htmlelements.game_elements.style.display = "block";
 
-        this.gameplay.hideMenu();
+        if (cbGp) this.gameplay.hideMenu();
     }
 
     onGoMenu () {
-        this.hideMenu();
+        this.hideMenu(true);
         this.loadTrack(this.htmlelements.menu_seed.value);
     }
 
     onGoScoreboard () {
-        this.gameplay.setCameraLerpFast();
+        this.gameplay.resetCamera();
         this.loadTrack(this.htmlelements.seed.value);
     }
 
@@ -93,13 +90,15 @@ class Menu {
         if (trackId == this.currentTrackId) {
             this.gameplay.reset();
         } else {
-            this.gameplay.reloadCircuit(this.circuitInit(trackId));
+            this.circuitInit(trackId).then(v => {
+                this.gameplay.reloadCircuit(v);
+            });
             this.currentTrackId = trackId;
         }
     }
 
     onRandomScoreboard () {
-        this.gameplay.setCameraLerpFast();
+        this.gameplay.resetCamera();
         this.loadTrack(this.seedGenerator(this.conf.trackidRandSize));
     }
 
@@ -118,19 +117,20 @@ class Menu {
 
         if (this.client.isConnected()
             && this.client.sessionid == this.htmlelements.session_id_input.value.toUpperCase()) {
-            this.hideMenu();
+            this.hideMenu(true);
             this.gameplay.reset();
             return;
         } else if (this.client.isConnected()) {
             this.client.disconnect();
         }
 
-        this.hideMenu();
+        this.hideMenu(false);
         this.htmlelements.seed.disabled = true;
         this.htmlelements.random.disabled = true;
         this.htmlelements.go.disabled = true;
         this.currentTrackId = undefined;
-        
+
+        this.gameplay.circuit = undefined;
         this.client.connect(this.htmlelements.session_id_input.value, 
                             this.htmlelements.session_tobelisted.checked);
     }
