@@ -257,7 +257,7 @@ tick();
 
 // todo clean code (= small code (especially js way...))
 /*
-TODO: 
+TODO:
 - go through all call and callback to fix architecture nonsense
 - session share
 - podium screen

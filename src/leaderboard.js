@@ -192,6 +192,7 @@ class Leaderboard {
         const showing = this.timegap != undefined;
 
         // reset
+        const lastTg = this.timegap;
         this.timegap = undefined;
         
         // Show timegap for only 4 sec after sector change
@@ -201,15 +202,23 @@ class Leaderboard {
             return;
         }
 
-        // Compute best sector time through all drivers
+        // doesn't suddenly popup a timegap message if none was shown
+        if (lastTg == "") {
+            this.timegap = "";
+            return;
+        }
+
+        // Compute best sector time of all drivers
         let ps = past_sector;
         if (ps < 0) ps = 2;
         const sectorTimes = [];
         for (let d of this.drivers) {
-            if (d.id == 0 && past_sector < 0) { 
-                if (d.lastLapBestLapTime != undefined) sectorTimes.push(d.lastLapBestLapTime);
-            } else if (d.bestTime[ps] != undefined) {
+            if (d.id == 0 && past_sector < 0 && d.lastLapBestLapTime != undefined) {
+                sectorTimes.push(d.lastLapBestLapTime);
+            } else if (d.id == 0 && past_sector >= 0 && d.bestTime[ps] != undefined) {
                 sectorTimes.push(d.bestTime[ps].time);
+            } else if (d.id != 0 && d.currTime[ps] != undefined) {
+                sectorTimes.push(d.currTime[ps].time);
             }
         }
         sectorTimes.sort((a, b) => { return a - b; });
@@ -233,6 +242,8 @@ class Leaderboard {
                 this.timegap += this.convertTimeToString(Math.abs(tg), false);
                 this.timegap += '</span>';
             }
+        } else {
+            this.timegap = "";
         }
     }
 
@@ -245,7 +256,6 @@ class Leaderboard {
                 this.current[current_sector] = new TimeColor(time);
             }
         }
-        this.computeTimeGap(current_sector, time, valid);
 
         // reset all rows & message
         let i = 0;
@@ -291,6 +301,7 @@ class Leaderboard {
         if (!showLast && !valid) this.rows[i].setColorAllRow("red");
 
         // show time gap
+        this.computeTimeGap(current_sector, time, valid);
         if (this.timegap != undefined) {
             if (this.htmlmessage.innerHTML != "") this.htmlmessage.innerHTML += "<br/>";
             this.htmlmessage.innerHTML += this.timegap;
