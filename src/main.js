@@ -106,7 +106,7 @@ const HTMLELEMENTS = {
     session_id_list: document.getElementById("session_id"),
     session_random: document.getElementById("session_random"),
     session_go: document.getElementById("session_go"),
-    session_tobelisted: document.getElementById("session_tobelisted"),
+    session_share: document.getElementById("session_share"),
 
     // Session info elements
     session_span: document.getElementById("session_span"),
@@ -115,7 +115,7 @@ const HTMLELEMENTS = {
 
 // ---------- Main --------------
 
-let physics, gameplay, menu, client, currCircuit;
+let physics, gameplay, menu, client, currCircuit, currSeed;
 
 // Generate Seed
 function generateRandomSeed (size) {
@@ -156,7 +156,12 @@ function initCircuit (seed) {
     }
 
     const circuitPromise = new Promise(resolve => {
-        resolve(new Circuit(GAMECONF.circuit, new Math.seedrandom(seed)));
+        if (seed == currSeed) {
+            resolve(currCircuit);
+        } else {
+            currSeed = seed;
+            resolve(new Circuit(GAMECONF.circuit, new Math.seedrandom(seed)));
+        }
     })
     
     // loader...
@@ -197,7 +202,8 @@ function init() {
     physics.world.addRigidBody(terrain.body);
 
     // Circuit
-    const seed = generateRandomSeed(GAMECONF.menu.trackidRandSize)
+    let seed = HTMLELEMENTS.menu_seed.value;
+    if (seed.length == 0) seed = generateRandomSeed(GAMECONF.menu.trackidRandSize);
     const circuitP = initCircuit(seed);
 
     // Car
@@ -259,8 +265,8 @@ tick();
 /*
 TODO:
 - go through all call and callback to fix architecture nonsense
-- session share
+  - write it down
 - podium screen
 - responsive
-- prettify (code&game): car, trees, stands, sound...
+- prettify (code&game): menu, car, trees, stands, sound...
 */

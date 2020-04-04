@@ -32,6 +32,8 @@ class Menu {
 
         this.htmlelements.session_random.addEventListener("click", this.onSessionRandomMenu.bind(this), false);
         this.htmlelements.session_go.addEventListener("click", this.onSessionGoMenu.bind(this), false);
+
+        this.htmlelements.session_share.addEventListener("click", this.onSessionShare.bind(this), false);
     }
 
     updatePlayerName () {
@@ -131,8 +133,21 @@ class Menu {
         this.currentTrackId = undefined;
 
         this.gameplay.circuit = undefined;
-        this.client.connect(this.htmlelements.session_id_input.value, 
-                            this.htmlelements.session_tobelisted.checked);
+        this.client.connect(this.htmlelements.session_id_input.value);
+    }
+
+    onSessionShare () {
+        const linkta = document.createElement('textarea');
+        linkta.value = "localhost:3000?sessionid=" + this.htmlelements.session_id_input.value.toUpperCase();
+        linkta.setAttribute('readonly', '');
+        linkta.style.position = 'absolute';
+        linkta.style.left = '-9999px';
+        document.body.appendChild(linkta);
+        linkta.select();
+        linkta.setSelectionRange(0,9999);
+        console.log(linkta.value);
+        document.execCommand("copy");
+        document.body.removeChild(linkta);
     }
 
 }

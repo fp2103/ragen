@@ -8,7 +8,7 @@ const CIRCUITRELOAD = 300000;
 const KEEPALIVETIME = 30000;
 const CLEANINGFREQUENCE = 10000;
 
-const MAXPLAYER = 12;
+const MAXPLAYER = 8;
 
 const POSITIONSREFRESH = 55;
 
@@ -58,10 +58,9 @@ const socket_player = new Map();
 
 // Sessions
 class Session {
-    constructor (id, listed) {
+    constructor (id) {
         console.log("Creating session", id);
         this.id = id;
-        this.listed = listed;
 
         this.circuit = generateRandomSeed(6);
         setInterval(this.reload_circuit.bind(this), CIRCUITRELOAD+1000);
@@ -177,12 +176,21 @@ const sessions = new Map();
 
 // Render the page
 app.get('/', (req, res) => {
-    res.render('index');
+    let sessionid = req.query.sessionid;
+    let circuitid = undefined;
+    if (sessionid != undefined) {
+        sessionid = sessionid.substring(0, 4);
+        sessionid = sessionid.toUpperCase();
+        if (sessions.has(sessionid)) {
+            circuitid = sessions.get(sessionid).circuit;
+        }
+    }
+    res.render('index', {sessionid: sessionid, circuitid: circuitid});
 });
 app.get('/sessions_list', (req,res) => {
     let sessions_list = [];
     for (let [sid, s] of sessions.entries()) {
-        if (s.listed) { sessions_list.push(sid); }
+        sessions_list.push(sid);
     }
     res.render('sessions_list', {sessions: sessions_list});
 });
@@ -220,7 +228,7 @@ io.on('connection', (socket) => {
         // Retreive session or create a new one
         let session = sessions.get(sid);
         if (session == undefined) {
-            session = new Session(sid, data.tbl);
+            session = new Session(sid);
             sessions.set(sid, session);
         }
 

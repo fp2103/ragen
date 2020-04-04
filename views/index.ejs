@@ -16,20 +16,18 @@
 
             <h4>Solo</h4>
             <label for="menu_seed">Track:</label>
-            <input type="text" id="menu_seed" maxlength="10">
+            <input type="text" id="menu_seed" maxlength="10" value="<%= circuitid %>">
             <input type="button" value="Random" id="menu_random">
             <input type="button" value="Go" id="menu_go">
             
             <h4>Multi</h4>
             <label for="session_id">Session ID:</label>
             <input list="session_id" style="width: 20%; text-transform: uppercase;"
-                   maxlength="4" name="session_id">
+                   maxlength="4" name="session_id" value="<%= sessionid %>">
             <datalist id="session_id"></datalist>
             <input type="button" value="Random" id="session_random">
-            <input type="button" value="Join/Create" id="session_go">
-            <br>
-            <label for="session_tobelisted">list new session:</label>
-            <input type="checkbox" id="session_tobelisted" checked>
+            <input type="button" value="Join" id="session_go">
+            <input type="button" value="Share" id="session_share">
         </div>
 
         <div id="game_elements" style="display: none;">

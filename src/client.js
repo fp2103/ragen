@@ -31,10 +31,9 @@
         return this.sessionid != undefined;
     }
 
-    connect (sessionid, tobelisted) {
+    connect (sessionid) {
         this.socket = io.connect(this.server);
         this.sessionid = sessionid.toUpperCase();
-        this.tobelisted = tobelisted;
 
         this.socket.on("session_please", () => this.send_session_info());
         this.socket.on("load_session", (data) => this.load_session(data));
@@ -54,7 +53,6 @@
 
     send_session_info () {
         this.socket.emit("join_session", {sid: this.sessionid,
-                                          tbl: this.tobelisted,
                                           user: this.get_user_data()});
     }
 
