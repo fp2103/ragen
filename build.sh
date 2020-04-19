@@ -18,11 +18,12 @@ circuit_utils.js
 circuit.js
 car.js
 driver.js
+controls.js
 gameplay.js
 client.js
 menu.js
-mainVue.js
-minimap.js
+mainView.js
+minimapView.js
 main.js
 "
 
@@ -80,6 +81,7 @@ for f in $FILES; do
     echo "Adding $DIR/$f to $OUTPUT";
     echo "// *-*-*-*- $DIR/$f -*-*-*-*" >> $OUTPUT
     cat $DIR/$f >> $OUTPUT;
+    echo "" >> $OUTPUT;
 done
 
 # Uglify

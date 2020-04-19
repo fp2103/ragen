@@ -1,36 +1,82 @@
 
+class CarFactory {
+
+    constructor (mainView, minimapView, physics) {
+        this.mainScene = mainView.scene;
+        this.minimapScene = minimapView.scene;
+        this.phyWorld = physics.world;
+    }
+
+    createCar (color, mainPlayer) {
+        const car = new Car(color);
+        car.initMainView(this.mainScene);
+        if (mainPlayer) {
+            car.initMinimapView(0xffff00, this.minimapScene);
+            car.initPhysics(this.phyWorld, {mass: 800,
+                                            suspensionStiffness: 100,
+                                            suspensionRestLength: 0.4,
+                                            maxSuspensionTravelCm: 10,
+                                            rollInfluence: 0.02,
+                                            friction: 8});
+        } else {
+            car.initMinimapView(0xffffff, this.minimapScene);
+        }
+        car.visible_cb = this.visible_callback.bind(this);
+        car.unvisible_cb = this.unvisible_callback.bind(this);
+        return car;
+    }
+
+    visible_callback (mainMeshes, minimapMesh) {
+        for (var i = 0; i < mainMeshes.length; i++) {
+            this.mainScene.add(mainMeshes[i]);
+        }
+        this.minimapScene.add(minimapMesh);
+    }
+
+    unvisible_callback (mainMeshes, minimapMesh) {
+        for (var i = 0; i < mainMeshes.length; i++) {
+            this.mainScene.remove(mainMeshes[i]);
+        }
+        this.minimapScene.remove(minimapMesh);
+    }
+}
+
 class Car {
 
-    constructor (conf) {
+    constructor (color) {
         this.WHEELSNUMBER = 4;
-
-        this._width = conf.width;
-        this._length = conf.length;
-        this._height = conf.width/2;
-
-        this._zreset = conf.Zinit;
-
-        this._wheelRadius = conf.width/5;
-
-        this.cameraX = conf.cameraPosition.x;
-        this.cameraY = conf.cameraPosition.y;
-        this.cameraZ = conf.cameraPosition.z;
-
-        this.chassisMesh = undefined;
-        this.cameraPosition = undefined;
-        this.wheelMeshes = [];
         this.FRONTLEFT = 0;
         this.FRONTRIGHT = 1;
         this.BACKLEFT = 2;
         this.BACKRIGHT = 3;
 
+        const CAR_WIDTH = 1.8;
+        const CAR_LENGTH = 4;
+        this._width = CAR_WIDTH;
+        this._length = CAR_LENGTH;
+        this._height = CAR_WIDTH/2;
+        this._zreset = 2;
+        this._wheelRadius = CAR_WIDTH/5;
+
+        this.chassisMesh = undefined;
+        this.minimapMeshInner = undefined;
+        this.cameraPosition = undefined;
+        this.wheelMeshes = [];
+
+        this.minimapMesh = undefined;
+
         this.chassisBody = undefined;
         this.vehiclePhysics = undefined;
+        this.DISABLE_DEACTIVATION = 4;
 
-        this.currentColor = new THREE.Color(conf.defaultColor);
-        this.minimapOuterColor = new THREE.Color(conf.colorOuterMinimap);
-        this.colorGrassParticle = conf.colorGrassParticle;
+        this.currentColor = new THREE.Color(color);
+        this.COLOR_GRASS_PARTICLE = 0x87B982;
 
+        this.visible_cb = undefined;
+        this.unvisible_cb = undefined;
+        this.visible = true;
+
+        // Client setted position
         this.lerpPosition = undefined;
         this.lerpQuaternion = undefined;
         this.clientSpeed = undefined;
@@ -38,7 +84,7 @@ class Car {
         this.lastSteeringVal = 0;
     }
 
-    initVue (scene) {
+    initMainView (scene) {
         // Build car shape around origin
         const w = this._width/2;
         const l = this._length/2;
@@ -74,7 +120,7 @@ class Car {
 
         // Camera
         this.cameraPosition = new THREE.Object3D();
-        this.cameraPosition.position.set(this.cameraX, this.cameraY, this.cameraZ);
+        this.cameraPosition.position.set(0, -5, 3.5);
         this.chassisMesh.add(this.cameraPosition);
 
         // Wheels
@@ -97,15 +143,18 @@ class Car {
         }
 
         scene.add(this.chassisMesh);
+    }
 
-        // Minimap
+    initMinimapView (colorOuter, scene) {
         const minimapgeo = new THREE.PlaneBufferGeometry(30,30);
-        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: this.minimapOuterColor}));
+        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: colorOuter}));
 
         const minimapgeoInner = new THREE.PlaneBufferGeometry(20,20);
         this.minimapMeshInner = new THREE.Mesh(minimapgeoInner, new THREE.MeshBasicMaterial({color: this.currentColor}));
 
         this.minimapMesh.add(this.minimapMeshInner);
+
+        scene.add(this.minimapMesh);
     }
 
     initPhysics (physicsWorld, conf) {
@@ -125,7 +174,7 @@ class Car {
 
         let rbInfo = new Ammo.btRigidBodyConstructionInfo(conf.mass, motionState, boxShape, localInertia);
         this.chassisBody = new Ammo.btRigidBody(rbInfo);
-        this.chassisBody.setActivationState(DISABLE_DEACTIVATION);
+        this.chassisBody.setActivationState(this.DISABLE_DEACTIVATION);
         physicsWorld.addRigidBody(this.chassisBody);
 
         const tuning = new Ammo.btVehicleTuning();
@@ -171,6 +220,20 @@ class Car {
         initWheel(this.vehiclePhysics, false, blPos, this._wheelRadius, 5*conf.friction);
         // Back Right
         initWheel(this.vehiclePhysics, false, brPos, this._wheelRadius, 5*conf.friction);
+    }
+
+    makeVisible () {
+        if (this.visible) return;
+
+        this.visible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+        this.visible = true;
+    }
+
+    makeUnvisible () {
+        if (!this.visible) return;
+
+        this.unvisible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+        this.visible = false;
     }
 
     setAtStartingPosition (nosePoint, alignementVector) {
@@ -235,7 +298,7 @@ class Car {
     createParticleMarkGrass (idWheel, speed) {
         let pos = this.wheelMeshes[idWheel].position.clone();
         let y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
-        let part = new Particle(new THREE.Vector2(this._wheelRadius/1.5, y), this.colorGrassParticle, 2);
+        let part = new Particle(new THREE.Vector2(this._wheelRadius/1.5, y), this.COLOR_GRASS_PARTICLE, 2);
         
         pos.z -= this._wheelRadius;
         let rot = this.chassisMesh.rotation.clone();

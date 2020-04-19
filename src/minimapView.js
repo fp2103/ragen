@@ -1,9 +1,9 @@
 
-class Minimap {
+class MinimapView {
 
-    constructor (conf, canvas) {
-        this.canvas = canvas;
-        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: false, 
+    constructor () {
+        this.canvas = document.getElementById("minimapc");
+        this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, antialias: false, 
                                                  alpha: true, precision: "lowp"});
         this.scene = new THREE.Scene();
 

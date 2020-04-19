@@ -1,197 +1,148 @@
 
-// Controls
-const KEYSACTIONS = {
-    "KeyW":'acceleration',
-    "ArrowUp":'acceleration',
-    "KeyS":'braking',
-    "ArrowDown":'braking',
-    "KeyA":'left',
-    "ArrowLeft":'left',
-    "KeyD":'right',
-    "ArrowRight":'right',
-    "KeyP":'reset'
-};
-const actions = {};
-
-function keyup(e) {
-    if(KEYSACTIONS[e.code]) {
-        actions[KEYSACTIONS[e.code]] = false;
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
-}
-function keydown(e) {
-    const active = document.activeElement;
-    const textInput = active.tagName == "INPUT" && active.type == "text";
-    if(KEYSACTIONS[e.code] && !textInput) {
-        actions[KEYSACTIONS[e.code]] = true;
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
-}
-
-window.addEventListener('keydown', keydown);
-window.addEventListener('keyup', keyup);
-window.addEventListener('blur', () => { actions['acceleration'] = false;
-                                        actions['braking'] = false;
-                                        actions['left'] = false;
-                                        actions['right'] = false;
-                                        actions['reset'] = false;});
-
 // Gameplay and Menu
 class Gameplay {
 
-    constructor (conf, circuitPromise, player, camera,
-                 particlesManager, htmlelements, leaderboard) {
-        this.circuit = undefined;
+    constructor (player, controls, camera, particlesManager) {
         this.player = player;
-        this.driver = player;
+        this.controls = controls;
         this.camera = camera;
         this.particlesManager = particlesManager;
-        this.htmlelements = htmlelements;
-        this.leaderboard = leaderboard;
 
-        this._circuitMargin = conf.circuit.margin;
+        this.leaderboard = new Leaderboard(player);
+        this.speedHtml = document.getElementById('speed');
+        this.otherDrivers = new Map();
 
         // Init camera position
-        this.camera.position.set(0, 0, 300);
+        this.UP_Z = new THREE.Vector3(0, 0, 1);
+        this.LERP_SLOW = 0.02;
+        this.LERP_FAST = 0.15;
         this.cameraLookAt = new THREE.Vector3(0,0,0);
-        this.lerpSlow = conf.misc.lerpSlow;
-        this.lerpFast = conf.misc.lerpFast;
-        this.cameraLerp = this.lerpSlow;
-        this.cameraStartDate = Date.now();
+        this.cameraLerp = this.LERP_SLOW;
+        this.cameraStartDate = undefined;
 
         // driving parameter        
-        this.steeringIncrement = conf.carPhysics.steeringIncrement;
-        this.steeringClamp = conf.carPhysics.steeringClamp;
+        this.STEERING_INCREMENT = 0.04;
+        this.STEERING_CLAMP = 0.4;
         this.vehicleSteering = 0;
-        this.maxEngineForce = conf.carPhysics.maxEngineForce;
-        this.maxBreakingForce = conf.carPhysics.maxBreakingForce;
-        this.maxSpeed = conf.carPhysics.maxSpeed;
-        this.maxReverseSpeed = conf.carPhysics.maxReverseSpeed;
-        this.defaultDrag = conf.carPhysics.defaultDrag;
-        this.grassDrag = conf.carPhysics.grassDrag;
+        this.MAX_ENGINE_FORCE = 3000;
+        this.MAX_BREAKING_FORCE = 100;
+        this.MAX_SPEED = 250;
+        this.MAX_REVERSE_SPEED = -30;
+        this.DEFAULT_DRAG = 3;
+        this.GRASS_DRAG = 60;
+        this.DOWN_VECTOR = new THREE.Vector3(0, 0, -1);
 
-        // Time
-        this.clock = new THREE.Clock(false)
-        this.laptime = 0;
-        
-        this.started = false;
-        this.validtime = true;
-
-        // Circuit checkpoints
+        // Circuit
+        this.circuit = undefined;
+        this.startingPos = undefined;
         this.checkpoints = [undefined, undefined, undefined];
-        this.nextcp = 0;
 
-        // Init leaderboard
-        this.leaderboard.addDriver(this.player);
+        // Rules
+        this.started = false;
+        this.nextcp = 0;
         
         // reset
         this.justReset = false;
 
-        // menu
-        this.onMenu = true;
-        this.player.makeUnvisible();
-
-        // non playable mode
-        this.nonplayable = false;
-
-        // Other cars
-        this.otherCars = new Map();
-
-        circuitPromise.then(value => {
-            this.reloadCircuit(value);
-        });
+        // Arcs status
+        this.state = undefined;
     }
 
-    initCarPosition () {
-        // compute nose position && alignement vector
-        const slv = new THREE.Vector3().subVectors(...this.circuit.startingLinePoints);
-        slv.multiplyScalar(-1/2);
+    setState (newState, newCircuit) {
+        // Update circuit
+        if (newCircuit != undefined) {
+            // Reset best laptime
+            if (this.circuit == undefined || newCircuit.id != this.circuit.id) {
+                this.player.resetTime();
+            }
 
-        const slvt = new THREE.Vector3().crossVectors(new THREE.Vector3(0,0,1), slv);
-        slvt.normalize();
-        slvt.multiplyScalar(this._circuitMargin);
-        
-        const nosePoint = this.circuit.startingLinePoints[0].clone();
-        nosePoint.add(slv);
-        if (this.circuit.clockwise) {
-            nosePoint.add(slvt);
-            slvt.multiplyScalar(-1);
+            this.circuit = newCircuit;
+            this.checkpoints = [this.circuit.slMesh,
+                            this.circuit.cp1Mesh,
+                            this.circuit.cp2Mesh];
+            this.startingPos = this.circuit.getStartingPosition();
         }
-        this.player.car.setAtStartingPosition(nosePoint, slvt);
+        if (this.circuit == undefined) return;
+
+        // Update state
+        switch(newState) {
+            case "spectator":
+                this.leaderboard.mode = "spectator";
+                this.leaderboard.delDriver(this.player.id);
+                this.leaderboard.hideLastRow();
+                this.speedHtml.style.display = "none";
+            case "menu":
+                this.player.car.makeUnvisible();
+                break;
+            case "solo":
+            case "multi":
+                this.leaderboard.mode = newState;
+                this.leaderboard.addDriver(this.player);
+                this.leaderboard.showLastRow();
+                this.player.car.makeVisible();
+                this.speedHtml.style.display = "block";
+                break;
+        }
+        this.state = newState;
+        this.resetCamera();
+        this.reset();
+    }
+
+    update () {
+        // Circuit promise not yet resolved, nothing to do
+        if (this.circuit == undefined) return;
+
+        switch(this.state) {
+            case "spectator":
+                this.leaderboard.update();
+            case "menu":
+                this.otherDrivers.forEach((v) => {v.car.updateLerpPosition()});
+                break;
+            case "multi":
+                this.otherDrivers.forEach((v) => {v.car.updateLerpPosition()});
+            case "solo":
+                this.onPlay();
+                this.leaderboard.update();
+                this.particlesManager.update();
+                break;
+        }
+    }
+
+    resetCamera () {
+        this.camera.position.set(0, 0, 300);
+        this.cameraLerp = this.LERP_SLOW;
+        this.camera.up = new THREE.Vector3(0, 1, 0);
+        this.cameraLookAt = new THREE.Vector3(0,0,0);
+        this.camera.lookAt(this.cameraLookAt);
+        this.cameraStartDate = Date.now();
     }
 
     reset () {
-        this.initCarPosition();
-
-        this.clock = new THREE.Clock(false);
-        this.laptime = 0;
+        this.player.car.setAtStartingPosition(this.startingPos.nosePoint, 
+                                              this.startingPos.directionVector);
         
         this.started = false;
-        this.validtime = true;
         this.nextcp = 0;
 
-        // driver & leaderboard times
-        this.driver.setToBest(true);
         this.leaderboard.reset();
-
-        // particles
-        this.particlesManager.reset()
-
-        // actions
-        actions['acceleration'] = false;
-        actions['braking'] = false;
-        actions['left'] = false;
-        actions['right'] = false;
-        actions['reset'] = false;
+        this.particlesManager.reset();
+        this.controls.resetActions();
 
         this.justReset = true;
     }
 
-    update () {
+    onPlay () {
+        let actions = this.controls.actions;
 
-        // Circuit promise not yet resolved, nothing to do
-        if (this.circuit == undefined) {
-            return;
-        }
-
-        // Update other cars position
-        for (let c of this.otherCars.values()) {
-            c.updateLerpPosition();
-        }
-
-        if (this.onMenu) {
-            return;
-        }
-
-        // Non playable mode
-        if (this.nonplayable) {
-            // Shutdown actions
-            actions['acceleration'] = false;
-            actions['braking'] = false;
-            actions['left'] = false;
-            actions['right'] = false;
-            actions['reset'] = false;
-        }
-
-        // Reset everything
+        // on action Reset
         if (actions.reset) {
             this.reset();
         } else if (this.justReset) {
-            // win 1 frame to avoid starting timer too soon after reset. 
+            // win 1 frame to avoid starting timer too soon after reset.
             this.justReset = !(actions.acceleration || actions.braking);
         }
 
-        // timer
-        if (this.started && !this.clock.running) {
-            this.clock.start();
-        }
-        this.laptime += this.clock.getDelta();
-
-        // Print speed
+        // Show speed
         let speed = this.player.car.vehiclePhysics.getCurrentSpeedKmHour();
         let speedtext = "0 km/h";
         if (speed > 1) {
@@ -199,10 +150,10 @@ class Gameplay {
         } else if (speed < -1) {
             speedtext = "(r) " + Math.floor(-speed) + " km/h";
         }
-        this.htmlelements.speed.innerHTML = speedtext;
+        this.speedHtml.innerHTML = speedtext;
 
-        // Update engine force
-        let breakingForce = this.defaultDrag;
+        // Car controls: Update engine force
+        let breakingForce = this.DEFAULT_DRAG;
         let engineForce = 0;
         let wheelOffside = 0;
         let nextcpcrossed = false;
@@ -210,10 +161,10 @@ class Gameplay {
             // Check Ground under each wheel
             // must use raycaster from threejs because ammojs doesn't work
             let raycaster = new THREE.Raycaster(this.player.car.wheelMeshes[i].position, 
-                                                new THREE.Vector3(0,0,-1), 0, 5);
+                                                this.DOWN_VECTOR, 0, 5);
             let intercir = raycaster.intersectObject(this.circuit.mesh);
             if (intercir.length == 0) {
-                breakingForce = this.grassDrag;
+                breakingForce = this.GRASS_DRAG;
                 wheelOffside += 1;
 
                 // Particles
@@ -222,9 +173,9 @@ class Gameplay {
 
             if (actions.acceleration) {
                 if (speed < -1) {
-                    breakingForce = this.maxBreakingForce;
-                } else if (speed < this.maxSpeed) {
-                    engineForce = this.maxEngineForce;
+                    breakingForce = this.MAX_BREAKING_FORCE;
+                } else if (speed < this.MAX_SPEED) {
+                    engineForce = this.MAX_ENGINE_FORCE;
                 } else {
                     engineForce = 0;
                 }
@@ -232,9 +183,9 @@ class Gameplay {
     
             if (actions.braking) {
                 if (speed > 1) {
-                    breakingForce = this.maxBreakingForce;
-                } else if (speed > this.maxReverseSpeed) {
-                    engineForce = -this.maxEngineForce;
+                    breakingForce = this.MAX_BREAKING_FORCE;
+                } else if (speed > this.MAX_REVERSE_SPEED) {
+                    engineForce = -this.MAX_ENGINE_FORCE;
                 } else {
                     engineForce = 0;
                 }
@@ -254,15 +205,15 @@ class Gameplay {
             }
         }
 
-        // Update steering force
+        // Car controls: Update steering force
         if (actions.left) {
-            if (this.vehicleSteering < this.steeringClamp)
-                this.vehicleSteering += this.steeringIncrement;
+            if (this.vehicleSteering < this.STEERING_CLAMP)
+                this.vehicleSteering += this.STEERING_INCREMENT;
         }
         else {
             if (actions.right) {
-                if (this.vehicleSteering > -this.steeringClamp)
-                    this.vehicleSteering -= this.steeringIncrement;
+                if (this.vehicleSteering > -this.STEERING_CLAMP)
+                    this.vehicleSteering -= this.STEERING_INCREMENT;
             }
             else {
                 this.vehicleSteering = 0;
@@ -271,40 +222,25 @@ class Gameplay {
         this.player.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.player.car.FRONTLEFT);
         this.player.car.vehiclePhysics.setSteeringValue(this.vehicleSteering, this.player.car.FRONTRIGHT);
 
-        // Update leaderboard
-        this.leaderboard.updateDisplay(this._get_sector_id(), this.laptime, this.validtime);
-
-        // Non playable doesn't need to update futher
-        if (this.nonplayable) return;
-
-        // Apply the rules
+        // Update time when crossing checkpoint
         if (nextcpcrossed) {
-            // update driver's time
-            if (this.started && this.validtime) {
-                this.driver.endSector(this._get_sector_id(), this.laptime);
-            }
-
-            // startline
-            if (this.nextcp == 0) {
-                if (!this.started) {
-                    this.started = true;
-                } else {
-                    this.laptime = 0;
-                    this.validtime = true;
-                    this.leaderboard.resetCurrent();
-                }
+            if (!this.started) {
+                this.leaderboard.clock.start();
+                this.started = true;
+            } else {
+                const sector = this.nextcp == 0 ? 2 : this.nextcp-1;
+                this.leaderboard.sectorEnd(sector)
             }
 
             this.nextcp += 1;
             if (this.nextcp >= 3) this.nextcp = 0;
         }
 
-        // Outside!
+        // Outside of track: change color & disqualify!
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
-            const ic = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
-            this.player.car.chassisMesh.material.color.copy(ic);
-            this.validtime = false;
-            this.driver.setToBest(true);
+            const oppositeColor = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
+            this.player.car.chassisMesh.material.color.copy(oppositeColor);
+            this.leaderboard.disqualify();
         } else {
             this.player.car.chassisMesh.material.color.copy(this.player.car.currentColor);
         }
@@ -313,62 +249,29 @@ class Gameplay {
         this.player.car.updatePosition(speed, false);
         
         // Update camera Position (and lerp factor after 1st movement)
-        if (this.cameraLerp == this.lerpSlow && (actions.acceleration || actions.braking)) {
-            this.cameraLerp = this.lerpFast;
+        if (this.cameraLerp == this.LERP_SLOW && (actions.acceleration || actions.braking)) {
+            this.cameraLerp = this.LERP_FAST;
         }
-        if (this.cameraLerp != this.lerpSlow || Date.now() - this.cameraStartDate >= 1000) {
+        if (this.cameraLerp != this.LERP_SLOW || Date.now() - this.cameraStartDate >= 1000) {
             let t = new THREE.Vector3();
             this.player.car.cameraPosition.getWorldPosition(t);
             this.camera.position.lerp(t, this.cameraLerp);
             this.cameraLookAt.lerp(this.player.car.chassisMesh.position, this.cameraLerp);
             
-            this.camera.up.lerp(new THREE.Vector3(0,0,1), this.lerpFast);
+            this.camera.up.lerp(this.UP_Z, this.LERP_FAST);
             this.camera.lookAt(this.cameraLookAt);
         }
-
-        // Update particles
-        this.particlesManager.update();
     }
 
-    _get_sector_id () {
-        let sector_id = this.nextcp - 1;
-        if (sector_id < 0) sector_id = 2;
-        return sector_id;
+    addOtherDriver (driver) {
+        this.otherDrivers.set(driver.id, driver);
+        this.leaderboard.addDriver(driver);
     }
 
-    resetCamera () {
-        this.camera.position.set(0, 0, 300);
-        this.cameraLookAt = new THREE.Vector3(0,0,0);
-        this.camera.up = new THREE.Vector3(0,1,0);
-        this.camera.lookAt(this.cameraLookAt);
-        this.cameraLerp = this.lerpSlow;
-        this.cameraStartDate = Date.now();
-    }
-
-    displayMenu () {
-        this.reset();
-        this.resetCamera();
-        this.onMenu = true;
-        this.player.makeUnvisible();
-    }
-
-    hideMenu () {
-        this.onMenu = false;
-        this.player.makeVisible();
-    }
-
-    setCameraLerpFast () {
-        this.cameraLerp = this.lerpFast;
-    }
-
-    reloadCircuit (newCircuit) {
-        this.circuit = newCircuit;
-        this.checkpoints = [this.circuit.slMesh,
-                            this.circuit.cp1Mesh,
-                            this.circuit.cp2Mesh];
-        this.leaderboard.reset();
-        this.driver.resetTime();
-        this.reset();
+    delOtherDriver (driverid) {
+        const del = this.otherDrivers.get(driverid);
+        if (this.otherDrivers.delete(driverid)) del.car.makeUnvisible();
+        this.leaderboard.delDriver(driverid);
     }
 
 }

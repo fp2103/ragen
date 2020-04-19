@@ -1,15 +1,18 @@
 
 class Terrain {
-    constructor (conf) {
+    constructor () {
+        const SIDE = 1000;
+        const HEIGHT = 1;
+
         // Three
-        const map = new THREE.BoxBufferGeometry(conf.Xsize, conf.Ysize, conf.Zsize);
+        const map = new THREE.BoxBufferGeometry(SIDE, SIDE, HEIGHT);
         const mapMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
-        mapMaterial.color.setHSL(conf.colorHSL[0], conf.colorHSL[1], conf.colorHSL[2]);
+        mapMaterial.color.setHSL(0.38, 0.50, 0.25);
         this.mesh = new THREE.Mesh(map, mapMaterial);
         this.mesh.receiveShadow = true;
 
         // Ammo
-        const ground = new Ammo.btBoxShape(new Ammo.btVector3(conf.Xsize * 0.5, conf.Ysize * 0.5, conf.Zsize * 0.5));
+        const ground = new Ammo.btBoxShape(new Ammo.btVector3(SIDE * 0.5, SIDE * 0.5, HEIGHT * 0.5));
         const mass = 0;
 
         let t = new Ammo.btTransform();

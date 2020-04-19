@@ -4,18 +4,15 @@
  **/
 
  class Client {
-    constructor (conf, carconf, gameplay, circuitInit, htmlSessionElements, player, leaderboard, scenes) {
-        this.server = conf.server;
-        this.posRefreshRate = conf.posRefreshRate; 
-        this.carconf = carconf;
+    constructor (gameplay, circuitFactory, carFactory, player) {
         this.gameplay = gameplay;
-        this.circuitInit = circuitInit;
-        this.htmlSessionElements = htmlSessionElements;
+        this.circuitFactory = circuitFactory;
+        this.carFactory = carFactory;
         this.player = player;
-        this.leaderboard = leaderboard;
-        this.scenes = scenes;
 
-        this.current_circuit = undefined;
+        this.SERVER = "http://localhost:3000";
+        this.POS_REFRESH_RATE = 50;
+        
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.socket = undefined;
@@ -23,8 +20,7 @@
         window.addEventListener("beforeunload", this.disconnect.bind(this), false);
         setInterval(this.updateRT.bind(this), 1000);
 
-        this.otherDrivers = new Map();
-        this.player.client_updateCb = this.mainDriverUpdate.bind(this);
+        this.player.client_CB = this.mainDriverUpdate.bind(this);
     }
 
     isConnected () {
@@ -32,7 +28,7 @@
     }
 
     connect (sessionid) {
-        this.socket = io.connect(this.server);
+        this.socket = io.connect(this.SERVER);
         this.sessionid = sessionid.toUpperCase();
 
         this.socket.on("session_please", () => this.send_session_info());
@@ -57,71 +53,49 @@
     }
 
     load_session (data) {
-        if (data.cid != this.current_circuit) {
-            this.gameplay.resetCamera();
-            this.circuitInit(data.cid).then(v => {
-                if (this.gameplay.onMenu && this.gameplay.circuit == undefined) {
-                    this.gameplay.hideMenu();
-                }
-                this.gameplay.reloadCircuit(v);
-            });
-        }
-        this.current_circuit = data.cid;
-        this.htmlSessionElements.session_span.innerHTML = data.id;
+        this.circuitFactory.createCircuit(data.cid).then(v => {
+            // Rebuild users list
+            this.clearDrivers();
+            for (let p of data.players) {
+                this.add_user(p);
+            }
+
+            document.getElementById("seed").value = data.cid;
+            document.getElementById("menu_seed").value = data.cid;
+
+            if (data.nonplayable) {
+                this.gameplay.setState("spectator", v);
+            } else {
+                this.gameplay.setState("multi", v);
+            }
+        });
+
+        document.getElementById("session_span").innerHTML = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
-
-        if (data.nonplayable) {
-            this.gameplay.nonplayable = true;
-            this.leaderboard.nonplayable = true;
-            this.player.makeUnvisible();
-            this.gameplay.htmlelements.speed.style.display = "none";
-        }
-        // Change in playability
-        if (!data.nonplayable && this.gameplay.nonplayable) {
-            this.gameplay.nonplayable = false;
-            this.leaderboard.nonplayable = false;
-            this.player.makeVisible();
-            this.gameplay.htmlelements.speed.style.display = "block";
-            this.gameplay.reset();
-        }
-
-        // Rebuild other users
-        this.destroyOtherUser();
-        for (let p of data.players) {
-            this.add_user(p);
-        }
     }
 
-    destroyOtherUser () {
-        this.leaderboard.clearSession();
-        this.otherDrivers.clear();
-        for (let c of this.gameplay.otherCars.values()) {
-            this.scenes[1].remove(c.minimapMesh);
-            this.scenes[0].remove(c.chassisMesh);
-            for (var i = 0; i < c.WHEELSNUMBER; i++) {
-                this.scenes[0].remove(c.wheelMeshes[i]);
-            }
+    clearDrivers () {
+        this.gameplay.leaderboard.clearRows();
+        for (let d of this.gameplay.otherDrivers.values()) {
+            d.car.makeUnvisible()
         }
-        this.gameplay.otherCars.clear();
+        this.gameplay.otherDrivers.clear();
     }
 
     disconnect () {
-        if (this.socket == undefined) { return; }
+        if (this.socket == undefined) return; 
+
         this.socket.close();
-        this.current_circuit = undefined;
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.socket = undefined;
         clearInterval(this.sendPosInter);
         this.sendPosInter = undefined;
+        document.getElementById("remaining_time").innerHTML = "&infin;";
+        document.getElementById("session_span").innerHTML = "N/A";
 
-        // reset non playable
-        this.gameplay.nonplayable = false;
-        this.leaderboard.nonplayable = false;
-        this.gameplay.htmlelements.speed.style.display = "block";
-
-        this.destroyOtherUser();
+        this.clearDrivers();
     }
 
     updateRT () {
@@ -133,42 +107,20 @@
             if (rtSec < 10) { rtSec = "0" + rtSec; }
             let innerhtml = rtMin + ":" + rtSec;
             if (rts <= 60) innerhtml = "<b>" + innerhtml + "</b>";
-            this.htmlSessionElements.remaining_time.innerHTML = innerhtml;
+            document.getElementById("remaining_time").innerHTML = innerhtml;
         }
     }
     
     add_user (data) {
-        // Create car & add it to the scene
-        let carconf_tmp = Object.assign({}, this.carconf);
-        carconf_tmp.defaultColor = "#" + data.color;
-        carconf_tmp.colorOuterMinimap = "white";
-        let c = new Car(carconf_tmp);
-        c.initVue(this.scenes[0]);
-        this.scenes[1].add(c.minimapMesh);
-
-        let d = new Driver(data.name, c, undefined, data.id);
+        const c = this.carFactory.createCar("#" + data.color, false);
+        const d = new Driver(data.id, data.name, c);
         d.currTime = data.currTime;
         d.bestLapTime = data.blt;
-        this.leaderboard.addDriver(d);
-        this.otherDrivers.set(data.id, d);
-
-        this.gameplay.otherCars.set(data.id, c);
+        this.gameplay.addOtherDriver(d);
     }
 
     del_user (data) {
-        let driver = this.otherDrivers.get(data.id);
-        if (driver != undefined) {
-            // remove meshes
-            this.scenes[1].remove(driver.car.minimapMesh);
-            this.scenes[0].remove(driver.car.chassisMesh);
-            for (var i = 0; i < driver.car.WHEELSNUMBER; i++) {
-                this.scenes[0].remove(driver.car.wheelMeshes[i]);
-            }
-
-            this.leaderboard.delDriver(data.id);
-            this.otherDrivers.delete(data.id);
-        }
-        this.gameplay.otherCars.delete(data.id);
+        this.gameplay.delOtherDriver(data.id);
     }
 
     mainDriverUpdate () {
@@ -178,22 +130,22 @@
     }
 
     update_user (data) {
-        let d = this.otherDrivers.get(data.id);
+        const d = this.gameplay.otherDrivers.get(data.id);
         if (d != undefined) {
-            d.updateName(data.name);
+            d.name = data.name;
             d.car.updateColor('#' + data.color);
             d.currTime = data.currTime;
             let last_blt = d.bestLapTime;
             d.bestLapTime = data.blt;
-            if (last_blt != data.blt) this.leaderboard.sortDrivers();
+            if (last_blt != data.blt) this.gameplay.leaderboard.sortDrivers();
         }
     }
 
     update_positions (data) {
-        for (let d of data.table) {
-            let c = this.gameplay.otherCars.get(d.id);
-            if (c != undefined) {
-                c.setLerpPosition(d.p, d.q, d.s, d.sv);
+        for (let p of data.table) {
+            let d = this.gameplay.otherDrivers.get(p.id);
+            if (d != undefined) {
+                d.car.setLerpPosition(p.p, p.q, p.s, p.sv);
             }
         }
     }

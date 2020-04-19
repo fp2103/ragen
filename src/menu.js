@@ -1,151 +1,149 @@
 
-function loadMenu () {
-    
-}
-
 class Menu {
-    constructor (htmlelements, conf, player, gameplay, seedGenerator, circuitInit, currentTrackId, client) {
-        this.htmlelements = htmlelements;
-        this.conf = conf;
-        this.player = player;
+    constructor (gameplay, circuitFactory, player, client) {
         this.gameplay = gameplay;
-
-        // Circuit
-        this.seedGenerator = seedGenerator;
-        this.circuitInit = circuitInit;
-        this.currentTrackId = currentTrackId;
-
-        // Client multi
+        this.circuitFactory = circuitFactory;
+        this.player = player;
         this.client = client;
 
+        this.TRACKID_SIZE = 6;
+        this.SESSION_SIZE = 4;
+        
         // Link with action
-        this.htmlelements.menu_button.addEventListener("click", this.displayMenu.bind(this), false);
+        document.getElementById("menu_button").addEventListener("click", this.showMenu.bind(this), false);
 
-        this.htmlelements.name.addEventListener("change", this.updatePlayerName.bind(this), false);
-        this.htmlelements.color.addEventListener("change", this.updateCarColor.bind(this), false);
+        document.getElementById("name").addEventListener("change", this.updatePlayerName.bind(this), false);
+        document.getElementById("color").addEventListener("change", this.updateCarColor.bind(this), false);
 
-        this.htmlelements.menu_go.addEventListener("click", this.onGoMenu.bind(this), false);
-        this.htmlelements.go.addEventListener("click", this.onGoScoreboard.bind(this), false);
+        document.getElementById("menu_go").addEventListener("click", this.onGoMenu.bind(this), false);
+        document.getElementById("go").addEventListener("click", this.onGoScoreboard.bind(this), false);
 
-        this.htmlelements.menu_random.addEventListener("click", this.onRandomMenu.bind(this), false);
-        this.htmlelements.random.addEventListener("click", this.onRandomScoreboard.bind(this), false);
+        document.getElementById("menu_random").addEventListener("click", this.onRandomMenu.bind(this), false);
+        document.getElementById("random").addEventListener("click", this.onRandomScoreboard.bind(this), false);
 
-        this.htmlelements.session_random.addEventListener("click", this.onSessionRandomMenu.bind(this), false);
-        this.htmlelements.session_go.addEventListener("click", this.onSessionGoMenu.bind(this), false);
+        document.getElementById("session_random").addEventListener("click", this.onSessionRandomMenu.bind(this), false);
+        document.getElementById("session_go").addEventListener("click", this.onSessionGoMenu.bind(this), false);
 
-        this.htmlelements.session_share.addEventListener("click", this.onSessionShare.bind(this), false);
+        document.getElementById("session_share").addEventListener("click", this.onSessionShare.bind(this), false);
     }
 
+    _generateRandomSeed (size) {
+        const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let seed = "";
+        for (var i = 0; i < size; i++) {
+            let j = Math.floor(Math.random() * (ascii.length));
+            seed += ascii.charAt(j);
+        }
+        return seed; 
+    }
+    
     updatePlayerName () {
-        this.player.updateName(this.htmlelements.name.value);
+        this.player.name = document.getElementById("name").value;
         this.client.mainDriverUpdate();
     }
 
     updateCarColor () {
-        this.player.car.updateColor(this.htmlelements.color.value);
+        this.player.car.updateColor(document.getElementById("color").value);
         this.client.mainDriverUpdate();
     }
- 
-    displayMenu () {
-        this.gameplay.displayMenu();
-        this.loadSessionsList();        
-        this.htmlelements.menu.style.display = "block";
-        this.htmlelements.game_elements.style.display = "none";
-    }
 
-    loadSessionsList () {
+    showMenu () {
+        // refresh session list
         fetch('http://localhost:3000/sessions_list')
         .then((res) => { return res.text(); })
-        .then((data) => { this.htmlelements.session_id_list.innerHTML = data; })
+        .then((data) => { document.getElementById("session_id").innerHTML = data; })
         .catch((err) => { console.log("error getting sessions_list", err); });
-    } 
 
-    hideMenu (cbGp) {
-        this.htmlelements.menu.style.display = "none";
-        this.htmlelements.game_elements.style.display = "block";
+        document.getElementById("menu").style.display = "block";
+        document.getElementById("game_elements").style.display = "none";
 
-        if (cbGp) this.gameplay.hideMenu();
+        this.gameplay.setState("menu");
+    }
+
+    hideMenu () {
+        document.getElementById("menu").style.display = "none";
+        document.getElementById("game_elements").style.display = "block";
     }
 
     onGoMenu () {
-        this.hideMenu(true);
-        this.loadTrack(this.htmlelements.menu_seed.value);
-    }
+        this.client.disconnect();
+        this.quickButtonsEnable();
 
-    onGoScoreboard () {
-        this.gameplay.resetCamera();
-        this.loadTrack(this.htmlelements.seed.value);
-    }
-
-    loadTrack (trackId) {
-        // Local track so disconnet session
-        if (this.client.isConnected()) {
-            this.client.disconnect();
-
-            this.htmlelements.seed.disabled = false;
-            this.htmlelements.random.disabled = false;
-            this.htmlelements.go.disabled = false;
-            this.htmlelements.session_span.innerHTML = "N/A";
-            this.htmlelements.remaining_time.innerHTML = "&infin;";
-        }
-
-        if (trackId == this.currentTrackId) {
-            this.gameplay.reset();
-        } else {
-            this.circuitInit(trackId).then(v => {
-                this.gameplay.reloadCircuit(v);
-            });
-            this.currentTrackId = trackId;
-        }
-    }
-
-    onRandomScoreboard () {
-        this.gameplay.resetCamera();
-        this.loadTrack(this.seedGenerator(this.conf.trackidRandSize));
+        this.loadTrack(document.getElementById("menu_seed").value, "solo");
+        this.hideMenu();
     }
 
     onRandomMenu () {
-        this.loadTrack(this.seedGenerator(this.conf.trackidRandSize));
+        this.client.disconnect();
+        this.quickButtonsEnable();
+
+        this.loadTrack(this._generateRandomSeed(this.TRACKID_SIZE), "menu");
+    }
+
+    onGoScoreboard () {
+        this.loadTrack(document.getElementById("seed").value, "solo");
+    }
+
+    onRandomScoreboard () {
+        this.loadTrack(this._generateRandomSeed(this.TRACKID_SIZE), "solo");
+    }
+
+    loadTrack (trackid, mode) {
+        this.circuitFactory.createCircuit(trackid).then(v => {
+            document.getElementById("seed").value = trackid;
+            document.getElementById("menu_seed").value = trackid;
+            this.gameplay.setState(mode, v);
+        });
+    }
+
+    // --- Multi buttons ---
+
+    quickButtonsDisable () {
+        document.getElementById("seed").disabled = true;
+        document.getElementById("random").disabled = true;
+        document.getElementById("go").disabled = true;
+    }
+
+    quickButtonsEnable () {
+        document.getElementById("seed").disabled = false;
+        document.getElementById("random").disabled = false;
+        document.getElementById("go").disabled = false;
     }
 
     onSessionRandomMenu () {
-        this.htmlelements.session_id_input.value = this.seedGenerator(this.conf.sessionRandSize);
+        document.getElementsByName("session_id")[0].value = this._generateRandomSeed(this.SESSION_SIZE);
     }
 
     onSessionGoMenu () {
-        if (!this.htmlelements.session_id_input.value) {
-            return;
-        }
+        const session_id = document.getElementsByName("session_id")[0].value;
+        if (!session_id) return;
 
+        this.quickButtonsDisable();
+        this.hideMenu();
+
+        // Already connected to this session
         if (this.client.isConnected()
-            && this.client.sessionid == this.htmlelements.session_id_input.value.toUpperCase()) {
-            this.hideMenu(true);
-            this.gameplay.reset();
+            && this.client.sessionid == session_id.toUpperCase()) {
             return;
-        } else if (this.client.isConnected()) {
-            this.client.disconnect();
         }
 
-        this.hideMenu(false);
-        this.htmlelements.seed.disabled = true;
-        this.htmlelements.random.disabled = true;
-        this.htmlelements.go.disabled = true;
-        this.currentTrackId = undefined;
-
+        this.client.disconnect();
         this.gameplay.circuit = undefined;
-        this.client.connect(this.htmlelements.session_id_input.value);
+        this.client.connect(session_id);
     }
 
     onSessionShare () {
         const linkta = document.createElement('textarea');
-        linkta.value = "localhost:3000?sessionid=" + this.htmlelements.session_id_input.value.toUpperCase();
+        linkta.value = "localhost:3000?sessionid=" + document.getElementsByName("session_id")[0].value.toUpperCase();
+
         linkta.setAttribute('readonly', '');
         linkta.style.position = 'absolute';
         linkta.style.left = '-9999px';
         document.body.appendChild(linkta);
+        
         linkta.select();
         linkta.setSelectionRange(0,9999);
-        console.log(linkta.value);
+
         document.execCommand("copy");
         document.body.removeChild(linkta);
     }

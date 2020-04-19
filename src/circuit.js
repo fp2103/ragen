@@ -1,7 +1,68 @@
 
+class CircuitFactory {
+    
+    constructor (mainView, minimapView, physics) {
+        this.mainScene = mainView.scene;
+        this.minimapScene = minimapView.scene;
+        this.phyWorld = physics.world;
+
+        const terrain = new Terrain();
+        this.mainScene.add(terrain.mesh);
+        this.phyWorld.addRigidBody(terrain.body);
+
+        this.currSeed = undefined;
+        this.currCircuit = undefined;
+    }
+
+    createCircuit (seed) {
+        const CONF = {minPoints: 15,
+                      maxPoints: 30,
+                      minX: -300,
+                      maxX: 300,
+                      minY: -200,
+                      maxY: 200,
+                      width: 12.5,
+                      margin: 0.5,
+                      pointResolution: 200,
+                      Z: 0.6,
+                      colorHSL: [0.1, 0.06, 0.33],
+                      colorMargin: 0xffffff,
+                      colorCP: 0x0000ff,
+                      colorMinimap: 0x0000ff};
+
+        const circuitPromise = new Promise(resolve => {
+            if (seed == this.currSeed) {
+                resolve(this.currCircuit);
+            } else {
+                if (this.currCircuit != undefined) {
+                    this.mainScene.remove(this.currCircuit.mesh);
+                    this.minimapScene.remove(this.currCircuit.minimapMesh);
+                    this.phyWorld.removeCollisionObject(this.currCircuit.body);
+                }
+                resolve(new Circuit(CONF, seed));
+            }
+        });
+
+        circuitPromise.then(value => {
+            if (value.id != this.currSeed) {
+                this.currSeed = seed;
+                this.currCircuit = value;
+                this.mainScene.add(value.mesh);
+                this.minimapScene.add(value.minimapMesh);
+                this.phyWorld.addRigidBody(value.body);
+            }
+        });
+        return circuitPromise;
+    }
+
+}
+
 class Circuit {
 
-    constructor  (conf, rng) {
+    constructor  (conf, id) {
+        this.id = id;
+        const rng = new Math.seedrandom(id);
+
         // Define direction
         this.clockwise = rng() < (1/2);
 
@@ -132,6 +193,7 @@ class Circuit {
         }
 
         // Create margin geometry (three & ammo)
+        this._margin = conf.margin;
         const marginInVertices = [];
         const marginExtVertices = [];
         for (var i = 0; i < points.length-1; i++) {
@@ -240,5 +302,24 @@ class Circuit {
         this.body = new Ammo.btRigidBody(rbInfo);
         
         this.body.setFriction(1);
+    }
+
+    getStartingPosition () {
+        // compute nose position && alignement vector
+        const slv = new THREE.Vector3().subVectors(...this.startingLinePoints);
+        slv.multiplyScalar(-1/2);
+
+        const slvt = new THREE.Vector3().crossVectors(new THREE.Vector3(0,0,1), slv);
+        slvt.normalize();
+        slvt.multiplyScalar(this._margin);
+        
+        const nosePoint = this.startingLinePoints[0].clone();
+        nosePoint.add(slv);
+        if (this.clockwise) {
+            nosePoint.add(slvt);
+            slvt.multiplyScalar(-1);
+        }
+
+        return {nosePoint: nosePoint, directionVector: slvt};
     }
 }

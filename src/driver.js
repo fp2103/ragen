@@ -1,82 +1,52 @@
 
 class Driver {
 
-    constructor (name, car, vuesCb, id) {
+    constructor (id, name, car) {
+        this.id = id;
         this.name = name;
         this.car = car;
-        this.vuesCb = vuesCb;
-        this.id = id;
-
+        
         this.bestLapTime = undefined;
-        this.lastLapBestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
 
-        this.lb_setLastCb = undefined;
-        this.client_updateCb = undefined;
-    }
-
-    updateName (newName) {
-        this.name = newName;
+        this.client_CB = undefined;
     }
 
     resetTime () {
         this.bestLapTime = undefined;
-        this.lastLapBestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
+        this.currTime = [undefined, undefined, undefined];
     }
 
-    setToBest (clientcb) {
+    updateCurrTime (sector, time) {
+        let better = this.bestTime[sector] == undefined || time <= this.bestTime[sector].time;
+        this.currTime[sector] = new TimeColor(time, better ? "green" : undefined);
+        return this.currTime[sector];
+    }
+
+    updateBestTime (time) {
+        if (this.bestLapTime == undefined || time < this.bestLapTime) {
+            this.bestLapTime = time;
+            for (var i = 0; i < 3; i++) {
+                this.bestTime[i] = this.currTime[i];
+            }
+            return true;
+        } else {
+            for (var i = 0; i < 3; i++) {
+                this.currTime[i] = this.bestTime[i];
+            }
+            return false;
+        }
+    }
+
+    cancelCurrTime () {
         let same = true;
         for (var i = 0; i < 3; i++) {
             same = same && (this.currTime[i] == this.bestTime[i]);
             this.currTime[i] = this.bestTime[i];
         }
-        if (!same && clientcb && this.client_updateCb != undefined) {
-            this.client_updateCb();
-        } 
+        if (!same) this.client_CB();
     }
 
-    saveAsBest () {
-        for (var i = 0; i < 3; i++) {
-            this.bestTime[i] = this.currTime[i];
-        }
-    }
-
-    getColorTime (sector, time) {
-        if (this.bestTime[sector] == undefined || time < this.bestTime[sector].time) {
-            return "green";
-        } else {
-            return undefined;
-        }
-    }
-
-    endSector (sector, time) {
-        this.currTime[sector] = new TimeColor(time, this.getColorTime(sector, time));
-
-        // full lap time
-        if (sector == 2) {
-            this.lastLapBestLapTime = this.bestLapTime;
-            // Update best time
-            if (this.bestTime[2] == undefined || time < this.bestTime[2].time) {
-                this.bestLapTime = time;
-                if (this.lb_setLastCb != undefined) this.lb_setLastCb(this.currTime, true);
-                this.saveAsBest();
-            } else {
-                if (this.lb_setLastCb != undefined) this.lb_setLastCb(this.currTime, false);
-                this.setToBest(false);
-            }
-        }
-
-        // CB on client to update session
-        if (this.client_updateCb != undefined) this.client_updateCb();
-    }
-
-    makeUnvisible () {
-        this.vuesCb(false, [this.car.chassisMesh, ...this.car.wheelMeshes], this.car.minimapMesh);
-    }
-
-    makeVisible () {
-        this.vuesCb(true, [this.car.chassisMesh, ...this.car.wheelMeshes], this.car.minimapMesh);
-    }
 }

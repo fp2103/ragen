@@ -10,11 +10,11 @@ function resizeRendererToDisplaySize(renderer) {
     return needResize;
 }
 
-class MainVue {
+class MainView {
 
-    constructor (conf, canvas) {
-        this.canvas = canvas;
-        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true,
+    constructor () {
+        this.canvas = document.getElementById("mainc");
+        this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, antialias: true,
                                                  gammaInput: true, gammaOutput: true});
         this.renderer.shadowMap.enabled = true;
         this.scene = new THREE.Scene();
@@ -23,7 +23,7 @@ class MainVue {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
         // Add the lights and sky
-        this.scene.background = new THREE.Color(conf.sky);
+        this.scene.background = new THREE.Color(0x87CEEB);
         this.scene.fog = new THREE.Fog(this.scene.background, 1, 2000);
 
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
