@@ -72,3 +72,12 @@ table, th, td {
     position: absolute;
     right: 0;
 }
+
+#centered_msg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    padding: 5%;
+}

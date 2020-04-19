@@ -15,6 +15,7 @@
         
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
+        this.spectator = false;
         this.socket = undefined;
         this.sendPosInter = undefined;
         window.addEventListener("beforeunload", this.disconnect.bind(this), false);
@@ -28,6 +29,9 @@
     }
 
     connect (sessionid) {
+        document.getElementById("centered_msg").innerHTML = "Connecting..."
+        document.getElementById("game_elements").style.display = "none";
+
         this.socket = io.connect(this.SERVER);
         this.sessionid = sessionid.toUpperCase();
 
@@ -62,11 +66,15 @@
 
             document.getElementById("seed").value = data.cid;
             document.getElementById("menu_seed").value = data.cid;
+            document.getElementById("centered_msg").innerHTML = ""
+            document.getElementById("game_elements").style.display = "block";
 
             if (data.nonplayable) {
                 this.gameplay.setState("spectator", v);
+                this.spectator = true;
             } else {
                 this.gameplay.setState("multi", v);
+                this.spectator = false;
             }
         });
 
@@ -89,6 +97,7 @@
         this.socket.close();
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
+        this.spectator = false;
         this.socket = undefined;
         clearInterval(this.sendPosInter);
         this.sendPosInter = undefined;

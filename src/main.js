@@ -74,7 +74,6 @@ main();
 
 
 /* TODO:
-- add loaders (circuit, session(use promise))
-- Leaderboard: compute serverside
+
 */
 

@@ -8,6 +8,10 @@ class Menu {
 
         this.TRACKID_SIZE = 6;
         this.SESSION_SIZE = 4;
+
+        this.htmlSeed = document.getElementById("seed");
+        this.htmlMenuSeed = document.getElementById("menu_seed");
+        this.htmlSessionId = document.getElementsByName("session_id")[0];
         
         // Link with action
         document.getElementById("menu_button").addEventListener("click", this.showMenu.bind(this), false);
@@ -69,7 +73,7 @@ class Menu {
         this.client.disconnect();
         this.quickButtonsEnable();
 
-        this.loadTrack(document.getElementById("menu_seed").value, "solo");
+        this.loadTrack(this.htmlMenuSeed.value, "solo");
         this.hideMenu();
     }
 
@@ -81,7 +85,7 @@ class Menu {
     }
 
     onGoScoreboard () {
-        this.loadTrack(document.getElementById("seed").value, "solo");
+        this.loadTrack(this.htmlSeed.value, "solo");
     }
 
     onRandomScoreboard () {
@@ -90,8 +94,8 @@ class Menu {
 
     loadTrack (trackid, mode) {
         this.circuitFactory.createCircuit(trackid).then(v => {
-            document.getElementById("seed").value = trackid;
-            document.getElementById("menu_seed").value = trackid;
+            this.htmlSeed.value = trackid;
+            this.htmlMenuSeed.value = trackid;
             this.gameplay.setState(mode, v);
         });
     }
@@ -99,23 +103,23 @@ class Menu {
     // --- Multi buttons ---
 
     quickButtonsDisable () {
-        document.getElementById("seed").disabled = true;
+        this.htmlSeed.disabled = true;
         document.getElementById("random").disabled = true;
         document.getElementById("go").disabled = true;
     }
 
     quickButtonsEnable () {
-        document.getElementById("seed").disabled = false;
+        this.htmlSeed.disabled = false;
         document.getElementById("random").disabled = false;
         document.getElementById("go").disabled = false;
     }
 
     onSessionRandomMenu () {
-        document.getElementsByName("session_id")[0].value = this._generateRandomSeed(this.SESSION_SIZE);
+        this.htmlSessionId.value = this._generateRandomSeed(this.SESSION_SIZE);
     }
 
     onSessionGoMenu () {
-        const session_id = document.getElementsByName("session_id")[0].value;
+        const session_id = this.htmlSessionId.value;
         if (!session_id) return;
 
         this.quickButtonsDisable();
@@ -124,6 +128,7 @@ class Menu {
         // Already connected to this session
         if (this.client.isConnected()
             && this.client.sessionid == session_id.toUpperCase()) {
+            this.gameplay.setState(this.client.spectator ? "spectator" : "multi");
             return;
         }
 
@@ -134,7 +139,7 @@ class Menu {
 
     onSessionShare () {
         const linkta = document.createElement('textarea');
-        linkta.value = "localhost:3000?sessionid=" + document.getElementsByName("session_id")[0].value.toUpperCase();
+        linkta.value = "localhost:3000?sessionid=" + this.htmlSessionId.value.toUpperCase();
 
         linkta.setAttribute('readonly', '');
         linkta.style.position = 'absolute';
