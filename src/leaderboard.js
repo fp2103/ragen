@@ -64,7 +64,7 @@ class Leaderboard {
         this.current_sector = 0;
 
         // Previous lap/sector info
-        this.lastShowing = false;
+        this.last = undefined;
         this.endSectorMsg = "";
         this.msgStartTime = 0;
 
@@ -82,9 +82,11 @@ class Leaderboard {
         this.current = [undefined, undefined, undefined];
         this.current_sector = 0;
 
-        this.lastShowing = false;
+        this.last = undefined;
         this.endSectorMsg = "";
         this.msgStartTime = 0;
+
+        this.bestSectorTime = [undefined, undefined, undefined];
 
         this.mainDriver.cancelCurrTime();
     }
@@ -106,18 +108,14 @@ class Leaderboard {
         if (sector < 2) {
             this.current_sector += 1;
         } else {
-            if (this.validtime) {
-                this.lastShowing = true;
-            } else {
-                this.current = [undefined, undefined, undefined];
-            }
-
+            if (this.validtime) this.last = [...this.current];
+            this.current = [undefined, undefined, undefined];
             this.laptime = 0
             this.validtime = true;
             this.current_sector = 0;
         }
 
-        if (bestMsg || timegapMsg || this.lastShowing) {
+        if (bestMsg || timegapMsg || this.last != undefined) {
             this.endSectorMsg = bestMsg + "<br/>" + timegapMsg;
             this.msgStartTime = Date.now();
         }
@@ -138,7 +136,7 @@ class Leaderboard {
 
         // fill table drivers
         const multi = this.mode == "multi" || this.mode == "spectator";
-        if (multi) this.computeBestSectorTime();
+        this.computeBestSectorTime();
         for (i = 0; i < this.drivers.length; i++) {
             let l = (i+1) + " . ";
             if (this.drivers[i].bestLapTime == undefined) l = "- . ";
@@ -158,7 +156,7 @@ class Leaderboard {
 
         // Update current time
         this.laptime += this.clock.getDelta();
-        if (this.laptime > 0 && !this.lastShowing) {
+        if (this.laptime > 0) {
             if (this.current[this.current_sector] == undefined) {
                 this.current[this.current_sector] = new TimeColor();
             }
@@ -167,20 +165,21 @@ class Leaderboard {
 
         // Add last/current row
         let lastRowLabel = "Current";
+        let lastRowData = this.current;
         if (Date.now() - this.msgStartTime <= this.MESSAGESHOWINGTIME) {
-            if (this.lastShowing) lastRowLabel = "Last";
+            if (this.last != undefined) {
+                lastRowLabel = "Last";
+                lastRowData = this.last;
+            }
             if (this.endSectorMsg) this.htmlMessage.innerHTML = this.endSectorMsg;
         } else {
-            // reset
-            if (this.lastShowing) this.current = [new TimeColor(this.laptime), undefined, undefined];
-
-            this.lastShowing = false;
+            this.last = undefined;
             this.endSectorMsg = "";
         }
 
         // fill table current/last
-        this.fillRow(i, lastRowLabel, undefined, this.current, multi);
-        if (!this.lastShowing && !this.validtime) this.rows[i].setColorAllRow("red");
+        this.fillRow(i, lastRowLabel, undefined, lastRowData, multi);
+        if (this.last == undefined && !this.validtime) this.rows[i].setColorAllRow("red");
     }
 
     hideLastRow () {
@@ -226,7 +225,7 @@ class Leaderboard {
 
                 // Change to purple for best overall time
                 if (purplize && this.bestSectorTime[j] != undefined 
-                    && sectors[j].color == "green" && sectors[j].time <= this.bestSectorTime[j]) {
+                    && sectors[j].time <= this.bestSectorTime[j]) {
                     c.style.color = "purple";
                 }
             }
@@ -300,22 +299,10 @@ class Leaderboard {
     }    
     
     computeTimeGap (sector, time) {
-        // Compute best sector time of all drivers
-        const sectorTimes = [];
-        for (let d of this.drivers) {
-            if (d.id == 0 && d.bestTime[sector] != undefined) {
-                sectorTimes.push(d.bestTime[sector].time);
-            } else if (d.id != 0 && d.currTime[sector] != undefined) {
-                sectorTimes.push(d.currTime[sector].time);
-            }
-        }
-        sectorTimes.sort((a, b) => { return a - b; });
+        if (this.bestSectorTime[sector] == undefined) return "";
 
-        let result = "";
-        if (sectorTimes.length == 0) return result;
-
-        let tg = time - sectorTimes[0];
-        result = tg > 0 ? '<span style="color: red;">+ ' : '<span style="color: blue;">- ';
+        let tg = time - this.bestSectorTime[sector];
+        let result = tg > 0 ? '<span style="color: red;">+ ' : '<span style="color: blue;">- ';
         result += this.convertTimeToString(Math.abs(tg), false);
         result += '</span>';
         return result;

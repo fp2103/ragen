@@ -74,6 +74,20 @@ main();
 
 
 /* TODO:
-
+- podium scene
+- car color random
+- responsive
+- touch controls
+- menu improvement:
+    - arrow zone
+    - session id details
+    - controls info
+    - about section
+    - design
+- scene improvment
+    - slide traces
+    - background
+    - car
+- sound
 */
 

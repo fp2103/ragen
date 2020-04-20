@@ -60,6 +60,7 @@ class Menu {
 
         document.getElementById("menu").style.display = "block";
         document.getElementById("game_elements").style.display = "none";
+        this.client.onMenu = true;
 
         this.gameplay.setState("menu");
     }
@@ -67,6 +68,7 @@ class Menu {
     hideMenu () {
         document.getElementById("menu").style.display = "none";
         document.getElementById("game_elements").style.display = "block";
+        this.client.onMenu = false;
     }
 
     onGoMenu () {

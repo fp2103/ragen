@@ -22,6 +22,7 @@
         setInterval(this.updateRT.bind(this), 1000);
 
         this.player.client_CB = this.mainDriverUpdate.bind(this);
+        this.onMenu = undefined;
     }
 
     isConnected () {
@@ -67,14 +68,13 @@
             document.getElementById("seed").value = data.cid;
             document.getElementById("menu_seed").value = data.cid;
             document.getElementById("centered_msg").innerHTML = ""
-            document.getElementById("game_elements").style.display = "block";
+            this.spectator = data.nonplayable;
 
-            if (data.nonplayable) {
-                this.gameplay.setState("spectator", v);
-                this.spectator = true;
+            if (!this.onMenu) {
+                document.getElementById("game_elements").style.display = "block";
+                this.gameplay.setState(this.spectator ? "spectator" : "multi", v);
             } else {
-                this.gameplay.setState("multi", v);
-                this.spectator = false;
+                this.gameplay.setState("menu", v);
             }
         });
 
