@@ -4,6 +4,7 @@
 const PORT = 3000;
 
 const CIRCUITRELOAD = 300000;
+const PODIUM_SCENE_DURATION = 10000;
 
 const KEEPALIVETIME = 30000;
 const CLEANINGFREQUENCE = 10000;
@@ -62,14 +63,18 @@ class Session {
         console.log("Creating session", id);
         this.id = id;
 
-        this.circuit = generateRandomSeed(6);
-        setInterval(this.reload_circuit.bind(this), CIRCUITRELOAD+1000);
-        this.circuitStartTime = Date.now();
+        this.circuit = undefined;
+        this.circuitStartTime = undefined;
+        this.state = undefined;
 
         this.players = new Map();
         this.activePlayerCount = 0;
 
         this.emitPosInter = setInterval(this.emitPositions.bind(this), POSITIONSREFRESH);
+        this.currentTimeout = undefined;
+
+        // load a new circuit
+        this.reload_circuit();
     }
 
     getData (socketid_dest) {
@@ -86,21 +91,48 @@ class Session {
                 cid: this.circuit,
                 rt: this.circuitStartTime + CIRCUITRELOAD - Date.now(),
                 players: otherPlayers,
-                nonplayable: isSpectator};
+                nonplayable: isSpectator,
+                state: this.state};
+    }
+
+    refreshSession () {
+        for (let p of this.players.values()) {
+            p.socket.emit('load_session', this.getData(p.socket.id));
+        }
+    }
+
+    circuitClosing () {
+        // if one player has a best time -> podium scene
+        let podium_scene = false;
+        for (let p of this.players.values()) {
+            if (p.bestLapTime != undefined) {
+                podium_scene = true;
+                break;
+            }
+        }
+
+        if (podium_scene) {
+            this.state = "podium";
+            this.refreshSession();
+            this.currentTimeout = setTimeout(this.reload_circuit.bind(this), PODIUM_SCENE_DURATION);
+        } else {
+            this.reload_circuit();
+        }
     }
 
     reload_circuit () {
         this.circuit = generateRandomSeed(6);
         this.circuitStartTime = Date.now();
+        this.state = "main";
+        console.log("Session", this.id, "new circuit", this.circuit);
         // Reset players time
         for (let p of this.players.values()) {
             p.currTime = [undefined, undefined, undefined];
             p.bestLapTime = undefined;
         }
         // Send new session info to players
-        for (let p of this.players.values()) {
-            p.socket.emit('load_session', this.getData(p.socket.id));
-        }
+        this.refreshSession();
+        this.currentTimeout = setTimeout(this.circuitClosing.bind(this), CIRCUITRELOAD + 1000);
     }
 
     is_inactive () {
@@ -177,15 +209,10 @@ const sessions = new Map();
 // Render the page
 app.get('/', (req, res) => {
     let sessionid = req.query.sessionid;
-    let circuitid = undefined;
     if (sessionid != undefined) {
-        sessionid = sessionid.substring(0, 4);
-        sessionid = sessionid.toUpperCase();
-        if (sessions.has(sessionid)) {
-            circuitid = sessions.get(sessionid).circuit;
-        }
+        sessionid = sessionid.substring(0, 4).toUpperCase();
     }
-    res.render('index', {sessionid: sessionid, circuitid: circuitid});
+    res.render('index', {sessionid: sessionid});
 });
 app.get('/sessions_list', (req,res) => {
     let sessions_list = [];
@@ -202,6 +229,7 @@ setInterval(() => {
         if (s.is_inactive()) {
             toDel.push(k);
             clearInterval(s.emitPosInter);
+            clearTimeout(s.currentTimeout);
         }
     }
     if (toDel.length > 0) {

@@ -4,7 +4,6 @@ const FPS = 50;
 const PARTICLES_LIMIT = 50;
 
 const DEFAULT_NAME = "anon";
-const DEFAULT_COLOR = 0x00ffff;
 
 // Global constant
 const SMALL_GAP = 0.1;
@@ -13,7 +12,6 @@ const VERY_SMALL_GAP = 0.01;
 // ----- Main -----
 
 // TODO WEBGL check
-
 
 async function main () {
 
@@ -30,7 +28,10 @@ async function main () {
     const particlesManager = new ParticlesManager(mainView.scene, PARTICLES_LIMIT);
 
     // Player
-    const driver = new Driver(0, DEFAULT_NAME, carFactory.createCar(DEFAULT_COLOR, true));
+    let randomColor = Math.floor(Math.random()*16777215).toString(16);
+    randomColor = '#' + randomColor;
+    document.getElementById("color").value = randomColor;
+    const driver = new Driver(0, DEFAULT_NAME, carFactory.createCar(randomColor, true));
 
     // Controls
     const controls = new Controls();
@@ -42,15 +43,17 @@ async function main () {
     const client = new Client(gameplay, circuitFactory, carFactory, driver);
     const menu = new Menu(gameplay, circuitFactory, driver, client); 
  
-    // init the menu & a circuit
-    menu.showMenu();
-    const seed = document.getElementById("menu_seed").value;
-    if (seed) {
-        menu.loadTrack(seed, "menu");
-    } else {
-        menu.onRandomMenu();
+    // init the menu / connect to given session
+    const sid = menu.htmlSessionId.value;
+    if (sid) {
+        menu.quickButtonsDisable();
+        client.onMenu = true;
+        await new Promise(resolve => { client.connect(sid, resolve) });
     }
-    
+    document.getElementById("mainc").style.display = "block";
+    menu.showMenu();
+    if (!sid) menu.onRandomMenu();
+
     // GAME LOOP
     const clock = new THREE.Clock();
     let df = 0;
@@ -75,7 +78,6 @@ main();
 
 /* TODO:
 - podium scene
-- car color random
 - responsive
 - touch controls
 - menu improvement:

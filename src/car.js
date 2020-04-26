@@ -8,18 +8,16 @@ class CarFactory {
     }
 
     createCar (color, mainPlayer) {
-        const car = new Car(color);
+        const car = new Car(color, mainPlayer);
         car.initMainView(this.mainScene);
+        car.initMinimapView(this.minimapScene);
         if (mainPlayer) {
-            car.initMinimapView(0xffff00, this.minimapScene);
             car.initPhysics(this.phyWorld, {mass: 800,
                                             suspensionStiffness: 100,
                                             suspensionRestLength: 0.4,
                                             maxSuspensionTravelCm: 10,
                                             rollInfluence: 0.02,
                                             friction: 8});
-        } else {
-            car.initMinimapView(0xffffff, this.minimapScene);
         }
         car.visible_cb = this.visible_callback.bind(this);
         car.unvisible_cb = this.unvisible_callback.bind(this);
@@ -43,7 +41,9 @@ class CarFactory {
 
 class Car {
 
-    constructor (color) {
+    constructor (color, mainPlayer) {
+        this.mainPlayer = mainPlayer;
+
         this.WHEELSNUMBER = 4;
         this.FRONTLEFT = 0;
         this.FRONTRIGHT = 1;
@@ -61,7 +61,7 @@ class Car {
         this.chassisMesh = undefined;
         this.minimapMeshInner = undefined;
         this.cameraPosition = undefined;
-        this.wheelMeshes = [];
+        this.wheelMeshes = [undefined, undefined, undefined, undefined];
 
         this.minimapMesh = undefined;
 
@@ -70,6 +70,7 @@ class Car {
         this.DISABLE_DEACTIVATION = 4;
 
         this.currentColor = new THREE.Color(color);
+        this.outerMinimapColor = this.mainPlayer ? 0xFFFF00: 0xFFFFFF; 
         this.COLOR_GRASS_PARTICLE = 0x87B982;
 
         this.visible_cb = undefined;
@@ -139,15 +140,15 @@ class Car {
             if (i == this.BACKLEFT) m.position.set(-ww, -wl, wh);
             if (i == this.BACKRIGHT) m.position.set(ww, -wl, wh);
             this.wheelMeshes[i] = m;
-            this.chassisMesh.add(m);
+            if (!this.mainPlayer) this.chassisMesh.add(m);
         }
 
         scene.add(this.chassisMesh);
     }
 
-    initMinimapView (colorOuter, scene) {
+    initMinimapView (scene) {
         const minimapgeo = new THREE.PlaneBufferGeometry(30,30);
-        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: colorOuter}));
+        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: this.outerMinimapColor}));
 
         const minimapgeoInner = new THREE.PlaneBufferGeometry(20,20);
         this.minimapMeshInner = new THREE.Mesh(minimapgeoInner, new THREE.MeshBasicMaterial({color: this.currentColor}));
@@ -225,14 +226,22 @@ class Car {
     makeVisible () {
         if (this.visible) return;
 
-        this.visible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+        if (this.mainPlayer) {
+            this.visible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+        } else {
+            this.visible_cb([this.chassisMesh], this.minimapMesh);
+        }
         this.visible = true;
     }
 
     makeUnvisible () {
         if (!this.visible) return;
 
-        this.unvisible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+        if (this.mainPlayer) {
+            this.unvisible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+        } else {
+            this.unvisible_cb([this.chassisMesh], this.minimapMesh);
+        }
         this.visible = false;
     }
 

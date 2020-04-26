@@ -23,15 +23,16 @@
 
         this.player.client_CB = this.mainDriverUpdate.bind(this);
         this.onMenu = undefined;
+
+        this.connect_cb = undefined;
     }
 
     isConnected () {
         return this.sessionid != undefined;
     }
 
-    connect (sessionid) {
-        document.getElementById("centered_msg").innerHTML = "Connecting..."
-        document.getElementById("game_elements").style.display = "none";
+    connect (sessionid, connect_cb) {
+        document.getElementById("centered_msg").innerHTML = `Connecting to ${sessionid.toUpperCase()}...`;
 
         this.socket = io.connect(this.SERVER);
         this.sessionid = sessionid.toUpperCase();
@@ -43,6 +44,8 @@
         this.socket.on("update_user", (data) => this.update_user(data));
         this.socket.on("update_positions", (data) => this.update_positions(data));
         this.sendPosInter = setInterval(this.send_position.bind(this), this.posRefreshRate);
+
+        this.connect_cb = connect_cb;
     }
 
     get_user_data () {
@@ -59,10 +62,10 @@
 
     load_session (data) {
         this.circuitFactory.createCircuit(data.cid).then(v => {
-            // Rebuild users list
-            this.clearDrivers();
-            for (let p of data.players) {
-                this.add_user(p);
+            // Convert players data to new Driver
+            const drivers = [];
+            for (let pData of data.players) {
+                drivers.push(this.createDriverFromData(pData));
             }
 
             document.getElementById("seed").value = data.cid;
@@ -70,11 +73,20 @@
             document.getElementById("centered_msg").innerHTML = ""
             this.spectator = data.nonplayable;
 
-            if (!this.onMenu) {
-                document.getElementById("game_elements").style.display = "block";
-                this.gameplay.setState(this.spectator ? "spectator" : "multi", v);
-            } else {
-                this.gameplay.setState("menu", v);
+            // Callback if defined
+            if (this.connect_cb != undefined) this.connect_cb();
+
+            if (this.onMenu) {
+                this.gameplay.setState("menu", v, drivers);
+                return;
+            }
+
+            switch (data.state) {
+                case "podium":
+                    this.gameplay.setState("podium", v, drivers);
+                    break;
+                default:
+                    this.gameplay.setState(this.spectator ? "spectator" : "multi", v, drivers);
             }
         });
 
@@ -83,16 +95,11 @@
         this.updateRT();
     }
 
-    clearDrivers () {
-        this.gameplay.leaderboard.clearRows();
-        for (let d of this.gameplay.otherDrivers.values()) {
-            d.car.makeUnvisible()
-        }
-        this.gameplay.otherDrivers.clear();
-    }
-
     disconnect () {
-        if (this.socket == undefined) return; 
+        if (this.socket == undefined) return;
+
+        this.gameplay.otherDrivers.forEach((v) => { v.car.makeUnvisible() });
+        this.gameplay.otherDrivers.clear();
 
         this.socket.close();
         this.circuit_change_date = undefined;
@@ -103,8 +110,7 @@
         this.sendPosInter = undefined;
         document.getElementById("remaining_time").innerHTML = "&infin;";
         document.getElementById("session_span").innerHTML = "N/A";
-
-        this.clearDrivers();
+        this.connect_cb = undefined;
     }
 
     updateRT () {
@@ -119,13 +125,17 @@
             document.getElementById("remaining_time").innerHTML = innerhtml;
         }
     }
-    
-    add_user (data) {
+
+    createDriverFromData (data) {
         const c = this.carFactory.createCar("#" + data.color, false);
         const d = new Driver(data.id, data.name, c);
         d.currTime = data.currTime;
         d.bestLapTime = data.blt;
-        this.gameplay.addOtherDriver(d);
+        return d;
+    }
+
+    add_user (data) {
+        this.gameplay.addOtherDriver(this.createDriverFromData(data));
     }
 
     del_user (data) {

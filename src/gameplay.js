@@ -10,6 +10,7 @@ class Gameplay {
 
         this.leaderboard = new Leaderboard(player);
         this.speedHtml = document.getElementById('speed');
+        this.gameElementsHtml = document.getElementById('game_elements'); 
         this.otherDrivers = new Map();
 
         // Init camera position
@@ -48,7 +49,22 @@ class Gameplay {
         this.state = undefined;
     }
 
-    setState (newState, newCircuit) {
+    /*
+     * clear all
+     * update
+     * init state
+     */
+    setState (newState, newCircuit, newOtherDrivers) {
+        // default html display
+        this.gameElementsHtml.style.display = "none";
+        this.speedHtml.style.display = "none";
+        this.leaderboard.clearRows();
+
+        // default Scene display
+        this.clearPodiumScene();
+        this.player.car.makeUnvisible();
+        this.otherDrivers.forEach((v) => {v.car.makeUnvisible()});
+        
         // Update circuit
         if (newCircuit != undefined) {
             // Reset best laptime
@@ -58,29 +74,36 @@ class Gameplay {
 
             this.circuit = newCircuit;
             this.checkpoints = [this.circuit.slMesh,
-                            this.circuit.cp1Mesh,
-                            this.circuit.cp2Mesh];
+                                this.circuit.cp1Mesh,
+                                this.circuit.cp2Mesh];
             this.startingPos = this.circuit.getStartingPosition();
         }
         if (this.circuit == undefined) return;
 
+        // Update other drivers
+        if (newOtherDrivers != undefined) {
+            this.otherDrivers.clear();
+            newOtherDrivers.forEach(d => this.otherDrivers.set(d.id, d));
+        }
+
         // Update state
         switch(newState) {
             case "spectator":
-                this.leaderboard.mode = "spectator";
-                this.leaderboard.delDriver(this.player.id);
-                this.leaderboard.hideLastRow();
-                this.speedHtml.style.display = "none";
+                this.gameElementsHtml.style.display = "block";
+                this.leaderboard.setMode("spectator", this.otherDrivers.values());
             case "menu":
-                this.player.car.makeUnvisible();
+                this.otherDrivers.forEach((v) => {v.car.makeVisible()});
                 break;
             case "solo":
             case "multi":
-                this.leaderboard.mode = newState;
-                this.leaderboard.addDriver(this.player);
-                this.leaderboard.showLastRow();
-                this.player.car.makeVisible();
+                this.gameElementsHtml.style.display = "block";
                 this.speedHtml.style.display = "block";
+                this.leaderboard.setMode(newState, this.otherDrivers.values());
+                this.otherDrivers.forEach((v) => {v.car.makeVisible()});
+                this.player.car.makeVisible();
+                break;
+            case "podium":
+                this.initPodiumScene();
                 break;
         }
         this.state = newState;
@@ -105,6 +128,10 @@ class Gameplay {
                 this.leaderboard.update();
                 this.particlesManager.update();
                 break;
+            case "podium":
+                this.onPodiumScene();
+                this.particlesManager.update();
+                break;
         }
     }
 
@@ -124,7 +151,7 @@ class Gameplay {
         this.started = false;
         this.nextcp = 0;
 
-        this.leaderboard.reset();
+        this.leaderboard.resetTime();
         this.particlesManager.reset();
         this.controls.resetActions();
 
@@ -272,6 +299,18 @@ class Gameplay {
         const del = this.otherDrivers.get(driverid);
         if (this.otherDrivers.delete(driverid)) del.car.makeUnvisible();
         this.leaderboard.delDriver(driverid);
+    }
+
+    initPodiumScene () {
+
+    }
+
+    onPodiumScene () {
+
+    }
+
+    clearPodiumScene () {
+
     }
 
 }

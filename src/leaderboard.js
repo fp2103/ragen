@@ -72,10 +72,10 @@ class Leaderboard {
         this.bestSectorTime = [undefined, undefined, undefined];
 
         // mode
-        this.mode = "solo";
+        this.mode = undefined;
     }
 
-    reset () {
+    resetTime () {
         this.clock = new THREE.Clock(false);
         this.laptime = 0;
         this.validtime = true;
@@ -182,17 +182,14 @@ class Leaderboard {
         if (this.last == undefined && !this.validtime) this.rows[i].setColorAllRow("red");
     }
 
-    hideLastRow () {
-        if (this.rows.length == this.drivers.length + 1) {
-            this.rows.pop();
-            this.htmlTable.deleteRow(-1);
-        }
-    }
-
-    showLastRow () {
-        if (this.rows.length == this.drivers.length) {
+    setMode (mode, drivers) {
+        this.mode = mode;
+        if (mode == "multi" || mode == "solo") {
+            this.addDriver(this.mainDriver);
+            // Add one row for current/last time
             this.rows.push(new Row(this.htmlTable));
         }
+        for (let d of drivers) this.addDriver(d);
     }
     
     // ---- Utils ----
@@ -225,7 +222,7 @@ class Leaderboard {
 
                 // Change to purple for best overall time
                 if (purplize && this.bestSectorTime[j] != undefined 
-                    && sectors[j].time <= this.bestSectorTime[j]) {
+                    && sectors[j].color == "green" && sectors[j].time <= this.bestSectorTime[j]) {
                     c.style.color = "purple";
                 }
             }
@@ -235,17 +232,8 @@ class Leaderboard {
     // ---- Multi drivers functions ----
 
     addDriver (driver) {
-        let found = false;
-        for (let d of this.drivers) {
-            if (d.id == driver.id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            this.drivers.push(driver);
-            this.rows.push(new Row(this.htmlTable));
-        }
+        this.drivers.push(driver);
+        this.rows.push(new Row(this.htmlTable));
     }
 
     delDriver (driverid) {

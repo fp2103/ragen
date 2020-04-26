@@ -14,7 +14,7 @@ class Menu {
         this.htmlSessionId = document.getElementsByName("session_id")[0];
         
         // Link with action
-        document.getElementById("menu_button").addEventListener("click", this.showMenu.bind(this), false);
+        document.getElementById("menu_button").addEventListener("click", this.onMenuButton.bind(this), false);
 
         document.getElementById("name").addEventListener("change", this.updatePlayerName.bind(this), false);
         document.getElementById("color").addEventListener("change", this.updateCarColor.bind(this), false);
@@ -59,15 +59,16 @@ class Menu {
         .catch((err) => { console.log("error getting sessions_list", err); });
 
         document.getElementById("menu").style.display = "block";
-        document.getElementById("game_elements").style.display = "none";
         this.client.onMenu = true;
+    }
 
+    onMenuButton () {
+        this.showMenu();
         this.gameplay.setState("menu");
     }
 
     hideMenu () {
         document.getElementById("menu").style.display = "none";
-        document.getElementById("game_elements").style.display = "block";
         this.client.onMenu = false;
     }
 
@@ -140,19 +141,21 @@ class Menu {
     }
 
     onSessionShare () {
-        const linkta = document.createElement('textarea');
-        linkta.value = "localhost:3000?sessionid=" + this.htmlSessionId.value.toUpperCase();
+        if (this.htmlSessionId.value) {
+            const linkta = document.createElement('textarea');
+            linkta.value = "localhost:3000?sessionid=" + this.htmlSessionId.value.toUpperCase();
 
-        linkta.setAttribute('readonly', '');
-        linkta.style.position = 'absolute';
-        linkta.style.left = '-9999px';
-        document.body.appendChild(linkta);
-        
-        linkta.select();
-        linkta.setSelectionRange(0,9999);
+            linkta.setAttribute('readonly', '');
+            linkta.style.position = 'absolute';
+            linkta.style.left = '-9999px';
+            document.body.appendChild(linkta);
+            
+            linkta.select();
+            linkta.setSelectionRange(0,9999);
 
-        document.execCommand("copy");
-        document.body.removeChild(linkta);
+            document.execCommand("copy");
+            document.body.removeChild(linkta);
+        }
     }
 
 }
