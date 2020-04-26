@@ -5,91 +5,20 @@ class CarFactory {
         this.mainScene = mainView.scene;
         this.minimapScene = minimapView.scene;
         this.phyWorld = physics.world;
-    }
 
-    createCar (color, mainPlayer) {
-        const car = new Car(color, mainPlayer);
-        car.initMainView(this.mainScene);
-        car.initMinimapView(this.minimapScene);
-        if (mainPlayer) {
-            car.initPhysics(this.phyWorld, {mass: 800,
-                                            suspensionStiffness: 100,
-                                            suspensionRestLength: 0.4,
-                                            maxSuspensionTravelCm: 10,
-                                            rollInfluence: 0.02,
-                                            friction: 8});
-        }
-        car.visible_cb = this.visible_callback.bind(this);
-        car.unvisible_cb = this.unvisible_callback.bind(this);
-        return car;
-    }
-
-    visible_callback (mainMeshes, minimapMesh) {
-        for (var i = 0; i < mainMeshes.length; i++) {
-            this.mainScene.add(mainMeshes[i]);
-        }
-        this.minimapScene.add(minimapMesh);
-    }
-
-    unvisible_callback (mainMeshes, minimapMesh) {
-        for (var i = 0; i < mainMeshes.length; i++) {
-            this.mainScene.remove(mainMeshes[i]);
-        }
-        this.minimapScene.remove(minimapMesh);
-    }
-}
-
-class Car {
-
-    constructor (color, mainPlayer) {
-        this.mainPlayer = mainPlayer;
-
-        this.WHEELSNUMBER = 4;
-        this.FRONTLEFT = 0;
-        this.FRONTRIGHT = 1;
-        this.BACKLEFT = 2;
-        this.BACKRIGHT = 3;
-
+        // Geometry properties
         const CAR_WIDTH = 1.8;
         const CAR_LENGTH = 4;
-        this._width = CAR_WIDTH;
-        this._length = CAR_LENGTH;
-        this._height = CAR_WIDTH/2;
-        this._zreset = 2;
-        this._wheelRadius = CAR_WIDTH/5;
-
-        this.chassisMesh = undefined;
-        this.minimapMeshInner = undefined;
-        this.cameraPosition = undefined;
-        this.wheelMeshes = [undefined, undefined, undefined, undefined];
-
-        this.minimapMesh = undefined;
-
-        this.chassisBody = undefined;
-        this.vehiclePhysics = undefined;
-        this.DISABLE_DEACTIVATION = 4;
-
-        this.currentColor = new THREE.Color(color);
-        this.outerMinimapColor = this.mainPlayer ? 0xFFFF00: 0xFFFFFF; 
-        this.COLOR_GRASS_PARTICLE = 0x87B982;
-
-        this.visible_cb = undefined;
-        this.unvisible_cb = undefined;
-        this.visible = true;
-
-        // Client setted position
-        this.lerpPosition = undefined;
-        this.lerpQuaternion = undefined;
-        this.clientSpeed = undefined;
-        this.clientSteeringVal = undefined;
-        this.lastSteeringVal = 0;
-    }
-
-    initMainView (scene) {
+        this.size = {width: CAR_WIDTH,
+                     length: CAR_LENGTH,
+                     height: CAR_WIDTH/2,
+                     wheelRadius: CAR_WIDTH/5};
+        
+        // Load Main Geometry
         // Build car shape around origin
-        const w = this._width/2;
-        const l = this._length/2;
-        const h = this._height/2;
+        const w = this.size.width/2;
+        const l = this.size.length/2;
+        const h = this.size.height/2;
         const carVertices = [
             new THREE.Vector3(w, -l, -h),
             new THREE.Vector3(0, l, -h),
@@ -107,16 +36,94 @@ class Car {
             new THREE.Vector3(0, w-l, h),
             new THREE.Vector3(-w, -l, -h)
         ];
+        this.mainGeo = new THREE.BufferGeometry().setFromPoints(carVertices);
+        this.mainGeo.computeVertexNormals();
+    }
 
-        const geo = new THREE.BufferGeometry().setFromPoints(carVertices);
-        geo.computeVertexNormals();
+    createCar (color, mainPlayer) {
+        const car = new Car(this.size, color, mainPlayer);
+        car.initMainView(this.mainGeo);
+        car.initMinimapView();
+        if (mainPlayer) {
+            car.initPhysics(this.phyWorld, {mass: 800,
+                                            suspensionStiffness: 100,
+                                            suspensionRestLength: 0.4,
+                                            maxSuspensionTravelCm: 10,
+                                            rollInfluence: 0.02,
+                                            friction: 8});
+        }
+        car.visible_cb = this.visible_callback.bind(this);
+        car.unvisible_cb = this.unvisible_callback.bind(this);
+        return car;
+    }
+
+    visible_callback (mainMeshes, minimapMesh) {
+        this.mainScene.add(...mainMeshes);
+        this.minimapScene.add(minimapMesh);
+    }
+
+    unvisible_callback (mainMeshes, minimapMesh) {
+        this.mainScene.remove(...mainMeshes);
+        this.minimapScene.remove(minimapMesh);
+    }
+}
+
+class Car {
+
+    constructor (size, color, mainPlayer) {
+        this.WHEELSNUMBER = 4;
+        this.FRONTLEFT = 0;
+        this.FRONTRIGHT = 1;
+        this.BACKLEFT = 2;
+        this.BACKRIGHT = 3;
+
+        // Geometry properties
+        this._width = size.width;
+        this._length = size.length;
+        this._height = size.height;
+        this._wheelRadius = size.wheelRadius;
+
+        // Reset altitude
+        this.Z_RESET = 1.5;
+
+        // Meshes
+        this.chassisMesh = undefined;
+        this.cameraPosition = undefined;
+        this.wheelMeshes = [undefined, undefined, undefined, undefined];
+        this.independantWheels = mainPlayer;
+
+        this.minimapMeshInner = undefined;
+        this.minimapMesh = undefined;
+
+        // Physics
+        this.chassisBody = undefined;
+        this.vehiclePhysics = undefined;
+        this.DISABLE_DEACTIVATION = 4;
+
+        // Colors
+        this.currentColor = new THREE.Color(color);
+        this.outerMinimapColor = mainPlayer ? 0xFFFF00: 0xFFFFFF; 
+        this.COLOR_GRASS_PARTICLE = 0x87B982;
+
+        // scene add/remove Callbacks
+        this.visible_cb = undefined;
+        this.unvisible_cb = undefined;
+        this.visible = false;
+
+        // Client setted position
+        this.lerpPosition = undefined;
+        this.lerpQuaternion = undefined;
+        this.clientSpeed = undefined;
+        this.clientSteeringVal = undefined;
+        this.lastSteeringVal = 0;
+    }
+
+    initMainView (geo) {
         const edges = new THREE.EdgesGeometry(geo);
         const lineMesh = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
 
         const material = new THREE.MeshLambertMaterial({color : this.currentColor});
         this.chassisMesh = new THREE.Mesh(geo, material);
-        //this.chassisMesh.castShadow = true;
-        //this.chassisMesh.receiveShadow = true;
         this.chassisMesh.add(lineMesh);
 
         // Camera
@@ -130,23 +137,21 @@ class Car {
         const wh = -0.3;
         const width = this._wheelRadius/1.5;
         const wheelGeo = new THREE.CylinderGeometry(this._wheelRadius, this._wheelRadius, width, 24, 1);
+        const wheelGeoIndicator = new THREE.BoxGeometry(width * 1.5, this._wheelRadius * 1.75, this._wheelRadius*.25); 
         wheelGeo.rotateZ(Math.PI/2);
         for (var i = 0; i < this.WHEELSNUMBER; i++) {
             let m = new THREE.Mesh(wheelGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
-            m.add(new THREE.Mesh(new THREE.BoxGeometry(width * 1.5, this._wheelRadius * 1.75, this._wheelRadius*.25),
-                                 new THREE.MeshBasicMaterial({color: 0xfff000})));
+            m.add(new THREE.Mesh(wheelGeoIndicator, new THREE.MeshBasicMaterial({color: 0xfff000})));
             if (i == this.FRONTLEFT) m.position.set(-ww, wl, wh);
             if (i == this.FRONTRIGHT) m.position.set(ww, wl, wh);
             if (i == this.BACKLEFT) m.position.set(-ww, -wl, wh);
             if (i == this.BACKRIGHT) m.position.set(ww, -wl, wh);
             this.wheelMeshes[i] = m;
-            if (!this.mainPlayer) this.chassisMesh.add(m);
+            if (!this.independantWheels) this.chassisMesh.add(m);
         }
-
-        scene.add(this.chassisMesh);
     }
 
-    initMinimapView (scene) {
+    initMinimapView () {
         const minimapgeo = new THREE.PlaneBufferGeometry(30,30);
         this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: this.outerMinimapColor}));
 
@@ -154,8 +159,6 @@ class Car {
         this.minimapMeshInner = new THREE.Mesh(minimapgeoInner, new THREE.MeshBasicMaterial({color: this.currentColor}));
 
         this.minimapMesh.add(this.minimapMeshInner);
-
-        scene.add(this.minimapMesh);
     }
 
     initPhysics (physicsWorld, conf) {
@@ -226,7 +229,7 @@ class Car {
     makeVisible () {
         if (this.visible) return;
 
-        if (this.mainPlayer) {
+        if (this.independantWheels) {
             this.visible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
         } else {
             this.visible_cb([this.chassisMesh], this.minimapMesh);
@@ -237,7 +240,7 @@ class Car {
     makeUnvisible () {
         if (!this.visible) return;
 
-        if (this.mainPlayer) {
+        if (this.independantWheels) {
             this.unvisible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
         } else {
             this.unvisible_cb([this.chassisMesh], this.minimapMesh);
@@ -266,7 +269,7 @@ class Car {
         // Modifiy Ammo body position
         let t = new Ammo.btTransform();
         t.setIdentity();
-        t.setOrigin(new Ammo.btVector3(initPoint.x, initPoint.y, this._zreset));
+        t.setOrigin(new Ammo.btVector3(initPoint.x, initPoint.y, this.Z_RESET));
         t.setRotation(new Ammo.btQuaternion(q.x, q.y, q.z, q.w));
         let motionState = new Ammo.btDefaultMotionState(t);
         this.chassisBody.setMotionState(motionState);
@@ -335,9 +338,11 @@ class Car {
     updateLerpPosition () {
         if (this.lerpPosition != undefined && this.lerpQuaternion != undefined
             && this.clientSpeed != undefined && this.clientSteeringVal != undefined) {
-            this.minimapMesh.position.lerp(this.lerpPosition, 0.2);
+            const lerpSpeed = this.minimapMesh.position.equals(new THREE.Vector3()) ? 0.2 : 1;
+
+            this.minimapMesh.position.lerp(this.lerpPosition, lerpSpeed);
             
-            this.chassisMesh.position.lerp(this.lerpPosition, 0.2);
+            this.chassisMesh.position.lerp(this.lerpPosition, lerpSpeed);
             this.chassisMesh.quaternion.set(this.lerpQuaternion.x,
                                             this.lerpQuaternion.y,
                                             this.lerpQuaternion.z,

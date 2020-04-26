@@ -51,7 +51,7 @@ class Gameplay {
 
     /*
      * clear all
-     * update
+     * update what's need to be updated
      * init state
      */
     setState (newState, newCircuit, newOtherDrivers) {
@@ -292,7 +292,10 @@ class Gameplay {
 
     addOtherDriver (driver) {
         this.otherDrivers.set(driver.id, driver);
-        this.leaderboard.addDriver(driver);
+        if (this.state == "multi" || this.state == "spectator" || this.state == "menu") {
+            this.leaderboard.addDriver(driver);
+            driver.car.makeVisible();
+        }
     }
 
     delOtherDriver (driverid) {
