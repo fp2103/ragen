@@ -338,7 +338,10 @@ class Car {
     updateLerpPosition () {
         if (this.lerpPosition != undefined && this.lerpQuaternion != undefined
             && this.clientSpeed != undefined && this.clientSteeringVal != undefined) {
-            const lerpSpeed = this.minimapMesh.position.equals(new THREE.Vector3()) ? 0.2 : 1;
+            const lerpSpeed = (this.minimapMesh.position.x == 0 
+                               && this.minimapMesh.position.y == 0
+                               && this.minimapMesh.position.z == 0) ? 1 : 0.2;
+            console.log(lerpSpeed);
 
             this.minimapMesh.position.lerp(this.lerpPosition, lerpSpeed);
             
