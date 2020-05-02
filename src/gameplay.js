@@ -48,6 +48,7 @@ class Gameplay {
 
         // Arcs status
         this.state = undefined;
+        this.getSessionState_cb = undefined; 
     }
 
     /*
@@ -97,7 +98,9 @@ class Gameplay {
                 this.gameElementsHtml.style.display = "block";
                 this.leaderboard.setMode("spectator", this.otherDrivers.values());
             case "menu":
-                this.otherDrivers.forEach((v) => {v.car.makeVisible()});
+                if (!this.getSessionState_cb().podium) {
+                    this.otherDrivers.forEach((v) => {v.car.makeVisible()});
+                }
                 break;
             case "solo":
             case "multi":
@@ -311,7 +314,7 @@ class Gameplay {
 
         const drivers = Array.from(this.otherDrivers.values());
         const SESSIONFULL_backup = this.leaderboard.SESSIONFULL;
-        if (this.leaderboard.mode != "spectator") {
+        if (!this.getSessionState_cb().spectator) {
             drivers.push(this.player);
             this.leaderboard.SESSIONFULL = "";   
         }

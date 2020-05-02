@@ -79,10 +79,11 @@ main();
 
 
 /* TODO:
-- podium scene
+- finish podium scene
 - make minimap using the same renderer/or maybe native canvas function?
-- set speed limit on grass
-- set red margin when out of track
+- set speed limit on grass (+ more grass drag?)
+- set red margin when out of track (no color change)
+- add close button to menu
 - responsive
 - touch controls
 - menu improvement:

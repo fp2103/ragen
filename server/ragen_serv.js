@@ -180,6 +180,10 @@ class Session {
         // Flag session to be deleted if empty
         if (this.players.size == 0) {
             this.lastDisonnectedTS = Date.now();
+            if (this.state == "podium") {
+                clearTimeout(this.currentTimeout);
+                this.reload_circuit();
+            }
         }
     }
 

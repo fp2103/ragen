@@ -153,6 +153,7 @@ class PodiumScene {
         this.camera.position.set(t.x, t.y, t.z);
         this.camera.up = new THREE.Vector3(0, 0, 1);
         this.camera.lookAt(this.podiumMesh.position);
+        this.ROTATION_AXIS = new THREE.Vector3(0, 0, -1);
         this.cumulativeRotation = 0;
         this.last_update = 0;
 
@@ -166,7 +167,6 @@ class PodiumScene {
                 this.particle_starting_position = this.DEFAULT_PARTICLE_SP.clone();
                 this.particle_starting_position.applyQuaternion(q);
                 this.particle_starting_position.add(t);
-                break;
             }
         }
         this.since_last_part_update = this.PARTICLE_UPDATE+1;

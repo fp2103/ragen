@@ -131,7 +131,13 @@ class Menu {
         // Already connected to this session
         if (this.client.isConnected()
             && this.client.sessionid == session_id.toUpperCase()) {
-            this.gameplay.setState(this.client.spectator ? "spectator" : "multi");
+            if (this.client.podiumScene) {
+                this.gameplay.setState("podium");
+            } else if (this.client.spectator) {
+                this.gameplay.setState("spectator");
+            } else {
+                this.gameplay.setState("multi");
+            }
             return;
         }
 

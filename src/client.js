@@ -15,16 +15,24 @@
         
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
-        this.spectator = false;
         this.socket = undefined;
         this.sendPosInter = undefined;
         window.addEventListener("beforeunload", this.disconnect.bind(this), false);
         setInterval(this.updateRT.bind(this), 1000);
 
         this.player.client_CB = this.mainDriverUpdate.bind(this);
-        this.onMenu = undefined;
 
         this.connect_cb = undefined;
+
+        // State
+        this.onMenu = false;
+        this.spectator = false;
+        this.podiumScene = false;
+        this.gameplay.getSessionState_cb = this.getSessionState.bind(this);
+    }
+
+    getSessionState () {
+        return {podium: this.podiumScene, spectator: this.spectator};
     }
 
     isConnected () {
@@ -72,6 +80,7 @@
             document.getElementById("menu_seed").value = data.cid;
             document.getElementById("centered_msg").innerHTML = ""
             this.spectator = data.nonplayable;
+            this.podiumScene = data.state == "podium";
 
             // Callback if defined
             if (this.connect_cb != undefined) this.connect_cb();
@@ -81,12 +90,12 @@
                 return;
             }
 
-            switch (data.state) {
-                case "podium":
-                    this.gameplay.setState("podium", v, drivers);
-                    break;
-                default:
-                    this.gameplay.setState(this.spectator ? "spectator" : "multi", v, drivers);
+            if (this.podiumScene) {
+                this.gameplay.setState("podium", v, drivers);
+            } else if (this.spectator) {
+                this.gameplay.setState("spectator", v, drivers);
+            } else {
+                this.gameplay.setState("multi", v, drivers);
             }
         });
 
@@ -105,6 +114,7 @@
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.spectator = false;
+        this.podiumScene = false;
         this.socket = undefined;
         clearInterval(this.sendPosInter);
         this.sendPosInter = undefined;
