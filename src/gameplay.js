@@ -31,7 +31,8 @@ class Gameplay {
         this.MAX_SPEED = 250;
         this.MAX_REVERSE_SPEED = -30;
         this.DEFAULT_DRAG = 3;
-        this.GRASS_DRAG = 60;
+        this.GRASS_DRAG = 100;
+        this.GRASS_MAX_SPEED = 100;
         this.DOWN_VECTOR = new THREE.Vector3(0, 0, -1);
 
         // Circuit
@@ -184,11 +185,13 @@ class Gameplay {
         this.speedHtml.innerHTML = speedtext;
 
         // Car controls: Update engine force
-        let breakingForce = this.DEFAULT_DRAG;
-        let engineForce = 0;
         let wheelOffside = 0;
         let nextcpcrossed = false;
         for (var i = 0; i < this.player.car.WHEELSNUMBER; i++) {
+            let breakingForce = this.DEFAULT_DRAG;
+            let engineForce = 0;
+            let maxspeed = this.MAX_SPEED;
+            
             // Check Ground under each wheel
             // must use raycaster from threejs because ammojs doesn't work
             let raycaster = new THREE.Raycaster(this.player.car.wheelMeshes[i].position, 
@@ -196,6 +199,7 @@ class Gameplay {
             let intercir = raycaster.intersectObject(this.circuit.mesh);
             if (intercir.length == 0) {
                 breakingForce = this.GRASS_DRAG;
+                maxspeed = this.GRASS_MAX_SPEED;
                 wheelOffside += 1;
 
                 // Particles
@@ -205,7 +209,7 @@ class Gameplay {
             if (actions.acceleration) {
                 if (speed < -1) {
                     breakingForce = this.MAX_BREAKING_FORCE;
-                } else if (speed < this.MAX_SPEED) {
+                } else if (speed < maxspeed) {
                     engineForce = this.MAX_ENGINE_FORCE;
                 } else {
                     engineForce = 0;
