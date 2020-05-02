@@ -9,6 +9,8 @@
 <body>
     <div id="container">
         <div id="menu" style="display: none;">
+            <input type="button" value="x" id="close" style="display: none;">
+
             <h3>Menu</h3>
             <label for="name">Driver Name:</label>
             <input type="text" id="name" maxlength="10" value="anon">
@@ -59,6 +61,7 @@
             <p id="speed">0 km/h</p>
             <p id="score_message"></p>
             <canvas id="minimapc"></canvas>
+            <canvas id="redalert"></canvas>
         </div>
 
         <p id="centered_msg"></p>
@@ -67,10 +70,39 @@
     </div>
 </body>
 
+<!-- fill red alert canvas -->
+<script>
+    const c = document.getElementById("redalert");
+    const ctx = c.getContext("2d");
+
+    // Create gradient
+    const grdA = ctx.createLinearGradient(0,0,c.width,0);
+    grdA.addColorStop(0,"rgba(255, 0, 0, 1)");
+    grdA.addColorStop(0.05,"rgba(255, 0, 0, 0)");
+    grdA.addColorStop(0.95,"rgba(255, 0, 0, 0)");
+    grdA.addColorStop(1,"rgba(255, 0, 0, 1)");
+
+    const grdB = ctx.createLinearGradient(0,0,0,c.height);
+    grdB.addColorStop(0,"rgba(255, 0, 0, 1)");
+    grdB.addColorStop(0.05,"rgba(255, 0, 0, 0)");
+    grdB.addColorStop(0.95,"rgba(255, 0, 0, 0)");
+    grdB.addColorStop(1,"rgba(255, 0, 0, 1)");
+
+    // Fill canvas
+    ctx.fillStyle = grdA;
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.globalCompositeOperation='lighter';
+    ctx.fillStyle = grdB;
+    ctx.fillRect(0,0,c.width,c.height);
+</script>
+
+<!-- Libraries -->
 <script src="libs/seedrandom.min.js"></script>
 <script src="libs/three.min.js"></script>
 <script src="libs/stats.min.js"></script>
 <script src="libs/ammo.js"></script>
 <script src="libs/socket.io.js"></script>
+
+<!-- Main script -->
 <script src="ragen.js"></script>
 </html>

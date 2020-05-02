@@ -29,6 +29,9 @@ class Menu {
         document.getElementById("session_go").addEventListener("click", this.onSessionGoMenu.bind(this), false);
 
         document.getElementById("session_share").addEventListener("click", this.onSessionShare.bind(this), false);
+
+        this.closeButton = document.getElementById("close");
+        this.closeButton.addEventListener("click", this.onClose.bind(this), false);
     }
 
     _generateRandomSeed (size) {
@@ -63,6 +66,7 @@ class Menu {
     }
 
     onMenuButton () {
+        this.closeButton.style.display = "block";
         this.showMenu();
         this.gameplay.setState("menu");
     }
@@ -83,6 +87,7 @@ class Menu {
     onRandomMenu () {
         this.client.disconnect();
         this.quickButtonsEnable();
+        this.closeButton.style.display = "none";
 
         this.loadTrack(this._generateRandomSeed(this.TRACKID_SIZE), "menu");
     }
@@ -164,4 +169,13 @@ class Menu {
         }
     }
 
+    onClose () {
+        if (this.client.isConnected()) {
+            // reset id to current session
+            this.htmlSessionId.value = this.client.sessionid;
+            this.onSessionGoMenu();
+        } else {
+            this.onGoMenu();
+        }
+    }
 }

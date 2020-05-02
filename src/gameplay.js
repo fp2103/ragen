@@ -11,7 +11,8 @@ class Gameplay {
 
         this.leaderboard = new Leaderboard(player);
         this.speedHtml = document.getElementById('speed');
-        this.gameElementsHtml = document.getElementById('game_elements'); 
+        this.gameElementsHtml = document.getElementById('game_elements');
+        this.redalertHtml = document.getElementById("redalert");
         this.otherDrivers = new Map();
 
         // Init camera position
@@ -31,7 +32,7 @@ class Gameplay {
         this.MAX_SPEED = 250;
         this.MAX_REVERSE_SPEED = -30;
         this.DEFAULT_DRAG = 3;
-        this.GRASS_DRAG = 100;
+        this.GRASS_DRAG = 60;
         this.GRASS_MAX_SPEED = 100;
         this.DOWN_VECTOR = new THREE.Vector3(0, 0, -1);
 
@@ -60,6 +61,7 @@ class Gameplay {
         // default html display
         this.gameElementsHtml.style.display = "none";
         this.speedHtml.style.display = "none";
+        this.redalertHtml.style.display = "none";
         this.leaderboard.clearRows();
 
         // default Scene display
@@ -273,11 +275,13 @@ class Gameplay {
 
         // Outside of track: change color & disqualify!
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
-            const oppositeColor = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
-            this.player.car.chassisMesh.material.color.copy(oppositeColor);
+            //const oppositeColor = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
+            //this.player.car.chassisMesh.material.color.copy(oppositeColor);
+            this.redalertHtml.style.display = "block";
             this.leaderboard.disqualify();
         } else {
-            this.player.car.chassisMesh.material.color.copy(this.player.car.currentColor);
+            //this.player.car.chassisMesh.material.color.copy(this.player.car.currentColor);
+            this.redalertHtml.style.display = "none";
         }
         
         // Update car position
