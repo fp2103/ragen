@@ -26,9 +26,11 @@ async function main () {
     const carFactory = new CarFactory(mainView, minimapView, physics);
     const circuitFactory = new CircuitFactory(mainView, minimapView, physics);
     const particlesManager = new ParticlesManager(mainView.scene, PARTICLES_LIMIT);
+    const podiumScene = new PodiumScene(mainView, particlesManager);
 
     // Player
     let randomColor = Math.floor(Math.random()*16777215).toString(16);
+    while (randomColor.length < 6) { randomColor = '0' + randomColor };
     randomColor = '#' + randomColor;
     document.getElementById("color").value = randomColor;
     const driver = new Driver(0, DEFAULT_NAME, carFactory.createCar(randomColor, true));
@@ -37,7 +39,7 @@ async function main () {
     const controls = new Controls();
 
     // Game main
-    const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager);
+    const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager, podiumScene);
 
     // Inputs
     const client = new Client(gameplay, circuitFactory, carFactory, driver);
@@ -78,6 +80,9 @@ main();
 
 /* TODO:
 - podium scene
+- make minimap using the same renderer/or maybe native canvas function?
+- set speed limit on grass
+- set red margin when out of track
 - responsive
 - touch controls
 - menu improvement:
@@ -88,8 +93,8 @@ main();
     - design
 - scene improvment
     - slide traces
-    - background
-    - car
+    - background objects
+    - car design
 - sound
 */
 

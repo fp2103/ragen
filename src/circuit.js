@@ -322,4 +322,16 @@ class Circuit {
 
         return {nosePoint: nosePoint, directionVector: slvt};
     }
+
+    getPodiumPosition () {
+        const slv = new THREE.Vector3().subVectors(...this.startingLinePoints);
+        slv.multiplyScalar(-1.75);
+        const point = this.startingLinePoints[0].clone();
+        point.add(slv);
+
+        const slvt = new THREE.Vector3().crossVectors(new THREE.Vector3(0,0,1), slv);
+        slvt.normalize();
+
+        return {p: point, d: slvt};
+    }
 }

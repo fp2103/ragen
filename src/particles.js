@@ -4,7 +4,7 @@ class Particle {
     constructor (size, color, time) {
         // Object3D
         this.geo = new THREE.PlaneBufferGeometry(size.x, size.y);
-        this.mat = new THREE.MeshBasicMaterial({color});
+        this.mat = new THREE.MeshBasicMaterial({color, side: THREE.DoubleSide});
         this.mesh = new THREE.Mesh(this.geo, this.mat);
 
         // Time

@@ -19,6 +19,7 @@ circuit.js
 car.js
 driver.js
 controls.js
+podiumScene.js
 gameplay.js
 client.js
 menu.js

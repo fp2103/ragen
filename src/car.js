@@ -296,6 +296,7 @@ class Car {
 
         // Update wheels position
         for (var i = 0; i < this.WHEELSNUMBER; i++) {
+            if (force) this.vehiclePhysics.updateWheelTransform(i); 
             let tm = this.vehiclePhysics.getWheelTransformWS(i);
             let p = tm.getOrigin();
             let q = tm.getRotation();
@@ -338,10 +339,10 @@ class Car {
     updateLerpPosition () {
         if (this.lerpPosition != undefined && this.lerpQuaternion != undefined
             && this.clientSpeed != undefined && this.clientSteeringVal != undefined) {
+            // lerpspeed depend on actual distance to position
             const lerpSpeed = (this.minimapMesh.position.x == 0 
                                && this.minimapMesh.position.y == 0
                                && this.minimapMesh.position.z == 0) ? 1 : 0.2;
-            console.log(lerpSpeed);
 
             this.minimapMesh.position.lerp(this.lerpPosition, lerpSpeed);
             
@@ -363,5 +364,32 @@ class Car {
             this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
             this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
         }
-    } 
+    }
+
+    forceMeshToPosition (point, dir) {
+        let angle = dir.angleTo(new THREE.Vector3(0,1,0));
+        const orthoZ = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), dir);
+        let sign = 1;
+        if (orthoZ.z < 0) sign = -1;
+        angle = sign*angle;
+        const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), angle);
+        
+        if (this.independantWheels) {
+            // Modifiy Ammo body position and then mesh
+            let t = new Ammo.btTransform();
+            t.setIdentity();
+            t.setOrigin(new Ammo.btVector3(point.x, point.y, point.z + this._height));
+            t.setRotation(new Ammo.btQuaternion(q.x, q.y, q.z, q.w));
+            let motionState = new Ammo.btDefaultMotionState(t);
+            this.chassisBody.setMotionState(motionState);
+            this.chassisBody.setLinearVelocity(new Ammo.btVector3(0,0,0));
+            this.chassisBody.setAngularVelocity(new Ammo.btVector3(0,0,0));
+            this.chassisBody.setLinearVelocity(0);
+
+            this.updatePosition(0, true);
+        } else {
+            this.chassisMesh.position.set(point.x, point.y, point.z + this._height);
+            this.chassisMesh.quaternion.set(q.x, q.y, q.z, q.w);
+        }
+    }
 }

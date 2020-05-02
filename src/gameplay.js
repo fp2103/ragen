@@ -2,11 +2,12 @@
 // Gameplay and Menu
 class Gameplay {
 
-    constructor (player, controls, camera, particlesManager) {
+    constructor (player, controls, camera, particlesManager, podiumScene) {
         this.player = player;
         this.controls = controls;
         this.camera = camera;
         this.particlesManager = particlesManager;
+        this.podiumScene = podiumScene;
 
         this.leaderboard = new Leaderboard(player);
         this.speedHtml = document.getElementById('speed');
@@ -50,9 +51,8 @@ class Gameplay {
     }
 
     /*
-     * clear all
-     * update what's need to be updated
-     * init state
+     * clear all & update what's need to be updated
+     * init new state
      */
     setState (newState, newCircuit, newOtherDrivers) {
         // default html display
@@ -62,8 +62,10 @@ class Gameplay {
 
         // default Scene display
         this.clearPodiumScene();
+        this.particlesManager.reset();
         this.player.car.makeUnvisible();
         this.otherDrivers.forEach((v) => {v.car.makeUnvisible()});
+        this.resetCamera();
         
         // Update circuit
         if (newCircuit != undefined) {
@@ -79,6 +81,9 @@ class Gameplay {
             this.startingPos = this.circuit.getStartingPosition();
         }
         if (this.circuit == undefined) return;
+
+        // Reset player gameplay
+        this.reset();
 
         // Update other drivers
         if (newOtherDrivers != undefined) {
@@ -107,8 +112,6 @@ class Gameplay {
                 break;
         }
         this.state = newState;
-        this.resetCamera();
-        this.reset();
     }
 
     update () {
@@ -129,8 +132,7 @@ class Gameplay {
                 this.particlesManager.update();
                 break;
             case "podium":
-                this.onPodiumScene();
-                this.particlesManager.update();
+                this.podiumScene.update();
                 break;
         }
     }
@@ -152,7 +154,6 @@ class Gameplay {
         this.nextcp = 0;
 
         this.leaderboard.resetTime();
-        this.particlesManager.reset();
         this.controls.resetActions();
 
         this.justReset = true;
@@ -305,15 +306,35 @@ class Gameplay {
     }
 
     initPodiumScene () {
+        this.gameElementsHtml.style.display = "block";
+        document.getElementById("minimapc").style.display = "none";
 
-    }
+        const drivers = Array.from(this.otherDrivers.values());
+        const SESSIONFULL_backup = this.leaderboard.SESSIONFULL;
+        if (this.leaderboard.mode != "spectator") {
+            drivers.push(this.player);
+            this.leaderboard.SESSIONFULL = "";   
+        }
+        this.leaderboard.setMode("spectator", drivers);
+        // Fill the board
+        this.leaderboard.update();
+        this.leaderboard.SESSIONFULL = SESSIONFULL_backup;
 
-    onPodiumScene () {
+        // Get three first drivers from sorted list
+        const winners = [undefined, undefined, undefined];
+        for (let i = 0; i < 3 && i < this.leaderboard.drivers.length; i++) {
+            if (this.leaderboard.drivers[i].bestLapTime != undefined) {
+                winners[i] = this.leaderboard.drivers[i];
+            } else { 
+                break;
+            }
+        }
 
+        this.podiumScene.createScene(this.circuit, winners);
     }
 
     clearPodiumScene () {
-
+        document.getElementById("minimapc").style.display = "block";
+        this.podiumScene.destroyScene();
     }
-
 }

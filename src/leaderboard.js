@@ -1,4 +1,18 @@
 
+function convertTimeToString (time, forceMin) {
+    let min = Math.floor(time/60);
+    let showMin = forceMin || min > 0;
+    let sec = Math.floor(time) % 60;
+    let milli = Math.round((time - Math.floor(time)) * 1000)
+    if (min < 10) min = "0" + min;
+    if (sec < 10) sec = "0" + sec;
+    if (milli < 10) milli = "00" + milli;
+    else if (milli < 100) milli = "0" + milli;
+
+    if (showMin) return min + ":" + sec + ":" + milli;
+    else return sec + ":" + milli;
+}
+
 class TimeColor {
     constructor (time, color) {
         this.time = time;
@@ -190,23 +204,10 @@ class Leaderboard {
             this.rows.push(new Row(this.htmlTable));
         }
         for (let d of drivers) this.addDriver(d);
+        this.sortDrivers();
     }
     
     // ---- Utils ----
-
-    convertTimeToString (time, forceMin) {
-        let min = Math.floor(time/60);
-        let showMin = forceMin || min > 0;
-        let sec = Math.floor(time) % 60;
-        let milli = Math.round((time - Math.floor(time)) * 1000)
-        if (min < 10) min = "0" + min;
-        if (sec < 10) sec = "0" + sec;
-        if (milli < 10) milli = "00" + milli;
-        else if (milli < 100) milli = "0" + milli;
-
-        if (showMin) return min + ":" + sec + ":" + milli;
-        else return sec + ":" + milli;
-    }
 
     fillRow (indice, label, labelColor, sectors, purplize) {
         const row = this.rows[indice];
@@ -217,7 +218,7 @@ class Leaderboard {
         for (var j = 0; j < 3; j++) {
             let c = row.csectors[j];
             if (sectors[j] != undefined) {
-                c.innerHTML = this.convertTimeToString(sectors[j].time, true);
+                c.innerHTML = convertTimeToString(sectors[j].time, true);
                 if (sectors[j].color != undefined) c.style.color = sectors[j].color;
 
                 // Change to purple for best overall time
@@ -291,7 +292,7 @@ class Leaderboard {
 
         let tg = time - this.bestSectorTime[sector];
         let result = tg > 0 ? '<span style="color: red;">+ ' : '<span style="color: blue;">- ';
-        result += this.convertTimeToString(Math.abs(tg), false);
+        result += convertTimeToString(Math.abs(tg), false);
         result += '</span>';
         return result;
     }
