@@ -61,8 +61,8 @@ async function main () {
     let df = 0;
     function tick() {
         requestAnimationFrame(tick);
-        responsive_update();
-
+        responsive_update(mainView, minimapView, gameplay.leaderboard);
+        
         df += clock.getDelta() * FPS;    
         if (df > FPS) { df = 1; }
         while (df >= 1) {
@@ -90,7 +90,8 @@ main();
     - about section (=link to github + readme)
     - design
 - leaderboard html prettify
-    - animation when sorting driver
+    - refactor it to upload only changing value!!!
+    - animation when sorting driver, (1 driver = 1 row et bouge pas (mieux))
 - scene improvment
     - slide traces
     - background objects

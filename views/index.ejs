@@ -37,9 +37,9 @@
         <div id="game_elements" style="display: none;">
 
             <!-- fullsize scoreboard -->
-            <div id="scoreboard"  style="display: none;">
+            <div id="scoreboard"  style="display: block;">
                 <input type="button" value="hide" id="hide" style="width: 100%; display: none;">
-                <div id="track" class="scoreboard-data">
+                <div id="track" class="scoreboard-data compact-hide">
                     <span>Track: </span>
                     <input type="text" name="seed" id="seed" maxlength="10">
                     <input type="button" value="Random" id="random">
@@ -50,7 +50,7 @@
                     <span>- Time remaining: </span><span id="remaining_time">&infin;</span>
                 </div>
                 <table id="leaderboard" class="leaderboard">
-                    <tr>
+                    <tr class="ultra-hide">
                         <td>Leaderboard</td>
                         <th style="min-width: 3em;">Name</th>
                         <th>Sector 1</th>
@@ -62,7 +62,7 @@
             </div>
 
             <!-- Minimal scoreboard -->
-            <div id="scoreboard_min" style="display: block;">
+            <div id="scoreboard_min" style="display: none;">
                 <p id="session_info_min" style="display: none;">
                     Session Time rem.: <span id="remaining_time_2">00:00</span>
                 </p>

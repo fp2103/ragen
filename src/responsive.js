@@ -1,5 +1,5 @@
 
-function responsive_update () {
+function responsive_update (mainView, minimapView, leaderboard) {
 
-    
+
 }

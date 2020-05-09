@@ -23,6 +23,7 @@ class TimeColor {
 class Row {
     constructor (table) {
         const row = table.insertRow(-1);
+        this.html = row;
         
         this.clabel = row.insertCell(-1);
         this.clabel.colSpan = 2;
@@ -30,16 +31,16 @@ class Row {
         this.csectors = [];
         for (var i = 0; i < 3; i++) {
             let c = row.insertCell(-1);
-            c.innerHTML = "-";
+            c.textContent = "-";
             this.csectors.push(c);
         } 
     }
 
     reset () {
-        this.clabel.innerHTML = "";
+        this.clabel.textContent = "";
         this.clabel.style.color = "black";
         for (var i = 0; i < 3; i++) {
-            this.csectors[i].innerHTML = "-";
+            this.csectors[i].textContent = "-";
             this.csectors[i].style.color = "black";
         }
     }
@@ -91,6 +92,7 @@ class Leaderboard {
 
         // mode
         this.mode = undefined;
+        this.mergeCurrentAndMain = false;
     }
 
     resetTime () {
@@ -173,20 +175,21 @@ class Leaderboard {
                 l += " (you)";
             }
             this.fillRow(i, l, this.drivers[i].car.currentColor.getHexString(), 
-                         this.drivers[i].currTime, multi);
+                         this.drivers[i].currTime, multi,
+                         this.drivers[i].id == 0 ? "ultra-hide" : "compact-hide");
         }
 
         // Reset minimal scoreboard
-        this.htmlPlayerMin.innerHTML = mainDriverPos + ". " + this.mainDriver.name;
+        this.htmlPlayerMin.textContent = mainDriverPos + ". " + this.mainDriver.name;
         this.htmlPlayerMin.style.color = "#" + this.mainDriver.car.currentColor.getHexString();
-        this.htmlTimeMin.innerHTML = "-";
+        this.htmlTimeMin.textContent = "-";
         this.htmlTimeMin.style.color = "black";
 
         // that's enough for spectator mode(/podium)
         if (this.mode == "spectator") {
             // Fill minimal scoreboard time with best lap time
             if (this.mainDriver.bestLapTime != undefined) {
-                this.htmlTimeMin.innerHTML = convertTimeToString(this.mainDriver.bestLapTime, true);
+                this.htmlTimeMin.textContent = convertTimeToString(this.mainDriver.bestLapTime, true);
             }
             return;
         }
@@ -202,6 +205,7 @@ class Leaderboard {
 
         // Add last/current row && display messages
         let lastRowLabel = "Current";
+        let lastRowLabelColor = undefined;
         let lastRowData = this.current;
         if (Date.now() - this.msgStartTime <= this.MESSAGESHOWINGTIME) {
             if (this.last != undefined) {
@@ -215,16 +219,30 @@ class Leaderboard {
             this.endSector_min = undefined;
         }
 
+        if (this.mergeCurrentAndMain && this.last == undefined) {
+            lastRowLabel = mainDriverPos + " . " + this.mainDriver.name;
+            lastRowLabelColor = this.mainDriver.car.currentColor.getHexString();
+            lastRowData = [undefined, undefined, undefined];
+            for (let j = 0; j < 3; j++) {
+                if (this.current[j] != undefined) {
+                    lastRowData[j] = this.current[j];
+                    if (!this.validtime) lastRowData[j].color = "red";
+                } else if (this.mainDriver.currTime[j] != undefined) {
+                    lastRowData[j] = this.mainDriver.currTime[j];
+                }
+            } 
+        }
+
         // fill table current/last
-        this.fillRow(i, lastRowLabel, undefined, lastRowData, multi);
-        if (this.last == undefined && !this.validtime) this.rows[i].setColorAllRow("red");
+        this.fillRow(i, lastRowLabel, lastRowLabelColor, lastRowData, multi);
+        if (!this.mergeCurrentAndMain && this.last == undefined && !this.validtime) this.rows[i].setColorAllRow("red");
 
         // Fill minimal scoreboard time
         if (this.endSector_min != undefined) {
-            this.htmlTimeMin.innerHTML = convertTimeToString(this.endSector_min.time, true);
+            this.htmlTimeMin.textContent = convertTimeToString(this.endSector_min.time, true);
             if (this.endSector_min.color != undefined) this.htmlTimeMin.style.color = this.endSector_min.color;
         } else {
-            this.htmlTimeMin.innerHTML = convertTimeToString(this.laptime, true);
+            this.htmlTimeMin.textContent = convertTimeToString(this.laptime, true);
             if (!this.validtime) this.htmlTimeMin.style.color = "red";
         }
     }
@@ -242,16 +260,20 @@ class Leaderboard {
     
     // ---- Utils ----
 
-    fillRow (indice, label, labelColor, sectors, purplize) {
+    fillRow (indice, label, labelColor, sectors, purplize, cls) {
         const row = this.rows[indice];
+        
+        // reset & set new class
+        row.html.className = "";
+        if (cls) row.html.className = cls;
 
-        row.clabel.innerHTML = label;
+        row.clabel.textContent = label;
         if (labelColor != undefined) row.clabel.style.color = "#" + labelColor;
 
         for (var j = 0; j < 3; j++) {
             let c = row.csectors[j];
             if (sectors[j] != undefined) {
-                c.innerHTML = convertTimeToString(sectors[j].time, true);
+                c.textContent = convertTimeToString(sectors[j].time, true);
                 if (sectors[j].color != undefined) c.style.color = sectors[j].color;
 
                 // Change to purple for best overall time
@@ -281,7 +303,7 @@ class Leaderboard {
     }
 
     clearRows () {
-        while (this.htmlTable.rows.length > 2) {
+        while (this.htmlTable.rows.length > 1) {
             this.htmlTable.deleteRow(-1);
         }
 
