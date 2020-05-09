@@ -171,7 +171,7 @@ class Menu {
 
     onClose () {
         if (this.client.isConnected()) {
-            // reset id to current session
+            // reset id field to current session
             this.htmlSessionId.value = this.client.sessionid;
             this.onSessionGoMenu();
         } else {

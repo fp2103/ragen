@@ -5,9 +5,11 @@
     <link rel="stylesheet" type="text/css" href="main.css">
     <title>RAGEN</title>
 </head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <body>
     <div id="container">
+
         <div id="menu" style="display: none;">
             <input type="button" value="x" id="close" style="display: none;">
 
@@ -33,30 +35,45 @@
         </div>
 
         <div id="game_elements" style="display: none;">
-            <div id="scoreboard">
-                <div id="track">
+
+            <!-- fullsize scoreboard -->
+            <div id="scoreboard"  style="display: none;">
+                <input type="button" value="hide" id="hide" style="width: 100%; display: none;">
+                <div id="track" class="scoreboard-data">
                     <span>Track: </span>
                     <input type="text" name="seed" id="seed" maxlength="10">
                     <input type="button" value="Random" id="random">
                     <input type="button" value="Go" id="go">
                 </div>
-                <div id="session_info">
+                <div id="session_info" class="scoreboard-data">
                     <span>Session: </span><span id="session_span">N/A</span>
                     <span>- Time remaining: </span><span id="remaining_time">&infin;</span>
                 </div>
                 <table id="leaderboard" class="leaderboard">
                     <tr>
                         <td>Leaderboard</td>
-                        <th>Name</th>
+                        <th style="min-width: 3em;">Name</th>
                         <th>Sector 1</th>
                         <th>Sector 2</th>
                         <th>Lap</th>
                     </tr>
-                    <tr>
-                        <td colspan="5"></td>
-                    </tr>
                 </table>
-            </div>            
+                <input type="button" value="&equiv;" id="expand" style="width: 100%; display: none;">
+            </div>
+
+            <!-- Minimal scoreboard -->
+            <div id="scoreboard_min" style="display: block;">
+                <p id="session_info_min" style="display: none;">
+                    Session Time rem.: <span id="remaining_time_2">00:00</span>
+                </p>
+                <div>
+                    <p id="leaderboard_min" style="display: inline-block;">
+                        <span id="player_min">-. anon</span> - <span id="time_min">-</span>
+                    </p>
+                    <input type="button" value="&equiv;" id="expand_min" style="display: inline-block;">
+                </div>
+            </div>
+
             <input id="menu_button" type="button" value="Menu">
             <p id="speed">0 km/h</p>
             <p id="score_message"></p>

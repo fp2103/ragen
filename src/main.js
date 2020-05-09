@@ -61,6 +61,7 @@ async function main () {
     let df = 0;
     function tick() {
         requestAnimationFrame(tick);
+        responsive_update();
 
         df += clock.getDelta() * FPS;    
         if (df > FPS) { df = 1; }
@@ -79,15 +80,17 @@ main();
 
 
 /* TODO:
-- make minimap using the same renderer??/or maybe native canvas function? 
 - responsive
+- podium update name color on update user
 - touch controls
 - menu improvement:
     - arrow zone
     - session id details
-    - controls info
-    - about section
+    - controls & settings options
+    - about section (=link to github + readme)
     - design
+- leaderboard html prettify
+    - animation when sorting driver
 - scene improvment
     - slide traces
     - background objects

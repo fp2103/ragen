@@ -120,6 +120,7 @@
         this.sendPosInter = undefined;
         document.getElementById("remaining_time").innerHTML = "&infin;";
         document.getElementById("session_span").innerHTML = "N/A";
+        document.getElementById("session_info_min").style.display = "none";
         this.connect_cb = undefined;
     }
 
@@ -133,6 +134,10 @@
             let innerhtml = rtMin + ":" + rtSec;
             if (rts <= 60) innerhtml = "<b>" + innerhtml + "</b>";
             document.getElementById("remaining_time").innerHTML = innerhtml;
+
+            // Scoreboard minimal
+            document.getElementById("session_info_min").style.display = "block";
+            document.getElementById("remaining_time_2").innerHTML = innerhtml;
         }
     }
 

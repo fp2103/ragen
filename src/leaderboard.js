@@ -58,6 +58,10 @@ class Leaderboard {
         this.mainDriver = mainDriver;
         this.htmlTable = document.getElementById("leaderboard");
         this.htmlMessage = document.getElementById("score_message");
+
+        // Minimal scoreboard
+        this.htmlPlayerMin = document.getElementById("player_min");
+        this.htmlTimeMin = document.getElementById("time_min")
         
         this.drivers = [];
         this.rows = [];
@@ -80,6 +84,7 @@ class Leaderboard {
         // Previous lap/sector info
         this.last = undefined;
         this.endSectorMsg = "";
+        this.endSector_min = undefined;
         this.msgStartTime = 0;
 
         // Keep best times for each sector
@@ -98,6 +103,7 @@ class Leaderboard {
 
         this.last = undefined;
         this.endSectorMsg = "";
+        this.endSector_min = undefined;
         this.msgStartTime = 0;
 
         this.bestSectorTime = [undefined, undefined, undefined];
@@ -112,9 +118,13 @@ class Leaderboard {
         if (this.validtime) {
             timegapMsg = this.computeTimeGap(sector, this.laptime);
             this.current[sector] = this.mainDriver.updateCurrTime(sector, this.laptime);
+            this.endSector_min = this.current[sector];
             if (sector == 2 && this.mainDriver.updateBestTime(this.laptime)) {
                 this.sortDrivers();
-                bestMsg = this.mode == "multi" ? this.SESSIONBEST : this.PERSONALBEST;
+                bestMsg = this.PERSONALBEST;
+                if (this.mode == "multi" && this.drivers[0].id == this.mainDriver.id) {
+                    bestMsg = this.SESSIONBEST;
+                }
             }
             this.mainDriver.client_CB();
         }
@@ -129,8 +139,8 @@ class Leaderboard {
             this.current_sector = 0;
         }
 
-        if (bestMsg || timegapMsg || this.last != undefined) {
-            this.endSectorMsg = bestMsg + "<br/>" + timegapMsg;
+        if (bestMsg || timegapMsg || this.last != undefined || this.endSector_min != undefined) {
+            if (bestMsg || timegapMsg) this.endSectorMsg = bestMsg + "<br/>" + timegapMsg;
             this.msgStartTime = Date.now();
         }
     }
@@ -150,10 +160,15 @@ class Leaderboard {
 
         // fill table drivers
         const multi = this.mode == "multi" || this.mode == "spectator";
+        let mainDriverPos = "-";
         this.computeBestSectorTime();
         for (i = 0; i < this.drivers.length; i++) {
             let l = (i+1) + " . ";
-            if (this.drivers[i].bestLapTime == undefined) l = "- . ";
+            if (this.drivers[i].bestLapTime == undefined) {
+                l = "- . ";
+            } else if (this.drivers[i].id == 0) {
+                mainDriverPos = i+1;
+            }
             l += this.drivers[i].name;
             if (multi && this.drivers[i].id == 0) {
                 l += " (you)";
@@ -162,9 +177,20 @@ class Leaderboard {
                          this.drivers[i].currTime, multi);
         }
 
-        // that's enough for spectator mode
+        // Reset minimal scoreboard
+        this.htmlPlayerMin.innerHTML = mainDriverPos + ". " + this.mainDriver.name;
+        this.htmlPlayerMin.style.color = "#" + this.mainDriver.car.currentColor.getHexString();
+        this.htmlTimeMin.innerHTML = "-";
+        this.htmlTimeMin.style.color = "black";
+
+        // that's enough for spectator mode(/podium)
         if (this.mode == "spectator") {
             this.htmlMessage.innerHTML = this.SESSIONFULL;
+
+            // Fill minimal scoreboard time with best lap time
+            if (this.mainDriver.bestLapTime != undefined) {
+                this.htmlTimeMin.innerHTML = convertTimeToString(this.mainDriver.bestLapTime, true);
+            }
             return;
         }
 
@@ -177,7 +203,7 @@ class Leaderboard {
             this.current[this.current_sector].time = this.laptime;
         }
 
-        // Add last/current row
+        // Add last/current row && display messages
         let lastRowLabel = "Current";
         let lastRowData = this.current;
         if (Date.now() - this.msgStartTime <= this.MESSAGESHOWINGTIME) {
@@ -189,11 +215,21 @@ class Leaderboard {
         } else {
             this.last = undefined;
             this.endSectorMsg = "";
+            this.endSector_min = undefined;
         }
 
         // fill table current/last
         this.fillRow(i, lastRowLabel, undefined, lastRowData, multi);
         if (this.last == undefined && !this.validtime) this.rows[i].setColorAllRow("red");
+
+        // Fill minimal scoreboard time
+        if (this.endSector_min != undefined) {
+            this.htmlTimeMin.innerHTML = convertTimeToString(this.endSector_min.time, true);
+            if (this.endSector_min.color != undefined) this.htmlTimeMin.style.color = this.endSector_min.color;
+        } else {
+            this.htmlTimeMin.innerHTML = convertTimeToString(this.laptime, true);
+            if (!this.validtime) this.htmlTimeMin.style.color = "red";
+        }
     }
 
     setMode (mode, drivers) {
@@ -291,7 +327,7 @@ class Leaderboard {
         if (this.bestSectorTime[sector] == undefined) return "";
 
         let tg = time - this.bestSectorTime[sector];
-        let result = tg > 0 ? '<span style="color: red;">+ ' : '<span style="color: blue;">- ';
+        let result = tg > 0 ? '<span style="color: red;">+ ' : '<span style="color: aquamarine;">- ';
         result += convertTimeToString(Math.abs(tg), false);
         result += '</span>';
         return result;

@@ -25,6 +25,7 @@ client.js
 menu.js
 mainView.js
 minimapView.js
+responsive.js
 main.js
 "
 

@@ -1,6 +1,7 @@
 html, body {
     margin: 0;
     height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 #container {
@@ -15,7 +16,7 @@ html, body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 1;
+    z-index: 2;
     background-color: rgba(220,220,220,0.7);
     padding: 5%;
 }
@@ -41,7 +42,7 @@ html, body {
 
 #score_message {
     position: absolute;
-    top: 7%;
+    bottom: 25%;
     left: 50%;
     transform: translate(-50%, 0);
     z-index: 1;
@@ -50,7 +51,9 @@ html, body {
 
 #minimapc {
     width: 30vw;
+    min-width: 300px;
     height: 15vw;
+    min-height: 150px;
     display: block;
     position: absolute;
     right: 0;
@@ -61,7 +64,19 @@ html, body {
 #scoreboard {
     position: absolute;
     background-color: rgba(220,220,220,0.7);
-    z-index: 1;
+    z-index: 2;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: auto;
+}
+
+.scoreboard-data {
+    padding: 2px;
+    width: max-content;
+}
+
+th, td {
+    min-width: 5em;
 }
 
 table, th, td {
@@ -73,7 +88,8 @@ table, th, td {
 #menu_button {
     position: absolute;
     right: 0;
-    z-index: 1;
+    z-index: 3;
+    background-color: lightgrey;
 }
 
 #centered_msg {
@@ -91,6 +107,31 @@ table, th, td {
     right: 0;
     width: 100%;
     height: 100%;
-    z-index: 0.5;
+    z-index: 1;
     display: none;
+}
+
+#scoreboard_min {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+    background-color: rgba(220,220,220,0.7);
+    z-index: 2;
+    padding: 3px;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
+}
+
+#leaderboard_min {
+    margin: 0px;
+    margin-right: 3px;
+    min-width: 10em;
+    text-align: center;
+}
+
+#session_info_min {
+    margin: 0px;
+    width: 100%;
+    text-align: center;
 }

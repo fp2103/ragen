@@ -275,12 +275,9 @@ class Gameplay {
 
         // Outside of track: change color & disqualify!
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
-            //const oppositeColor = new THREE.Color(0xffffff).sub(this.player.car.currentColor);
-            //this.player.car.chassisMesh.material.color.copy(oppositeColor);
             this.redalertHtml.style.display = "block";
             this.leaderboard.disqualify();
         } else {
-            //this.player.car.chassisMesh.material.color.copy(this.player.car.currentColor);
             this.redalertHtml.style.display = "none";
         }
         

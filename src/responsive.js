@@ -1,0 +1,5 @@
+
+function responsive_update () {
+
+    
+}
