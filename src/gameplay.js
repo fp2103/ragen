@@ -10,10 +10,13 @@ class Gameplay {
         this.podiumScene = podiumScene;
 
         this.leaderboard = new Leaderboard(player);
+        this.otherDrivers = new Map();
+
         this.speedHtml = document.getElementById('speed');
         this.gameElementsHtml = document.getElementById('game_elements');
         this.redalertHtml = document.getElementById("redalert");
-        this.otherDrivers = new Map();
+        this.centeredMsgHtml = document.getElementById("centered_msg");
+        this.SESSIONFULL = "Session is Full";
 
         // Init camera position
         this.UP_Z = new THREE.Vector3(0, 0, 1);
@@ -62,6 +65,7 @@ class Gameplay {
         this.gameElementsHtml.style.display = "none";
         this.speedHtml.style.display = "none";
         this.redalertHtml.style.display = "none";
+        this.centeredMsgHtml.innerHTML = "";
         this.leaderboard.clearRows();
 
         // default Scene display
@@ -99,6 +103,7 @@ class Gameplay {
         switch(newState) {
             case "spectator":
                 this.gameElementsHtml.style.display = "block";
+                this.centeredMsgHtml.innerHTML = this.SESSIONFULL;
                 this.leaderboard.setMode("spectator", this.otherDrivers.values());
             case "menu":
                 if (!this.getSessionState_cb().podium) {
@@ -318,15 +323,13 @@ class Gameplay {
         document.getElementById("minimapc").style.display = "none";
 
         const drivers = Array.from(this.otherDrivers.values());
-        const SESSIONFULL_backup = this.leaderboard.SESSIONFULL;
         if (!this.getSessionState_cb().spectator) {
             drivers.push(this.player);
-            this.leaderboard.SESSIONFULL = "";   
+        } else {
+            this.centeredMsgHtml.innerHTML = this.SESSIONFULL;
         }
         this.leaderboard.setMode("spectator", drivers);
-        // Fill the board
         this.leaderboard.update();
-        this.leaderboard.SESSIONFULL = SESSIONFULL_backup;
 
         // Get three first drivers from sorted list
         const winners = [undefined, undefined, undefined];

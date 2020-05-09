@@ -70,7 +70,6 @@ class Leaderboard {
         this.MESSAGESHOWINGTIME = 3000;
 
         // Msg
-        this.SESSIONFULL = "Session is full";
         this.SESSIONBEST = "Session Best";
         this.PERSONALBEST = "Personal Best";
 
@@ -185,8 +184,6 @@ class Leaderboard {
 
         // that's enough for spectator mode(/podium)
         if (this.mode == "spectator") {
-            this.htmlMessage.innerHTML = this.SESSIONFULL;
-
             // Fill minimal scoreboard time with best lap time
             if (this.mainDriver.bestLapTime != undefined) {
                 this.htmlTimeMin.innerHTML = convertTimeToString(this.mainDriver.bestLapTime, true);
