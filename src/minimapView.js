@@ -13,10 +13,6 @@ class MinimapView {
     }
 
     render () {
-        if (resizeRendererToDisplaySize(this.renderer)) {
-            this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
-            this.camera.updateProjectionMatrix();
-        }
         this.renderer.render(this.scene, this.camera);
     }
 }

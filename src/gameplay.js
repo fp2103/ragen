@@ -65,7 +65,7 @@ class Gameplay {
         this.gameElementsHtml.style.display = "none";
         this.speedHtml.style.display = "none";
         this.redalertHtml.style.display = "none";
-        this.centeredMsgHtml.innerHTML = "";
+        this.centeredMsgHtml.textContent = "";
         this.leaderboard.clearRows();
 
         // default Scene display
@@ -103,7 +103,7 @@ class Gameplay {
         switch(newState) {
             case "spectator":
                 this.gameElementsHtml.style.display = "block";
-                this.centeredMsgHtml.innerHTML = this.SESSIONFULL;
+                this.centeredMsgHtml.textContent = this.SESSIONFULL;
                 this.leaderboard.setMode("spectator", this.otherDrivers.values());
             case "menu":
                 if (!this.getSessionState_cb().podium) {
@@ -189,7 +189,7 @@ class Gameplay {
         } else if (speed < -1) {
             speedtext = "(r) " + Math.floor(-speed) + " km/h";
         }
-        this.speedHtml.innerHTML = speedtext;
+        this.speedHtml.textContent = speedtext;
 
         // Car controls: Update engine force
         let wheelOffside = 0;
@@ -326,7 +326,7 @@ class Gameplay {
         if (!this.getSessionState_cb().spectator) {
             drivers.push(this.player);
         } else {
-            this.centeredMsgHtml.innerHTML = this.SESSIONFULL;
+            this.centeredMsgHtml.textContent = this.SESSIONFULL;
         }
         this.leaderboard.setMode("spectator", drivers);
         this.leaderboard.update();

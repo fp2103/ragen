@@ -29,6 +29,8 @@
         this.spectator = false;
         this.podiumScene = false;
         this.gameplay.getSessionState_cb = this.getSessionState.bind(this);
+
+        this.display = "full";
     }
 
     getSessionState () {
@@ -40,7 +42,7 @@
     }
 
     connect (sessionid, connect_cb) {
-        document.getElementById("centered_msg").innerHTML = `Connecting to ${sessionid.toUpperCase()}...`;
+        document.getElementById("centered_msg").textContent = `Connecting to ${sessionid.toUpperCase()}...`;
 
         this.socket = io.connect(this.SERVER);
         this.sessionid = sessionid.toUpperCase();
@@ -78,7 +80,7 @@
 
             document.getElementById("seed").value = data.cid;
             document.getElementById("menu_seed").value = data.cid;
-            document.getElementById("centered_msg").innerHTML = ""
+            document.getElementById("centered_msg").textContent = ""
             this.spectator = data.nonplayable;
             this.podiumScene = data.state == "podium";
 
@@ -99,9 +101,10 @@
             }
         });
 
-        document.getElementById("session_span").innerHTML = data.id;
+        document.getElementById("session_span").textContent = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
+        this.updateScoreboardDisplay(true);
     }
 
     disconnect () {
@@ -118,10 +121,9 @@
         this.socket = undefined;
         clearInterval(this.sendPosInter);
         this.sendPosInter = undefined;
-        document.getElementById("remaining_time").innerHTML = "&infin;";
-        document.getElementById("session_span").innerHTML = "N/A";
-        document.getElementById("session_info_min").style.display = "none";
         this.connect_cb = undefined;
+
+        this.updateScoreboardDisplay(false);
     }
 
     updateRT () {
@@ -134,9 +136,6 @@
             let innerhtml = rtMin + ":" + rtSec;
             if (rts <= 60) innerhtml = "<b>" + innerhtml + "</b>";
             document.getElementById("remaining_time").innerHTML = innerhtml;
-
-            // Scoreboard minimal
-            document.getElementById("session_info_min").style.display = "block";
             document.getElementById("remaining_time_2").innerHTML = innerhtml;
         }
     }
@@ -195,5 +194,50 @@
         let s = this.player.car.vehiclePhysics.getCurrentSpeedKmHour()/3.6;
         let sv = this.player.car.vehiclePhysics.getSteeringValue(0);
         this.socket.emit("update_position", {p: p, q: q, s: s, sv: sv});
+    }
+
+    updateScoreboardDisplay (connect) {
+        const session_info_min = document.getElementById("session_info_min");
+        const session_info = document.getElementById("session_info");
+        const track_info = document.getElementById("track");
+        const expand_button = document.getElementById("expand");
+
+        if (connect) {
+            session_info_min.style.display = "block";
+
+            switch (this.display) {
+                case "compact":
+                    track_info.style.display = "none";
+                    session_info.style.display = "block";
+                    expand_button.style.display = "block";
+                    expand_button_2.style.display = "none";
+                    break;
+                case "ultracompact":
+                    track_info.style.display = "none";
+                    session_info.style.display = "table";
+                    expand_button.style.display = "none";
+                    expand_button_2.style.display = "table-cell";
+                    break;
+            }
+        } else {
+            document.getElementById("remaining_time").innerHTML = "&infin;";
+            document.getElementById("remaining_time_2").innerHTML = "&infin;";
+            document.getElementById("session_span").textContent = "N/A";
+            session_info_min.style.display = "none";
+            switch (this.display) {
+                case "compact":
+                    track_info.style.display = "block";
+                    session_info.style.display = "none";
+                    expand_button.style.display = "none";
+                    expand_button_2.style.display = "none";
+                    break;
+                case "ultracompact":
+                    track_info.style.display = "none";
+                    session_info.style.display = "none";
+                    expand_button.style.display = "block";
+                    expand_button_2.style.display = "none";
+                    break;
+            }
+        }
     }
  }

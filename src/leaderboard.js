@@ -234,7 +234,7 @@ class Leaderboard {
         }
 
         // fill table current/last
-        this.fillRow(i, lastRowLabel, lastRowLabelColor, lastRowData, multi);
+        this.fillRow(i, lastRowLabel, lastRowLabelColor, lastRowData, multi, "");
         if (!this.mergeCurrentAndMain && this.last == undefined && !this.validtime) this.rows[i].setColorAllRow("red");
 
         // Fill minimal scoreboard time
@@ -264,8 +264,7 @@ class Leaderboard {
         const row = this.rows[indice];
         
         // reset & set new class
-        row.html.className = "";
-        if (cls) row.html.className = cls;
+        if (cls != row.html.className) row.html.className = cls;
 
         row.clabel.textContent = label;
         if (labelColor != undefined) row.clabel.style.color = "#" + labelColor;

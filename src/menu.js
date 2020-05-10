@@ -58,7 +58,7 @@ class Menu {
         // refresh session list
         fetch('http://localhost:3000/sessions_list')
         .then((res) => { return res.text(); })
-        .then((data) => { document.getElementById("session_id").innerHTML = data; })
+        .then((data) => { document.getElementById("session_id").textContent = data; })
         .catch((err) => { console.log("error getting sessions_list", err); });
 
         document.getElementById("menu").style.display = "block";

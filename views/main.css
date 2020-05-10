@@ -73,7 +73,7 @@ html, body {
 
 .scoreboard-data {
     padding: 2px;
-    width: max-content;
+    width: 100%;
 }
 
 th, td {
@@ -90,7 +90,6 @@ table, th, td {
     position: absolute;
     right: 0;
     z-index: 3;
-    background-color: lightgrey;
 }
 
 #centered_msg {
