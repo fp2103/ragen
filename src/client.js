@@ -30,7 +30,7 @@
         this.podiumScene = false;
         this.gameplay.getSessionState_cb = this.getSessionState.bind(this);
 
-        this.display = "full";
+        this.updateScorboardDisplay_cb = undefined;
     }
 
     getSessionState () {
@@ -104,7 +104,7 @@
         document.getElementById("session_span").textContent = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
-        this.updateScoreboardDisplay(true);
+        this.updateScorboardDisplay_cb();
     }
 
     disconnect () {
@@ -123,7 +123,10 @@
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
 
-        this.updateScoreboardDisplay(false);
+        document.getElementById("remaining_time").innerHTML = "&infin;";
+        document.getElementById("remaining_time_2").innerHTML = "&infin;";
+        document.getElementById("session_span").textContent = "N/A";
+        this.updateScorboardDisplay_cb();
     }
 
     updateRT () {
@@ -194,50 +197,5 @@
         let s = this.player.car.vehiclePhysics.getCurrentSpeedKmHour()/3.6;
         let sv = this.player.car.vehiclePhysics.getSteeringValue(0);
         this.socket.emit("update_position", {p: p, q: q, s: s, sv: sv});
-    }
-
-    updateScoreboardDisplay (connect) {
-        const session_info_min = document.getElementById("session_info_min");
-        const session_info = document.getElementById("session_info");
-        const track_info = document.getElementById("track");
-        const expand_button = document.getElementById("expand");
-
-        if (connect) {
-            session_info_min.style.display = "block";
-
-            switch (this.display) {
-                case "compact":
-                    track_info.style.display = "none";
-                    session_info.style.display = "block";
-                    expand_button.style.display = "block";
-                    expand_button_2.style.display = "none";
-                    break;
-                case "ultracompact":
-                    track_info.style.display = "none";
-                    session_info.style.display = "table";
-                    expand_button.style.display = "none";
-                    expand_button_2.style.display = "table-cell";
-                    break;
-            }
-        } else {
-            document.getElementById("remaining_time").innerHTML = "&infin;";
-            document.getElementById("remaining_time_2").innerHTML = "&infin;";
-            document.getElementById("session_span").textContent = "N/A";
-            session_info_min.style.display = "none";
-            switch (this.display) {
-                case "compact":
-                    track_info.style.display = "block";
-                    session_info.style.display = "none";
-                    expand_button.style.display = "none";
-                    expand_button_2.style.display = "none";
-                    break;
-                case "ultracompact":
-                    track_info.style.display = "none";
-                    session_info.style.display = "none";
-                    expand_button.style.display = "block";
-                    expand_button_2.style.display = "none";
-                    break;
-            }
-        }
     }
  }

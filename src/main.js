@@ -8,6 +8,7 @@ const DEFAULT_NAME = "anon";
 // Global constant
 const SMALL_GAP = 0.1;
 const VERY_SMALL_GAP = 0.01;
+const DEFAULT_EM = 16;
 
 // ----- Main -----
 
@@ -56,12 +57,14 @@ async function main () {
     menu.showMenu();
     if (!sid) menu.onRandomMenu();
 
+    const responsive = new Responsive(mainView, minimapView, gameplay.leaderboard, client);
+
     // GAME LOOP
     const clock = new THREE.Clock();
     let df = 0;
     function tick() {
         requestAnimationFrame(tick);
-        responsive_update(mainView, minimapView, gameplay.leaderboard, client);
+        responsive.update();
         
         df += clock.getDelta() * FPS;    
         if (df > FPS) { df = 1; }
@@ -81,6 +84,7 @@ main();
 
 /* TODO:
 - responsive
+    refactor it because degeu + client ne cevrait pas avoir a géré tout ça....
 - podium update name color on update user
 - touch controls
 - menu improvement:
@@ -93,7 +97,7 @@ main();
     - refactor it to upload only changing value !!!
     - animation when sorting driver !!!
 - scene improvment
-    - slide traces
+    - drift traces
     - background objects
     - car design
 - sound
