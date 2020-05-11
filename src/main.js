@@ -14,6 +14,12 @@ const DEFAULT_EM = 16;
 
 // TODO WEBGL check
 
+// Stats
+const container = document.querySelector('#container');
+const stats = new Stats();
+stats.domElement.style.position = 'absolute';
+//container.appendChild(stats.domElement);
+
 async function main () {
 
     // Views/Scenes
@@ -45,6 +51,9 @@ async function main () {
     // Inputs
     const client = new Client(gameplay, circuitFactory, carFactory, driver);
     const menu = new Menu(gameplay, circuitFactory, driver, client); 
+
+    // Adapt view to display
+    const responsive = new Responsive(mainView, minimapView, gameplay.leaderboard, client);
  
     // init the menu / connect to given session
     const sid = menu.htmlSessionId.value;
@@ -55,9 +64,12 @@ async function main () {
     }
     document.getElementById("mainc").style.display = "block";
     menu.showMenu();
-    if (!sid) menu.onRandomMenu();
-
-    const responsive = new Responsive(mainView, minimapView, gameplay.leaderboard, client);
+    if (!sid) {
+        menu.onRandomMenu();
+        menu.onSoloButton();
+    } else {
+        menu.onMultiButton();
+    }
 
     // GAME LOOP
     const clock = new THREE.Clock();
@@ -75,6 +87,7 @@ async function main () {
             minimapView.render();
             df -= 1; 
         }
+        stats.update();
     }
     tick();
 
@@ -83,16 +96,8 @@ main();
 
 
 /* TODO:
-- responsive
-    refactor it because degeu + client ne cevrait pas avoir a géré tout ça....
 - podium update name color on update user
 - touch controls
-- menu improvement:
-    - arrow zone
-    - session id details
-    - controls & settings options
-    - about section (=link to github + readme)
-    - design
 - leaderboard html prettify
     - refactor it to upload only changing value !!!
     - animation when sorting driver !!!

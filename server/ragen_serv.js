@@ -221,9 +221,9 @@ app.get('/', (req, res) => {
 app.get('/sessions_list', (req,res) => {
     let sessions_list = [];
     for (let [sid, s] of sessions.entries()) {
-        sessions_list.push(sid);
+        sessions_list.push({sid: sid, p: s.activePlayerCount});
     }
-    res.render('sessions_list', {sessions: sessions_list});
+    res.render('sessions_list', {sessions: sessions_list, mp: MAXPLAYER});
 });
 
 // Clean old empty sessions

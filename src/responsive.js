@@ -64,16 +64,15 @@ class Responsive {
             this.mainView.renderer.setSize(this.currentW, this.currentH, false);
             this.mainView.camera.aspect = this.currentW / this.currentH;
             this.mainView.camera.updateProjectionMatrix();
-        
-            const minimapc = this.minimapView.canvas;
-            if (this.currentW < 300 || this.currentH < 150) {
+        }
+        const minimapc = this.minimapView.canvas;
+        if (this.currentW < 300 || this.currentH < 150) {
                 minimapc.style.display = "none";
-            } else {
+        } else if (minimapc.width !== minimapc.clientWidth || minimapc.height !== minimapc.clientHeight) {
+                minimapc.style.display = "block";
                 this.minimapView.renderer.setSize(minimapc.clientWidth, minimapc.clientHeight, false);
                 this.minimapView.camera.aspect = minimapc.clientWidth / minimapc.clientHeight;
                 this.minimapView.camera.updateProjectionMatrix();
-                minimapc.style.display = "block";
-            }
         }
 
         // ---- Scoreboard ----

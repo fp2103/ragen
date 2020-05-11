@@ -32,6 +32,9 @@ class Menu {
 
         this.closeButton = document.getElementById("close");
         this.closeButton.addEventListener("click", this.onClose.bind(this), false);
+
+        document.getElementById("solo_b").addEventListener("click", this.onSoloButton.bind(this), false);
+        document.getElementById("multi_b").addEventListener("click", this.onMultiButton.bind(this), false);
     }
 
     _generateRandomSeed (size) {
@@ -58,7 +61,7 @@ class Menu {
         // refresh session list
         fetch('http://localhost:3000/sessions_list')
         .then((res) => { return res.text(); })
-        .then((data) => { document.getElementById("session_id").textContent = data; })
+        .then((data) => { document.getElementById("session_id").innerHTML = data; })
         .catch((err) => { console.log("error getting sessions_list", err); });
 
         document.getElementById("menu").style.display = "block";
@@ -66,7 +69,7 @@ class Menu {
     }
 
     onMenuButton () {
-        this.closeButton.style.display = "block";
+        this.closeButton.style.display = "";
         this.showMenu();
         this.gameplay.setState("menu");
     }
@@ -169,6 +172,8 @@ class Menu {
         }
     }
 
+    // ---- Other buttons ----
+
     onClose () {
         if (this.client.isConnected()) {
             // reset id field to current session
@@ -176,6 +181,28 @@ class Menu {
             this.onSessionGoMenu();
         } else {
             this.onGoMenu();
+        }
+    }
+
+    onSoloButton () {
+        const b = document.getElementById("solo_b");
+        if (b.value == ">") {
+            b.value = "v";
+            document.getElementById("solo_div").style.display = "block";
+        } else {
+            b.value = ">";
+            document.getElementById("solo_div").style.display = "none";
+        }
+    }
+
+    onMultiButton () {
+        const b = document.getElementById("multi_b");
+        if (b.value == ">") {
+            b.value = "v";
+            document.getElementById("multi_div").style.display = "block";
+        } else {
+            b.value = ">";
+            document.getElementById("multi_div").style.display = "none";
         }
     }
 }

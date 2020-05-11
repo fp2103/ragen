@@ -11,27 +11,53 @@
     <div id="container">
 
         <div id="menu" style="display: none;">
-            <input type="button" value="x" id="close" style="display: none;">
+            <div style="min-width: 21em; max-width: 100vw; padding: 5px;">
+            <div style="width: 100%; max-width: 95vw;">
+                <h3 style="margin-top: 0px; display: inline-block;">Menu</h3>
+                <input type="button" value="x" id="close" style="float: right; display: none;">
+            </div>
+            <div>
+                <label for="name">Driver Name:</label>
+                <input type="text" id="name" maxlength="10" value="anon" style="width: 8em;">
+                <input type="color" id="color" value="#00ffff">
+            </div>
+            <div style="margin-top: 1em;">
+                <label for="controls">Controls:</label>
+                <select id="controls">
+                    <option value="keyboard">Keyboard (WASD/Arrows, P to reset)</option>
+                    <option value="touch">Touch</option>
+                </select>
+            </div>
 
-            <h3>Menu</h3>
-            <label for="name">Driver Name:</label>
-            <input type="text" id="name" maxlength="10" value="anon">
-            <input type="color" id="color" value="#00ffff">
-
-            <h4>Solo</h4>
-            <label for="menu_seed">Track:</label>
-            <input type="text" id="menu_seed" maxlength="10" value="">
-            <input type="button" value="Random" id="menu_random">
-            <input type="button" value="Go" id="menu_go">
+            <div>
+                <h4 style="display: inline-block;">Solo</h4>
+                <input type="button" value=">" id="solo_b" class="menu-arrows">
+            </div>
+            <div id="solo_div" style="display: none;">
+                <label for="menu_seed">Track:</label>
+                <input type="text" id="menu_seed" maxlength="10" value="" style="width: 8em;">
+                <input type="button" value="Random" id="menu_random">
+                <input type="button" value="Go" id="menu_go">
+            </div>
             
-            <h4>Multi</h4>
-            <label for="session_id">Session ID:</label>
-            <input list="session_id" style="width: 20%; text-transform: uppercase;"
-                   maxlength="4" name="session_id" value="<%= sessionid %>">
-            <datalist id="session_id"></datalist>
-            <input type="button" value="Random" id="session_random">
-            <input type="button" value="Join" id="session_go">
-            <input type="button" value="Share" id="session_share">
+            <div>
+                <h4 style="display: inline-block;">Multi</h4>
+                <input type="button" value=">" id="multi_b" class="menu-arrows">
+            </div>
+            <div id="multi_div" style="display: none;">
+                <label for="session_id">Session ID:</label>
+                <input list="session_id" style="width: 4.8em; text-transform: uppercase;"
+                       maxlength="4" name="session_id" value="<%= sessionid %>">
+                <datalist id="session_id"></datalist>
+                <input type="button" value="Random" id="session_random">
+                <input type="button" value="Share" id="session_share">
+                <input type="button" value="Join" id="session_go">
+            </div>
+
+            <div style="margin-top: 8px;">
+                <a href="https://github.com/fp2103/ragen" style="margin-top: 8px;">github</a>
+            </div>
+            </div>
         </div>
 
         <div id="game_elements" style="display: none;">
@@ -61,7 +87,8 @@
                         <th>Lap</th>
                     </tr>
                 </table>
-                <input type="button" value="&equiv;" id="expand" style="background-color: transparent; width: 100%; display: none;">
+                <input type="button" value="&equiv;" id="expand" 
+                       style="background-color: transparent; width: 100%; display: none;">
             </div>
 
             <!-- Minimal scoreboard -->

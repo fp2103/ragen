@@ -4,6 +4,10 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+input[type=button] {
+    font-size: 0.9em;
+}
+
 #container {
     position: relative;
     width: 100%;
@@ -18,7 +22,10 @@ html, body {
     transform: translate(-50%, -50%);
     z-index: 2;
     background-color: rgba(220,220,220,0.7);
-    padding: 5%;
+    padding: 4%;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: auto;
 }
 
 #mainc {
@@ -135,4 +142,11 @@ table, th, td {
     margin: 0px;
     width: 100%;
     text-align: center;
+}
+
+.menu-arrows {
+    background: transparent;
+    font-size: larger;
+    font-weight: bold;
+    margin-left: 5px;
 }
