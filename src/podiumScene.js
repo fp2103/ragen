@@ -35,6 +35,7 @@ class PodiumScene {
         this.particlesManager = particlesManager;
         
         this.visible = false;
+        this.winners = undefined;
 
         // Configuration
         const SIZE = 6;
@@ -112,6 +113,8 @@ class PodiumScene {
     }
 
     createScene (circuit, winners) {
+        this.winners = winners;
+
         // Update textures
         for (let i = 0; i < 3; i++) {
             this.fillCanvasCtx(this.canvasl[i], winners[i]);
@@ -177,6 +180,7 @@ class PodiumScene {
             this.scene.remove(this.podiumMesh);
         }
         this.visible = false;
+        this.winners = undefined;
     }
 
     update () {
@@ -214,5 +218,17 @@ class PodiumScene {
             }
         }
         this.particlesManager.update();
+    }
+
+    updateDriver (id) {
+        if (this.winners != undefined) {
+            for (let i = 0; i < 3; i++) {
+                const w = this.winners[i];
+                if (w != undefined && w.id == id) {
+                    this.fillCanvasCtx(this.canvasl[i], this.winners[i]);
+                    this.textures[i].needsUpdate = true;
+                }
+            }
+        }
     }
 }

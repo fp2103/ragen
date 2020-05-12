@@ -49,7 +49,7 @@ async function main () {
     const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager, podiumScene);
 
     // Inputs
-    const client = new Client(gameplay, circuitFactory, carFactory, driver);
+    const client = new Client(gameplay, circuitFactory, carFactory, driver, podiumScene);
     const menu = new Menu(gameplay, circuitFactory, driver, client); 
 
     // Adapt view to display
@@ -96,9 +96,9 @@ main();
 
 
 /* TODO:
-- podium update name color on update user
 - touch controls
 - leaderboard html prettify
+    - animation collapse on expand button
     - refactor it to upload only changing value !!!
     - animation when sorting driver !!!
 - scene improvment

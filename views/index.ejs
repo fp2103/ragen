@@ -11,7 +11,7 @@
     <div id="container">
 
         <div id="menu" style="display: none;">
-            <div style="min-width: 21em; max-width: 100vw; padding: 5px;">
+        <div style="min-width: 21em; padding: 5px;">
             <div style="width: 100%; max-width: 95vw;">
                 <h3 style="margin-top: 0px; display: inline-block;">Menu</h3>
                 <input type="button" value="x" id="close" style="float: right; display: none;">
@@ -50,20 +50,23 @@
                        maxlength="4" name="session_id" value="<%= sessionid %>">
                 <datalist id="session_id"></datalist>
                 <input type="button" value="Random" id="session_random">
-                <input type="button" value="Share" id="session_share">
+                <div class="tooltip">
+                    <input type="button" value="Share" id="session_share">
+                    <span class="tooltiptext">Copy session link</span> 
+                </div>
                 <input type="button" value="Join" id="session_go">
             </div>
 
             <div style="margin-top: 8px;">
                 <a href="https://github.com/fp2103/ragen" style="margin-top: 8px;">github</a>
             </div>
-            </div>
+        </div>
         </div>
 
         <div id="game_elements" style="display: none;">
 
             <!-- fullsize scoreboard -->
-            <div id="scoreboard"  style="display: block;">
+            <div id="scoreboard" class="scoreboard">
                 <input type="button" value="hide" id="hide" style="width: 100%; display: none;">
                 <div id="track" class="scoreboard-data">
                     <span>Track: </span>

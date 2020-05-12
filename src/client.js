@@ -4,11 +4,12 @@
  **/
 
  class Client {
-    constructor (gameplay, circuitFactory, carFactory, player) {
+    constructor (gameplay, circuitFactory, carFactory, player, podiumSceneFactory) {
         this.gameplay = gameplay;
         this.circuitFactory = circuitFactory;
         this.carFactory = carFactory;
         this.player = player;
+        this.podiumSceneFactory = podiumSceneFactory;
 
         this.SERVER = "http://localhost:3000";
         this.POS_REFRESH_RATE = 50;
@@ -104,7 +105,7 @@
         document.getElementById("session_span").textContent = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
-        this.updateScorboardDisplay_cb();
+        this.updateScorboardDisplay_cb(0);
     }
 
     disconnect () {
@@ -126,7 +127,7 @@
         document.getElementById("remaining_time").innerHTML = "&infin;";
         document.getElementById("remaining_time_2").innerHTML = "&infin;";
         document.getElementById("session_span").textContent = "N/A";
-        this.updateScorboardDisplay_cb();
+        this.updateScorboardDisplay_cb(0);
     }
 
     updateRT () {
@@ -170,6 +171,7 @@
         if (d != undefined) {
             d.name = data.name;
             d.car.updateColor('#' + data.color);
+            this.podiumSceneFactory.updateDriver(d.id);
             d.currTime = data.currTime;
             let last_blt = d.bestLapTime;
             d.bestLapTime = data.blt;

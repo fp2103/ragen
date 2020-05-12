@@ -1,3 +1,4 @@
+/* Commons */
 html, body {
     margin: 0;
     height: 100%;
@@ -15,6 +16,7 @@ input[type=button] {
     overflow: hidden;
 }
 
+/* Menu */
 #menu {
     position: absolute;
     top: 50%;
@@ -28,12 +30,25 @@ input[type=button] {
     overflow: auto;
 }
 
+.menu-arrows {
+    background: transparent;
+    font-size: larger;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+/* Game elements */
 #mainc {
     width: 100%;
     height: 100%;
     display: block;
 }
 
+#menu_button {
+    position: absolute;
+    right: 0;
+    z-index: 3;
+}
 
 #speed {
     position: absolute;
@@ -69,18 +84,23 @@ input[type=button] {
     z-index: 1;
 }
 
-#scoreboard {
+/* Scoreboard */
+.scoreboard {
     position: absolute;
     background-color: rgba(220,220,220,0.7);
     z-index: 2;
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 100vw;
+    max-height: 100vh;
     overflow: auto;
 }
 
 .scoreboard-data {
     padding: 2px;
-    width: 100%;
+    width: 99%;
+}
+
+table {
+    max-width: 99%;
 }
 
 th, td {
@@ -93,12 +113,12 @@ table, th, td {
     border-collapse: collapse;
 }
 
-#menu_button {
-    position: absolute;
-    right: 0;
-    z-index: 3;
+.scoreboard-collapsible {
+    max-height: 0px;
+    transition: max-height 0.2s ease-out;
 }
 
+/* Other game elements */
 #centered_msg {
     position: absolute;
     top: 50%;
@@ -119,6 +139,7 @@ table, th, td {
     display: none;
 }
 
+/* Small scoreboard */
 #scoreboard_min {
     position: absolute;
     left: 50%;
@@ -144,9 +165,46 @@ table, th, td {
     text-align: center;
 }
 
-.menu-arrows {
-    background: transparent;
-    font-size: larger;
-    font-weight: bold;
-    margin-left: 5px;
+/* Tooltip */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    font-size: 0.8em;
+    width: 8.8em;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+  
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -4.25em;
+  
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+  
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+  
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
 }
