@@ -3,7 +3,7 @@
 // ---- CONFIGURATION ----
 const PORT = 3000;
 
-const CIRCUITRELOAD = 120000;//300000;
+const CIRCUITRELOAD = 600000;//300000;
 const PODIUM_SCENE_DURATION = 15000;
 
 const KEEPALIVETIME = 30000;
@@ -121,7 +121,8 @@ class Session {
     }
 
     reload_circuit () {
-        this.circuit = generateRandomSeed(6);
+        //this.circuit = generateRandomSeed(6);
+        this.circuit = "D48Osg";
         this.circuitStartTime = Date.now();
         this.state = "main";
         console.log("Session", this.id, "new circuit", this.circuit);

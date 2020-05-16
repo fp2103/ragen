@@ -20,6 +20,9 @@ const stats = new Stats();
 stats.domElement.style.position = 'absolute';
 //container.appendChild(stats.domElement);
 
+// List to keep callbacks for css animation that require multiple framess
+const cssAnimationNextFrameCbs = [];
+
 async function main () {
 
     // Views/Scenes
@@ -56,13 +59,13 @@ async function main () {
     const responsive = new Responsive(mainView, minimapView, gameplay.leaderboard, client);
  
     // init the menu / connect to given session
-    const sid = menu.htmlSessionId.value;
+    const sid = menu.html.sessionIdInput.value;
     if (sid) {
         menu.quickButtonsDisable();
         client.onMenu = true;
         await new Promise(resolve => { client.connect(sid, resolve) });
     }
-    document.getElementById("mainc").style.display = "block";
+    mainView.canvas.style.display = "block";
     menu.showMenu();
     if (!sid) {
         menu.onRandomMenu();
@@ -70,12 +73,16 @@ async function main () {
     } else {
         menu.onMultiButton();
     }
-
+ 
     // GAME LOOP
     const clock = new THREE.Clock();
     let df = 0;
     function tick() {
         requestAnimationFrame(tick);
+        while (cssAnimationNextFrameCbs.length > 0) {
+            const f = cssAnimationNextFrameCbs.pop();
+            f();
+        }
         responsive.update();
         
         df += clock.getDelta() * FPS;    
@@ -97,10 +104,6 @@ main();
 
 /* TODO:
 - touch controls
-- leaderboard html prettify
-    - animation collapse on expand button
-    - refactor it to upload only changing value !!!
-    - animation when sorting driver !!!
 - scene improvment
     - drift traces
     - background objects

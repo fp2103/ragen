@@ -78,10 +78,7 @@ class Responsive {
             this.mainView.camera.updateProjectionMatrix();
         }
         const minimapc = this.minimapView.canvas;
-        if (this.currentW < 300 || this.currentH < 150) {
-                minimapc.style.display = "none";
-        } else if (minimapc.width !== minimapc.clientWidth || minimapc.height !== minimapc.clientHeight) {
-                minimapc.style.display = "block";
+        if (minimapc.width !== minimapc.clientWidth || minimapc.height !== minimapc.clientHeight) {
                 this.minimapView.renderer.setSize(minimapc.clientWidth, minimapc.clientHeight, false);
                 this.minimapView.camera.aspect = minimapc.clientWidth / minimapc.clientHeight;
                 this.minimapView.camera.updateProjectionMatrix();
@@ -118,7 +115,8 @@ class Responsive {
                 this.html.session_info.style.display = "block";
                 
                 this.getNewRuleIndex();
-                this.leaderboard.mergeCurrentAndMain = false;     
+                this.leaderboard.mergeCurrentAndMain = false;
+                this.leaderboard.table.allowAnimation = true;
             } else if (this.currentH < 6*5*this.currentEm) {
                 //console.log("Using UltraCompact scoreboard", this.currentEm, this.currentH);
                 this.hideScoreboardFull(2.75*this.currentEm);
@@ -139,6 +137,7 @@ class Responsive {
                     this.ruleIndex = this.html.stylesheet.insertRule(".compact-hide, .ultra-hide { display: none; }",
                                                                     this.getNewRuleIndex());
                     this.leaderboard.mergeCurrentAndMain = true;
+                    this.leaderboard.table.allowAnimation = false;
                 }, after);
             } else {
                 //console.log("Using Compact scoreboard", this.currentEm, this.currentH);
@@ -160,6 +159,7 @@ class Responsive {
                     this.ruleIndex = this.html.stylesheet.insertRule(".compact-hide { display: none; }",
                                                                     this.getNewRuleIndex());
                     this.leaderboard.mergeCurrentAndMain = false;
+                    this.leaderboard.table.allowAnimation = false;
                 }, after);
             }
         }
@@ -198,6 +198,7 @@ class Responsive {
 
         this.html.scoreboard_full.style.maxHeight = this.html.scoreboard_full.scrollHeight + "px";
         this.leaderboard.mergeCurrentAndMain = false;
+        this.leaderboard.table.allowAnimation = true;
         
         this.timeoutMaxHeight = setTimeout(() => {
             this.html.scoreboard_full.style.maxHeight = "100vh";

@@ -12,10 +12,13 @@ class Gameplay {
         this.leaderboard = new Leaderboard(player);
         this.otherDrivers = new Map();
 
-        this.speedHtml = document.getElementById('speed');
-        this.gameElementsHtml = document.getElementById('game_elements');
-        this.redalertHtml = document.getElementById("redalert");
-        this.centeredMsgHtml = document.getElementById("centered_msg");
+        this.htmlElements = {
+            speed: document.getElementById("speed"),
+            gameElements: document.getElementById("game_elements"),
+            redAlert: document.getElementById("redalert"),
+            minimap: document.getElementById("minimapc"),
+            centeredMsg: document.getElementById("centered_msg"),
+        }
         this.SESSIONFULL = "Session is Full";
 
         // Init camera position
@@ -57,24 +60,17 @@ class Gameplay {
     }
 
     /*
-     * clear all & update what's need to be updated
+     * reset & update what's need to be updated
      * init new state
      */
     setState (newState, newCircuit, newOtherDrivers) {
-        // default html display
-        this.gameElementsHtml.style.display = "none";
-        this.speedHtml.style.display = "none";
-        this.redalertHtml.style.display = "none";
-        this.centeredMsgHtml.textContent = "";
-        this.leaderboard.clearRows();
-
-        // default Scene display
-        this.clearPodiumScene();
+        // Reset
+        this.htmlElements.centeredMsg.textContent = "";
+        this.htmlElements.redAlert.style.display = "none";
         this.particlesManager.reset();
-        this.player.car.makeUnvisible();
-        this.otherDrivers.forEach((v) => {v.car.makeUnvisible()});
+        this.podiumScene.destroyScene();
         this.resetCamera();
-        
+         
         // Update circuit
         if (newCircuit != undefined) {
             // Reset best laptime
@@ -95,31 +91,48 @@ class Gameplay {
 
         // Update other drivers
         if (newOtherDrivers != undefined) {
+            this.otherDrivers.forEach((v) => {v.car.makeUnvisible()});
             this.otherDrivers.clear();
             newOtherDrivers.forEach(d => this.otherDrivers.set(d.id, d));
         }
 
         // Update state
+        const sessionStatus = this.getSessionState_cb();
         switch(newState) {
             case "spectator":
-                this.gameElementsHtml.style.display = "block";
-                this.centeredMsgHtml.textContent = this.SESSIONFULL;
+                this.htmlElements.gameElements.style.display = "block";    
+                this.htmlElements.speed.style.display = "none";
+                this.htmlElements.minimap.style.display = "block";
+                this.htmlElements.centeredMsg.textContent = this.SESSIONFULL;
                 this.leaderboard.setMode("spectator", this.otherDrivers.values());
+                this.player.car.makeUnvisible();
+                this.otherDrivers.forEach((v) => {v.car.makeVisible()});
+                break;
             case "menu":
-                if (!this.getSessionState_cb().podium) {
+                this.htmlElements.gameElements.style.display = "none";
+                this.player.car.makeUnvisible();
+                if (sessionStatus.connected && !sessionStatus.podium) {
                     this.otherDrivers.forEach((v) => {v.car.makeVisible()});
+                } else {
+                    this.otherDrivers.forEach((v) => {v.car.makeUnvisible()});
                 }
                 break;
             case "solo":
+                this.otherDrivers.forEach((v) => {v.car.makeUnvisible()});
+                this.otherDrivers.clear();
             case "multi":
-                this.gameElementsHtml.style.display = "block";
-                this.speedHtml.style.display = "block";
+                this.htmlElements.gameElements.style.display = "block";    
+                this.htmlElements.speed.style.display = "block";
+                this.htmlElements.minimap.style.display = "block";
                 this.leaderboard.setMode(newState, this.otherDrivers.values());
-                this.otherDrivers.forEach((v) => {v.car.makeVisible()});
                 this.player.car.makeVisible();
+                this.otherDrivers.forEach((v) => {v.car.makeVisible()});
                 break;
             case "podium":
-                this.initPodiumScene();
+                this.htmlElements.gameElements.style.display = "block";    
+                this.htmlElements.speed.style.display = "none";
+                this.htmlElements.minimap.style.display = "none";
+                this.initPodiumScene(sessionStatus);
                 break;
         }
         this.state = newState;
@@ -189,7 +202,7 @@ class Gameplay {
         } else if (speed < -1) {
             speedtext = "(r) " + Math.floor(-speed) + " km/h";
         }
-        this.speedHtml.textContent = speedtext;
+        this.htmlElements.speed.textContent = speedtext;
 
         // Car controls: Update engine force
         let wheelOffside = 0;
@@ -280,10 +293,10 @@ class Gameplay {
 
         // Outside of track: change color & disqualify!
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
-            this.redalertHtml.style.display = "block";
+            this.htmlElements.redAlert.style.display = "block";
             this.leaderboard.disqualify();
         } else {
-            this.redalertHtml.style.display = "none";
+            this.htmlElements.redAlert.style.display = "none";
         }
         
         // Update car position
@@ -307,7 +320,7 @@ class Gameplay {
     addOtherDriver (driver) {
         this.otherDrivers.set(driver.id, driver);
         if (this.state == "multi" || this.state == "spectator" || this.state == "menu") {
-            this.leaderboard.addDriver(driver);
+            this.leaderboard.addDriver(driver, true);
             driver.car.makeVisible();
         }
     }
@@ -318,34 +331,27 @@ class Gameplay {
         this.leaderboard.delDriver(driverid);
     }
 
-    initPodiumScene () {
-        this.gameElementsHtml.style.display = "block";
-        document.getElementById("minimapc").style.display = "none";
-
+    initPodiumScene (sessionStatus) {
         const drivers = Array.from(this.otherDrivers.values());
-        if (!this.getSessionState_cb().spectator) {
+        if (!sessionStatus.spectator) {
             drivers.push(this.player);
         } else {
-            this.centeredMsgHtml.textContent = this.SESSIONFULL;
+            this.htmlElements.centeredMsg.textContent = this.SESSIONFULL;
         }
         this.leaderboard.setMode("spectator", drivers);
         this.leaderboard.update();
 
-        // Get three first drivers from sorted list
+        // Get first 3 drivers, use leaderboard list because it is sorted
         const winners = [undefined, undefined, undefined];
-        for (let i = 0; i < 3 && i < this.leaderboard.drivers.length; i++) {
-            if (this.leaderboard.drivers[i].bestLapTime != undefined) {
+        for (let i = 0; i < this.leaderboard.drivers.length; i++) {
+            if (i < 3 && this.leaderboard.drivers[i].bestLapTime != undefined) {
                 winners[i] = this.leaderboard.drivers[i];
-            } else { 
-                break;
+            } else { // hide rest of cars
+                this.leaderboard.drivers[i].car.makeUnvisible();
             }
         }
 
         this.podiumScene.createScene(this.circuit, winners);
     }
 
-    clearPodiumScene () {
-        document.getElementById("minimapc").style.display = "block";
-        this.podiumScene.destroyScene();
-    }
 }

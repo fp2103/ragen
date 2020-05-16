@@ -12,11 +12,12 @@ FILES="
 physics.js
 line.js
 particles.js
-leaderboard.js
 terrain.js
 circuit_utils.js
 circuit.js
 car.js
+leaderboard_table.js
+leaderboard.js
 driver.js
 controls.js
 podiumScene.js

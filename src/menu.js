@@ -9,32 +9,48 @@ class Menu {
         this.TRACKID_SIZE = 6;
         this.SESSION_SIZE = 4;
 
-        this.htmlSeed = document.getElementById("seed");
-        this.htmlMenuSeed = document.getElementById("menu_seed");
-        this.htmlSessionId = document.getElementsByName("session_id")[0];
-        
+        this.html = {
+            menu: document.getElementById("menu"),
+            // Driver info
+            name: document.getElementById("name"),
+            color: document.getElementById("color"),
+            // circuit info
+            menuSeed: document.getElementById("menu_seed"),
+            seed: document.getElementById("seed"),
+            trackGo: document.getElementById("go"),
+            trackRandom: document.getElementById("random"),
+            // session info
+            sessionIdInput: document.getElementsByName("session_id")[0],
+            sessionIdList: document.getElementById("session_id"),
+            // others
+            closeButton: document.getElementById("close"),
+            soloB: document.getElementById("solo_b"),
+            soloDiv: document.getElementById("solo_div"),
+            multiB: document.getElementById("multi_b"),
+            multiDiv: document.getElementById("multi_div"),
+        }
+    
         // Link with action
         document.getElementById("menu_button").addEventListener("click", this.onMenuButton.bind(this), false);
 
-        document.getElementById("name").addEventListener("change", this.updatePlayerName.bind(this), false);
-        document.getElementById("color").addEventListener("change", this.updateCarColor.bind(this), false);
+        this.html.name.addEventListener("change", this.updatePlayerName.bind(this), false);
+        this.html.color.addEventListener("change", this.updateCarColor.bind(this), false);
 
         document.getElementById("menu_go").addEventListener("click", this.onGoMenu.bind(this), false);
-        document.getElementById("go").addEventListener("click", this.onGoScoreboard.bind(this), false);
+        this.html.trackGo.addEventListener("click", this.onGoScoreboard.bind(this), false);
 
         document.getElementById("menu_random").addEventListener("click", this.onRandomMenu.bind(this), false);
-        document.getElementById("random").addEventListener("click", this.onRandomScoreboard.bind(this), false);
+        this.html.trackRandom.addEventListener("click", this.onRandomScoreboard.bind(this), false);
 
         document.getElementById("session_random").addEventListener("click", this.onSessionRandomMenu.bind(this), false);
         document.getElementById("session_go").addEventListener("click", this.onSessionGoMenu.bind(this), false);
 
         document.getElementById("session_share").addEventListener("click", this.onSessionShare.bind(this), false);
 
-        this.closeButton = document.getElementById("close");
-        this.closeButton.addEventListener("click", this.onClose.bind(this), false);
+        this.html.closeButton.addEventListener("click", this.onClose.bind(this), false);
 
-        document.getElementById("solo_b").addEventListener("click", this.onSoloButton.bind(this), false);
-        document.getElementById("multi_b").addEventListener("click", this.onMultiButton.bind(this), false);
+        this.html.soloB.addEventListener("click", this.onSoloButton.bind(this), false);
+        this.html.multiB.addEventListener("click", this.onMultiButton.bind(this), false);
     }
 
     _generateRandomSeed (size) {
@@ -48,12 +64,12 @@ class Menu {
     }
     
     updatePlayerName () {
-        this.player.name = document.getElementById("name").value;
+        this.player.name = this.html.name.value;
         this.client.mainDriverUpdate();
     }
 
     updateCarColor () {
-        this.player.car.updateColor(document.getElementById("color").value);
+        this.player.car.updateColor(this.html.color.value);
         this.client.mainDriverUpdate();
     }
 
@@ -61,21 +77,21 @@ class Menu {
         // refresh session list
         fetch('http://localhost:3000/sessions_list')
         .then((res) => { return res.text(); })
-        .then((data) => { document.getElementById("session_id").innerHTML = data; })
+        .then((data) => { this.html.sessionIdList.innerHTML = data; })
         .catch((err) => { console.log("error getting sessions_list", err); });
 
-        document.getElementById("menu").style.display = "block";
+        this.html.menu.style.display = "block";
         this.client.onMenu = true;
     }
 
     onMenuButton () {
-        this.closeButton.style.display = "";
+        this.html.closeButton.style.display = "";
         this.showMenu();
         this.gameplay.setState("menu");
     }
 
     hideMenu () {
-        document.getElementById("menu").style.display = "none";
+        this.html.menu.style.display = "none";
         this.client.onMenu = false;
     }
 
@@ -83,20 +99,20 @@ class Menu {
         this.client.disconnect();
         this.quickButtonsEnable();
 
-        this.loadTrack(this.htmlMenuSeed.value, "solo");
+        this.loadTrack(this.html.menuSeed.value, "solo");
         this.hideMenu();
     }
 
     onRandomMenu () {
         this.client.disconnect();
         this.quickButtonsEnable();
-        this.closeButton.style.display = "none";
+        this.html.closeButton.style.display = "none";
 
         this.loadTrack(this._generateRandomSeed(this.TRACKID_SIZE), "menu");
     }
 
     onGoScoreboard () {
-        this.loadTrack(this.htmlSeed.value, "solo");
+        this.loadTrack(this.html.seed.value, "solo");
     }
 
     onRandomScoreboard () {
@@ -105,8 +121,8 @@ class Menu {
 
     loadTrack (trackid, mode) {
         this.circuitFactory.createCircuit(trackid).then(v => {
-            this.htmlSeed.value = trackid;
-            this.htmlMenuSeed.value = trackid;
+            this.html.seed.value = trackid;
+            this.html.menuSeed.value = trackid;
             this.gameplay.setState(mode, v);
         });
     }
@@ -114,23 +130,23 @@ class Menu {
     // --- Multi buttons ---
 
     quickButtonsDisable () {
-        this.htmlSeed.disabled = true;
-        document.getElementById("random").disabled = true;
-        document.getElementById("go").disabled = true;
+        this.html.seed.disabled = true;
+        this.html.trackGo.disabled = true;
+        this.html.trackRandom.disabled = true;
     }
 
     quickButtonsEnable () {
-        this.htmlSeed.disabled = false;
-        document.getElementById("random").disabled = false;
-        document.getElementById("go").disabled = false;
+        this.html.seed.disabled = false;
+        this.html.trackGo.disabled = false;
+        this.html.trackRandom.disabled = false;
     }
 
     onSessionRandomMenu () {
-        this.htmlSessionId.value = this._generateRandomSeed(this.SESSION_SIZE);
+        this.html.sessionIdInput.value = this._generateRandomSeed(this.SESSION_SIZE);
     }
 
     onSessionGoMenu () {
-        const session_id = this.htmlSessionId.value;
+        const session_id = this.html.sessionIdInput.value;
         if (!session_id) return;
 
         this.quickButtonsDisable();
@@ -155,9 +171,9 @@ class Menu {
     }
 
     onSessionShare () {
-        if (this.htmlSessionId.value) {
+        if (this.html.sessionIdInput.value) {
             const linkta = document.createElement('textarea');
-            linkta.value = "localhost:3000?sessionid=" + this.htmlSessionId.value.toUpperCase();
+            linkta.value = "localhost:3000?sessionid=" + this.html.sessionIdInput.value.toUpperCase();
 
             linkta.setAttribute('readonly', '');
             linkta.style.position = 'absolute';
@@ -177,7 +193,7 @@ class Menu {
     onClose () {
         if (this.client.isConnected()) {
             // reset id field to current session
-            this.htmlSessionId.value = this.client.sessionid;
+            this.html.sessionIdInput.value = this.client.sessionid;
             this.onSessionGoMenu();
         } else {
             this.onGoMenu();
@@ -185,24 +201,24 @@ class Menu {
     }
 
     onSoloButton () {
-        const b = document.getElementById("solo_b");
+        const b = this.html.soloB;
         if (b.value == ">") {
             b.value = "v";
-            document.getElementById("solo_div").style.display = "block";
+            this.html.soloDiv.style.display = "block";
         } else {
             b.value = ">";
-            document.getElementById("solo_div").style.display = "none";
+            this.html.soloDiv.style.display = "none";
         }
     }
 
     onMultiButton () {
-        const b = document.getElementById("multi_b");
+        const b = this.html.multiB;
         if (b.value == ">") {
             b.value = "v";
-            document.getElementById("multi_div").style.display = "block";
+            this.html.multiDiv.style.display = "block";
         } else {
             b.value = ">";
-            document.getElementById("multi_div").style.display = "none";
+            this.html.multiDiv.style.display = "none";
         }
     }
 }

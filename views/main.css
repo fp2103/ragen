@@ -101,16 +101,14 @@ input[type=button] {
 
 table {
     max-width: 99%;
+    text-align: center;
+    border-collapse: separate;
+    border-spacing: 0px;
 }
 
 th, td {
     min-width: 5em;
-}
-
-table, th, td {
-    text-align: center;
     border: 1px solid black;
-    border-collapse: collapse;
 }
 
 .scoreboard-collapsible {
@@ -163,6 +161,26 @@ table, th, td {
     margin: 0px;
     width: 100%;
     text-align: center;
+}
+
+.soon {
+    font-weight: bold;
+    animation: pulsate 1s ease-out;
+    animation-iteration-count: infinite; 
+    opacity: 0.5;
+    line-height: 1rem;
+    font-size: 1.2em;
+}
+@keyframes pulsate {
+    0% { 
+        opacity: 0.5;
+    }
+    50% { 
+        opacity: 1.0;
+    }
+    100% { 
+        opacity: 0.5;
+    }
 }
 
 /* Tooltip */

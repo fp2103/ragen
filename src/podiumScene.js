@@ -29,10 +29,11 @@ class Sparkle extends Particle {
 }
 
 class PodiumScene {
-    constructor (view, particlesManager) {
+    constructor (view, particlesManager, mainDriverId) {
         this.scene = view.scene;
         this.camera = view.camera;
         this.particlesManager = particlesManager;
+        this.mainDriverId = mainDriverId;
         
         this.visible = false;
         this.winners = undefined;
@@ -164,7 +165,7 @@ class PodiumScene {
         this.face_angle = angle;
         this.particle_starting_position = undefined;
         for (let i = 0; i < 3; i++) {
-            if (winners[i] != undefined && winners[i].id == 0) {
+            if (winners[i] != undefined && winners[i].id == this.mainDriverId) {
                 let t = new THREE.Vector3();
                 this.boxes[i].getWorldPosition(t);
                 this.particle_starting_position = this.DEFAULT_PARTICLE_SP.clone();

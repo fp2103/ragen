@@ -18,12 +18,10 @@
         this.sessionid = undefined;
         this.socket = undefined;
         this.sendPosInter = undefined;
+        this.connect_cb = undefined;
         window.addEventListener("beforeunload", this.disconnect.bind(this), false);
         setInterval(this.updateRT.bind(this), 1000);
-
         this.player.client_CB = this.mainDriverUpdate.bind(this);
-
-        this.connect_cb = undefined;
 
         // State
         this.onMenu = false;
@@ -31,11 +29,20 @@
         this.podiumScene = false;
         this.gameplay.getSessionState_cb = this.getSessionState.bind(this);
 
+        // Html
+        this.htmlElements = {
+            centeredMsg: document.getElementById("centered_msg"),
+            seed: document.getElementById("seed"),
+            menuSeed: document.getElementById("menu_seed"),
+            sessionSpan: document.getElementById("session_span"),
+            remainingTime: document.getElementById("remaining_time"),
+            remainingTime2: document.getElementById("remaining_time_2")
+        }
         this.updateScorboardDisplay_cb = undefined;
     }
 
     getSessionState () {
-        return {podium: this.podiumScene, spectator: this.spectator};
+        return {connected: this.isConnected, podium: this.podiumScene, spectator: this.spectator};
     }
 
     isConnected () {
@@ -43,7 +50,10 @@
     }
 
     connect (sessionid, connect_cb) {
-        document.getElementById("centered_msg").textContent = `Connecting to ${sessionid.toUpperCase()}...`;
+        this.htmlElements.centeredMsg.textContent = `Connecting to ${sessionid.toUpperCase()}...`;
+
+        // clear time on connection
+        this.player.resetTime();
 
         this.socket = io.connect(this.SERVER);
         this.sessionid = sessionid.toUpperCase();
@@ -79,9 +89,9 @@
                 drivers.push(this.createDriverFromData(pData));
             }
 
-            document.getElementById("seed").value = data.cid;
-            document.getElementById("menu_seed").value = data.cid;
-            document.getElementById("centered_msg").textContent = ""
+            this.htmlElements.seed.value = data.cid;
+            this.htmlElements.menuSeed.value = data.cid;
+            this.htmlElements.centeredMsg.textContent = ""
             this.spectator = data.nonplayable;
             this.podiumScene = data.state == "podium";
 
@@ -102,7 +112,7 @@
             }
         });
 
-        document.getElementById("session_span").textContent = data.id;
+        this.htmlElements.sessionSpan.textContent = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
         this.updateScorboardDisplay_cb(0);
@@ -124,9 +134,11 @@
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
 
-        document.getElementById("remaining_time").innerHTML = "&infin;";
-        document.getElementById("remaining_time_2").innerHTML = "&infin;";
-        document.getElementById("session_span").textContent = "N/A";
+        this.htmlElements.remainingTime.innerHTML = "&infin;";
+        this.htmlElements.remainingTime2.innerHTML = "&infin;";
+        this.htmlElements.remainingTime.classList.remove("soon");
+        this.htmlElements.remainingTime2.classList.remove("soon");
+        this.htmlElements.sessionSpan.textContent = "N/A";
         this.updateScorboardDisplay_cb(0);
     }
 
@@ -137,10 +149,19 @@
             let rtMin = Math.floor(rts/60);
             let rtSec = rts % 60;
             if (rtSec < 10) { rtSec = "0" + rtSec; }
-            let innerhtml = rtMin + ":" + rtSec;
-            if (rts <= 60) innerhtml = "<b>" + innerhtml + "</b>";
-            document.getElementById("remaining_time").innerHTML = innerhtml;
-            document.getElementById("remaining_time_2").innerHTML = innerhtml;
+            let rtText = rtMin + ":" + rtSec;
+            
+            const rtHtml = this.htmlElements.remainingTime;
+            const rtHtml2 = this.htmlElements.remainingTime2;
+            if (rts < 60) {
+                if (!rtHtml.classList.contains("soon")) rtHtml.classList.add("soon");
+                if (!rtHtml2.classList.contains("soon")) rtHtml2.classList.add("soon");
+            } else {
+                rtHtml.classList.remove("soon");
+                rtHtml2.classList.remove("soon");
+            }
+            rtHtml.textContent = rtText;
+            rtHtml2.textContent = rtText;
         }
     }
 
@@ -175,7 +196,7 @@
             d.currTime = data.currTime;
             let last_blt = d.bestLapTime;
             d.bestLapTime = data.blt;
-            if (last_blt != data.blt) this.gameplay.leaderboard.sortDrivers();
+            if (last_blt != data.blt) this.gameplay.leaderboard.sortDrivers(true);
         }
     }
 
