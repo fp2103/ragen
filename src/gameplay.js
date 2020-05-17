@@ -18,6 +18,7 @@ class Gameplay {
             redAlert: document.getElementById("redalert"),
             minimap: document.getElementById("minimapc"),
             centeredMsg: document.getElementById("centered_msg"),
+            resetButton: document.getElementById("reset")
         }
         this.SESSIONFULL = "Session is Full";
 
@@ -103,6 +104,7 @@ class Gameplay {
                 this.htmlElements.gameElements.style.display = "block";    
                 this.htmlElements.speed.style.display = "none";
                 this.htmlElements.minimap.style.display = "block";
+                this.htmlElements.resetButton.style.display = "none";
                 this.htmlElements.centeredMsg.textContent = this.SESSIONFULL;
                 this.leaderboard.setMode("spectator", this.otherDrivers.values());
                 this.player.car.makeUnvisible();
@@ -124,6 +126,7 @@ class Gameplay {
                 this.htmlElements.gameElements.style.display = "block";    
                 this.htmlElements.speed.style.display = "block";
                 this.htmlElements.minimap.style.display = "block";
+                this.htmlElements.resetButton.style.display = "block";
                 this.leaderboard.setMode(newState, this.otherDrivers.values());
                 this.player.car.makeVisible();
                 this.otherDrivers.forEach((v) => {v.car.makeVisible()});
@@ -132,6 +135,7 @@ class Gameplay {
                 this.htmlElements.gameElements.style.display = "block";    
                 this.htmlElements.speed.style.display = "none";
                 this.htmlElements.minimap.style.display = "none";
+                this.htmlElements.resetButton.style.display = "none";
                 this.initPodiumScene(sessionStatus);
                 break;
         }

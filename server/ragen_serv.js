@@ -3,7 +3,7 @@
 // ---- CONFIGURATION ----
 const PORT = 3000;
 
-const CIRCUITRELOAD = 60000;//300000;
+const CIRCUITRELOAD = 120000;//300000;
 const PODIUM_SCENE_DURATION = 15000;
 
 const KEEPALIVETIME = 30000;
@@ -12,6 +12,7 @@ const CLEANINGFREQUENCE = 10000;
 const MAXPLAYER = 8;
 
 const POSITIONSREFRESH = 55;
+const GARBAGE_USER = 15000;
 
 // ---- Function Utils ----
 function generateRandomSeed (size) {
@@ -32,8 +33,9 @@ app.use(express.static('public'));
 
 // Each individual player
 class Player {
-    constructor (socket, session, name, color, currTime, blt) {
+    constructor (socket, token, session, name, color, currTime, blt) {
         this.socket = socket;
+        this.token = token;
         this.session = session;
         this.name = name;
         this.color = color;
@@ -45,10 +47,12 @@ class Player {
         this.quaternion = undefined;
         this.speed = undefined;
         this.steeringValue = undefined;
+
+        this.disconnected = false;
     }
 
     getData () {
-        return {id: this.socket.id,
+        return {id: this.token,
                 name: this.name,
                 color: this.color,
                 currTime: this.currTime,
@@ -75,6 +79,9 @@ class Session {
 
         // load a new circuit
         this.reload_circuit();
+
+        this.garbageUserIter = setInterval(this.garbageUserCollector.bind(this), GARBAGE_USER);
+        this.toDumpList = [];
     }
 
     getData (socketid_dest) {
@@ -97,7 +104,7 @@ class Session {
 
     refreshSession () {
         for (let p of this.players.values()) {
-            p.socket.emit('load_session', this.getData(p.socket.id));
+            if(!p.disconnected) p.socket.emit('load_session', this.getData(p.socket.id));
         }
     }
 
@@ -121,8 +128,8 @@ class Session {
     }
 
     reload_circuit () {
-        //this.circuit = generateRandomSeed(6);
-        this.circuit = "D48Osg";
+        this.circuit = generateRandomSeed(6);
+        //this.circuit = "D48Osg";
         this.circuitStartTime = Date.now();
         this.state = "main";
         console.log("Session", this.id, "new circuit", this.circuit);
@@ -144,7 +151,7 @@ class Session {
     new_user (player) {
         if (this.activePlayerCount < MAXPLAYER) {
             for (let p of this.players.values()) {
-                if (p.socket.id != player.socket.id) {
+                if (p.socket.id != player.socket.id && !p.disconnected) {
                     p.socket.emit('add_user', player.getData());
                 }
             }
@@ -152,7 +159,7 @@ class Session {
         } else {
             player.isSpectator = true;
         }
-        this.players.set(player.socket.id, player);
+        this.players.set(player.token, player);
         this.lastDisonnectedTS = undefined;
     }
 
@@ -161,7 +168,7 @@ class Session {
         // Remove from all other users
         this.players.delete(userid);
         for (let p of this.players.values()) {
-            p.socket.emit('del_user', {id: userid});
+            if (!p.disconnected) p.socket.emit('del_user', {id: userid});
         }
 
         if (player != undefined && !player.isSpectator) {
@@ -169,7 +176,7 @@ class Session {
 
             // Load another waiting player
             for (let p of this.players.values()) {
-                if (p.isSpectator) {
+                if (p.isSpectator && !p.disconnected) {
                     p.isSpectator = false;
                     this.new_user(p);
                     p.socket.emit('load_session', this.getData(p.socket.id));
@@ -190,7 +197,7 @@ class Session {
 
     update_user (user) {
         for (let p of this.players.values()) {
-            if (p.socket.id != user.socket.id) {
+            if (!p.disconnected && p.socket.id != user.socket.id) {
                 p.socket.emit('update_user', user.getData());
             }
         }
@@ -200,12 +207,23 @@ class Session {
         // Create table of all players position
         const table = [];
         for (let p of this.players.values()) {
-            table.push({id: p.socket.id, p: p.position, q: p.quaternion, 
+            table.push({id: p.token, p: p.position, q: p.quaternion, 
                         s: p.speed, sv: p.steeringValue});
         }
         // Emit table to all players
         for (let p of this.players.values()) {
-            p.socket.emit("update_positions", {table: table});
+            if (!p.disconnected) p.socket.emit("update_positions", {table: table});
+        }
+    }
+
+    garbageUserCollector () {
+        while (this.toDumpList.length > 0) {
+            let p = this.toDumpList.pop();
+            if (p.disconnected) this.remove_user(p.token);
+        }
+
+        for (let p of this.players) {
+            if (p.disconnected) this.toDumpList.push(p);
         }
     }
 }
@@ -234,6 +252,7 @@ setInterval(() => {
         if (s.is_inactive()) {
             toDel.push(k);
             clearInterval(s.emitPosInter);
+            clearInterval(s.garbageUserIter);
             clearTimeout(s.currentTimeout);
         }
     }
@@ -255,7 +274,8 @@ io.on('connection', (socket) => {
     
     socket.on('join_session', (data) => {
         const sid = data.sid.toUpperCase();
-        console.log("User", socket.id, "Joining session", sid);
+        const userToken = data.t;
+        console.log("User", socket.id, "Joining session", sid, "token", userToken);
         console.log(data.user);
         
         // Retreive session or create a new one
@@ -265,19 +285,35 @@ io.on('connection', (socket) => {
             sessions.set(sid, session);
         }
 
-        // Create new Player
-        let p = new Player(socket, session, data.user.name, data.user.color, data.user.currTime);
+        let p = session.players.get(userToken);
+        if (p == undefined) {
+            // Create new Player
+            p = new Player(socket, userToken, session,
+                               data.user.name, data.user.color, data.user.currTime);
+            session.new_user(p);
+        } else {
+            p.disconnected = false;
+            p.socket = socket;
+        }
         socket_player.set(socket.id, p);
-        session.new_user(p);
 
         socket.emit('load_session', session.getData(socket.id));
     });
 
-    socket.on('disconnect', () => {
-        console.log("User disconnected", socket.id);
+    socket.on('desco', () => {
+        console.log("User disconnected (asked by client)", socket.id);
         let player = socket_player.get(socket.id);
         if (player != undefined) {
-            player.session.remove_user(socket.id);
+            player.session.remove_user(player.token);
+        }
+        socket_player.delete(socket.id);
+    });
+
+    socket.on('disconnect', () => {
+        console.log("Socket disconnected", socket.id);
+        let player = socket_player.get(socket.id);
+        if (player != undefined) {
+            player.disconnected = true;
         }
         socket_player.delete(socket.id);
     });

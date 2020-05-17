@@ -16,6 +16,7 @@
         
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
+        this.userToken = undefined;
         this.socket = undefined;
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
@@ -55,6 +56,9 @@
         // clear time on connection
         this.player.resetTime();
 
+        // create a user token for this connection
+        this.userToken= generateRandomSeed(10);
+
         this.socket = io.connect(this.SERVER);
         this.sessionid = sessionid.toUpperCase();
 
@@ -77,7 +81,7 @@
     }
 
     send_session_info () {
-        this.socket.emit("join_session", {sid: this.sessionid,
+        this.socket.emit("join_session", {sid: this.sessionid, t: this.userToken,
                                           user: this.get_user_data()});
     }
 
@@ -124,9 +128,11 @@
         this.gameplay.otherDrivers.forEach((v) => { v.car.makeUnvisible() });
         this.gameplay.otherDrivers.clear();
 
+        this.socket.emit("desco");
         this.socket.close();
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
+        this.userToken = undefined;
         this.spectator = false;
         this.podiumScene = false;
         this.socket = undefined;

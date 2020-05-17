@@ -24,6 +24,8 @@ class Controls {
         window.addEventListener('keydown', this.keydown.bind(this));
         window.addEventListener('keyup', this.keyup.bind(this));
         window.addEventListener('blur', this.resetActions.bind(this));
+
+        document.getElementById('reset').addEventListener('click', () => { this.actions['reset'] = true; }, false);
     }
 
     resetActions () {

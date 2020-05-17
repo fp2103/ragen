@@ -52,16 +52,6 @@ class Menu {
         this.html.soloB.addEventListener("click", this.onSoloButton.bind(this), false);
         this.html.multiB.addEventListener("click", this.onMultiButton.bind(this), false);
     }
-
-    _generateRandomSeed (size) {
-        const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let seed = "";
-        for (var i = 0; i < size; i++) {
-            let j = Math.floor(Math.random() * (ascii.length));
-            seed += ascii.charAt(j);
-        }
-        return seed; 
-    }
     
     updatePlayerName () {
         this.player.name = this.html.name.value;
@@ -108,7 +98,7 @@ class Menu {
         this.quickButtonsEnable();
         this.html.closeButton.style.display = "none";
 
-        this.loadTrack(this._generateRandomSeed(this.TRACKID_SIZE), "menu");
+        this.loadTrack(generateRandomSeed(this.TRACKID_SIZE), "menu");
     }
 
     onGoScoreboard () {
@@ -116,7 +106,7 @@ class Menu {
     }
 
     onRandomScoreboard () {
-        this.loadTrack(this._generateRandomSeed(this.TRACKID_SIZE), "solo");
+        this.loadTrack(generateRandomSeed(this.TRACKID_SIZE), "solo");
     }
 
     loadTrack (trackid, mode) {
@@ -142,7 +132,7 @@ class Menu {
     }
 
     onSessionRandomMenu () {
-        this.html.sessionIdInput.value = this._generateRandomSeed(this.SESSION_SIZE);
+        this.html.sessionIdInput.value = generateRandomSeed(this.SESSION_SIZE);
     }
 
     onSessionGoMenu () {

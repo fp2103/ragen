@@ -20,6 +20,17 @@ const stats = new Stats();
 stats.domElement.style.position = 'absolute';
 //container.appendChild(stats.domElement);
 
+// random generator utils
+function generateRandomSeed (size) {
+    const ascii = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let seed = "";
+    for (var i = 0; i < size; i++) {
+        let j = Math.floor(Math.random() * (ascii.length));
+        seed += ascii.charAt(j);
+    }
+    return seed; 
+}
+
 // List to keep callbacks for css animation that require multiple framess
 const cssAnimationNextFrameCbs = [];
 
@@ -104,11 +115,11 @@ main();
 
 /* TODO:
 - touch controls
-- clientside uuid
 - scene improvment
     - drift traces
     - background objects
     - car design
 - sound
+- check webgl, loading logo
 */
 
