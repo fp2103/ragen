@@ -241,7 +241,7 @@ class Leaderboard {
                 this.rows.set(this.mainDriver.id, oldRows.get(this.mainDriver.id))
             }
             this.addDriver(this.mainDriver, false);
-            this.rows.get("current").htmlRow.style.display = undefined;
+            this.rows.get("current").htmlRow.style.display = "";
         } else {
             this.rows.get("current").htmlRow.style.display = "none";
         }

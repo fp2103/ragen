@@ -36,7 +36,7 @@ async function main () {
     const carFactory = new CarFactory(mainView, minimapView, physics);
     const circuitFactory = new CircuitFactory(mainView, minimapView, physics);
     const particlesManager = new ParticlesManager(mainView.scene, PARTICLES_LIMIT);
-    const podiumScene = new PodiumScene(mainView, particlesManager);
+    const podiumScene = new PodiumScene(mainView, particlesManager, 0);
 
     // Player
     let randomColor = Math.floor(Math.random()*16777215).toString(16);
@@ -105,7 +105,6 @@ main();
 /* TODO:
 - touch controls
 - clientside uuid
-- fix sorting algo
 - scene improvment
     - drift traces
     - background objects

@@ -38,25 +38,25 @@ class CellWrap {
 }
 
 class RowWrap {
-    constructor (id, rowPromise, cls) {
+    constructor (id) {
         this.id = id;
         this.htmlRow = undefined;
         this.cells = [];
         for (let i = 0; i < 4; i++) {
             this.cells.push(new CellWrap());
         }
-        
-        rowPromise.then((v) => {
-            this.htmlRow = v;
-            if (cls) this.htmlRow.className = cls;
-            for (let c of this.cells) {
-                c.htmlCell = this.htmlRow.insertCell(-1);
-                c.force();
-            }
-            this.cells[0].htmlCell.colSpan = 2;
-        });
 
         this.position = 0;
+    }
+
+    setHtmlRow (htmlRow, cls) {
+        this.htmlRow = htmlRow;
+        if (cls) this.htmlRow.className = cls;
+        for (let c of this.cells) {
+            c.htmlCell = this.htmlRow.insertCell(-1);
+            c.force();
+        }
+        this.cells[0].htmlCell.colSpan = 2;
     }
 
     setColorAllRow (color) {
@@ -126,31 +126,32 @@ class TableWrap {
     // --- Row management ---
 
     addRow (id, cls, animate) {
-        const r = new RowWrap(id, new Promise((resolve) => {
-            this.cancelLastTimeout();
+        this.cancelLastTimeout();
 
-            let lastIndex = this.htmlTable.rows.length-1;
-            if (lastIndex == 0) lastIndex = -1;
+        const r = new RowWrap(id);
 
-            if (this.allowAnimation && animate) {
-                let lastRow = undefined;
-                if (lastIndex > 0) {
-                    lastRow = this.getRowFromRealIndex(lastIndex);
-                    lastRow.translateAnimation(1);
-                }
-                this.container.style.padding = "0px 0px " + this.htmlTable.rows[0].clientHeight + "px";
-                this.container.style.transition = `padding ${ANIMATION_DURATION}ms`;
+        let lastIndex = this.htmlTable.rows.length-1;
+        if (lastIndex == 0) lastIndex = -1;
 
-                this.setTimeoutProtected(() => {
-                    if (lastRow != undefined) lastRow.clearAnimation();
-                    this.container.style.transition = "";
-                    this.container.style.padding = "";
-                    resolve(this.htmlTable.insertRow(lastIndex));
-                }, ANIMATION_DURATION-50);
-            } else {
-                resolve(this.htmlTable.insertRow(lastIndex));
+        if (this.allowAnimation && animate) {
+            let lastRow = undefined;
+            if (lastIndex > 0) {
+                lastRow = this.getRowFromRealIndex(lastIndex);
+                lastRow.translateAnimation(1);
             }
-        }), cls);
+            this.container.style.padding = "0px 0px " + this.htmlTable.rows[0].clientHeight + "px";
+            this.container.style.transition = `padding ${ANIMATION_DURATION}ms`;
+
+            this.setTimeoutProtected(() => {
+                if (lastRow != undefined) lastRow.clearAnimation();
+                this.container.style.transition = "";
+                this.container.style.padding = "";
+                r.setHtmlRow(this.htmlTable.insertRow(lastIndex), cls);
+            }, ANIMATION_DURATION-50);
+        } else {
+            r.setHtmlRow(this.htmlTable.insertRow(lastIndex), cls);
+        }
+        
         this.rows.push(r);
         return r;
     }
@@ -203,7 +204,6 @@ class TableWrap {
     }
 
     refreshPosition (animate) {
-
         this.cancelLastTimeout();
 
         const move = () => {
@@ -211,10 +211,10 @@ class TableWrap {
             do {
                 cont = false;
                 for (let r of this.rows) {
-                    if (r.position > 0 && r.htmlRow != undefined && r.position != r.htmlRow.rowIndex) {
-                        cont = true;
+                    if (r.position > 0 && r.position < r.htmlRow.rowIndex) {
                         const dest = this.htmlTable.rows[r.position];
                         r.htmlRow.parentNode.insertBefore(r.htmlRow, dest);
+                        cont = true;
                         break;
                     }
                 }
