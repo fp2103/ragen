@@ -104,6 +104,8 @@ main();
 
 /* TODO:
 - touch controls
+- clientside uuid
+- fix sorting algo
 - scene improvment
     - drift traces
     - background objects

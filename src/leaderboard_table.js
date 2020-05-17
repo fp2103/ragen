@@ -1,4 +1,6 @@
 
+const ANIMATION_DURATION = 500;
+
 class CellWrap {
     constructor () {
         this.htmlCell = undefined;
@@ -67,7 +69,7 @@ class RowWrap {
         const h = this.htmlRow.clientHeight;
         const t = coeff * h;
 
-        this.htmlRow.style.transition = "transform 500ms";
+        this.htmlRow.style.transition = `transform ${ANIMATION_DURATION}ms`;
         this.htmlRow.style.transform = `translateY(${t}px)`;
     }
 
@@ -80,9 +82,7 @@ class RowWrap {
 class TableWrap {
     constructor (htmlTable) {
         this.htmlTable = htmlTable;
-        
         this.container = this.htmlTable.parentNode;
-        this.animationDuration = 500;
 
         this.rows = [];
 
@@ -127,28 +127,27 @@ class TableWrap {
 
     addRow (id, cls, animate) {
         const r = new RowWrap(id, new Promise((resolve) => {
+            this.cancelLastTimeout();
+
+            let lastIndex = this.htmlTable.rows.length-1;
+            if (lastIndex == 0) lastIndex = -1;
+
             if (this.allowAnimation && animate) {
-                this.cancelLastTimeout();
-
-                let lastIndex = this.htmlTable.rows.length-1;
+                let lastRow = undefined;
                 if (lastIndex > 0) {
-                    const lastRow = this.getRowFromRealIndex(lastIndex);
+                    lastRow = this.getRowFromRealIndex(lastIndex);
                     lastRow.translateAnimation(1);
-                    this.container.style.padding = "0px 0px " + this.htmlTable.rows[0].clientHeight + "px";
-                    this.container.style.transition = "padding 500ms";
-
-                    this.setTimeoutProtected(() => {
-                        lastRow.clearAnimation();
-                        this.container.style.transition = "";
-                        this.container.style.padding = "";
-                        resolve(this.htmlTable.insertRow(lastIndex));
-                    }, this.animationDuration-50);
-                } else {
-                    resolve(this.htmlTable.insertRow(-1));
                 }
+                this.container.style.padding = "0px 0px " + this.htmlTable.rows[0].clientHeight + "px";
+                this.container.style.transition = `padding ${ANIMATION_DURATION}ms`;
+
+                this.setTimeoutProtected(() => {
+                    if (lastRow != undefined) lastRow.clearAnimation();
+                    this.container.style.transition = "";
+                    this.container.style.padding = "";
+                    resolve(this.htmlTable.insertRow(lastIndex));
+                }, ANIMATION_DURATION-50);
             } else {
-                let lastIndex = this.htmlTable.rows.length-1;
-                if (lastIndex == 0) lastIndex = -1;
                 resolve(this.htmlTable.insertRow(lastIndex));
             }
         }), cls);
@@ -166,96 +165,77 @@ class TableWrap {
         }
 
         if (toDelIndex != undefined) {
+            this.cancelLastTimeout();
             const toDel = this.rows.splice(toDelIndex, 1)[0];
-            
-            if (toDel.htmlRow != undefined) {
-                toDel.htmlRow.style.visibility = "hidden";
-                if (this.allowAnimation && animate) {
-                    this.cancelLastTimeout();
+            if (toDel.htmlRow == undefined) {
+                console.warn("Deleting a row that doesn't have a tr element");
+                return;
+            }
+            toDel.htmlRow.style.visibility = "hidden";
 
-                    const movedRowList = [];
-                    for (let j = toDel.htmlRow.rowIndex+1; j < this.htmlTable.rows.length; j++) {
-                        const r = this.getRowFromRealIndex(j);
-                        movedRowList.push(r);
-                        r.translateAnimation(-1);
-                    }
-
-                    if (movedRowList.length > 0) {
-                        this.container.style.maxHeight = this.container.scrollHeight + "px";
-                        this.container.style.transition = "max-height 500ms";
-                        cssAnimationNextFrameCbs.push(() => {
-                            const newmh = this.container.scrollHeight - this.htmlTable.rows[0].clientHeight;
-                            this.container.style.maxHeight = `${newmh}px`;
-                        });
-
-                        this.setTimeoutProtected(() => {
-                            for (let r of movedRowList) {
-                                r.clearAnimation();
-                            }
-                            this.container.style.transition = "";
-                            this.container.style.maxHeight = "";
-                            this.htmlTable.deleteRow(toDel.htmlRow.rowIndex);
-                        }, this.animationDuration);
-                    } else {
-                        this.htmlTable.deleteRow(toDel.htmlRow.rowIndex);
-                    }
-                } else {
-                    this.htmlTable.deleteRow(toDel.htmlRow.rowIndex);
+            if (this.allowAnimation && animate) {
+                const movedRowList = [];
+                for (let j = toDel.htmlRow.rowIndex+1; j < this.htmlTable.rows.length; j++) {
+                    const r = this.getRowFromRealIndex(j);
+                    movedRowList.push(r);
+                    r.translateAnimation(-1);
                 }
+
+                this.container.style.maxHeight = this.container.scrollHeight + "px";
+                this.container.style.transition = `max-height ${ANIMATION_DURATION}ms`;
+                cssAnimationNextFrameCbs.push(() => {
+                    const newmh = this.container.scrollHeight - this.htmlTable.rows[0].clientHeight;
+                    this.container.style.maxHeight = `${newmh}px`;
+                });
+
+                this.setTimeoutProtected(() => {
+                    for (let r of movedRowList) {
+                        r.clearAnimation();
+                    }
+                    this.container.style.transition = "";
+                    this.container.style.maxHeight = "";
+                    this.htmlTable.deleteRow(toDel.htmlRow.rowIndex);
+                }, ANIMATION_DURATION);
+            } else {
+                this.htmlTable.deleteRow(toDel.htmlRow.rowIndex);
             }
         }
     }
 
     refreshPosition (animate) {
-        const everyRowHappy = () => {
-            for (let r of this.rows) {
-                if (r.position > 0 && r.htmlRow != undefined && r.position != r.htmlRow.rowIndex) {
-                    return false;
-                }
-            }
-            return true;
-        }
 
-        if (this.allowAnimation && animate) {
-            // animate on position change
-            let change = false;
-            for (let r of this.rows) {
-                if (r.position > 0 && ((r.htmlRow != undefined && r.position != r.htmlRow.rowIndex)
-                                    || r.htmlRow == undefined)) {
-                    change = true;
-                    this.cancelLastTimeout();
-                    r.translateAnimation(r.position - r.htmlRow.rowIndex);
-                }
-            }
+        this.cancelLastTimeout();
 
-            // update table
-            if (change) {
-                this.setTimeoutProtected(() => {
-                    while (!everyRowHappy()) {
-                        for (let r of this.rows) {
-                            if (r.position > 0 && r.htmlRow != undefined && r.position != r.htmlRow.rowIndex) {
-                                const dest = this.htmlTable.rows[r.position];
-                                r.htmlRow.parentNode.insertBefore(dest, r.htmlRow);
-                                break;
-                            }
-                        }
-                    }
-
-                    for (let r of this.rows) {
-                        r.clearAnimation();
-                    }
-                }, this.animationDuration+50);
-            }
-        } else {
-            while (!everyRowHappy()) {
+        const move = () => {
+            let cont = false;
+            do {
+                cont = false;
                 for (let r of this.rows) {
                     if (r.position > 0 && r.htmlRow != undefined && r.position != r.htmlRow.rowIndex) {
+                        cont = true;
                         const dest = this.htmlTable.rows[r.position];
-                        r.htmlRow.parentNode.insertBefore(dest, r.htmlRow);
+                        r.htmlRow.parentNode.insertBefore(r.htmlRow, dest);
                         break;
                     }
                 }
+            } while (cont);
+        }
+
+        if (this.allowAnimation && animate) {
+            for (let r of this.rows) {
+                if (r.position > 0 && r.position != r.htmlRow.rowIndex) {
+                    r.translateAnimation(r.position - r.htmlRow.rowIndex);
+                }
             }
+        
+            this.setTimeoutProtected(() => {
+                move();
+                for (let r of this.rows) {
+                    r.clearAnimation();
+                }
+            }, ANIMATION_DURATION+50);
+        } else {
+            move();
         }
     }
 }

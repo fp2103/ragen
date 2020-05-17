@@ -91,6 +91,7 @@ class Responsive {
     }
 
     resizeScoreboard (after) {
+        this.leaderboard.table.cancelLastTimeout();
         clearTimeout(this.timeoutChange);
         clearTimeout(this.timeoutMaxHeight);
         if (this.currentW < 25*this.currentEm) {
