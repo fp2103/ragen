@@ -114,7 +114,6 @@ main();
 
 
 /* TODO:
-- touch controls
 - scene improvment
     - drift traces
     - background objects

@@ -88,6 +88,8 @@ class Menu {
     onGoMenu () {
         this.client.disconnect();
         this.quickButtonsEnable();
+        this.html.multiB.value = ">";
+        this.html.multiDiv.style.display = "none";
 
         this.loadTrack(this.html.menuSeed.value, "solo");
         this.hideMenu();
@@ -141,6 +143,8 @@ class Menu {
 
         this.quickButtonsDisable();
         this.hideMenu();
+        this.html.soloB.value = ">";
+        this.html.soloDiv.style.display = "none";
 
         // Already connected to this session
         if (this.client.isConnected()

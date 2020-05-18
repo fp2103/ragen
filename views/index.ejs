@@ -22,11 +22,11 @@
                 <input type="color" id="color" value="#00ffff">
             </div>
             <div style="margin-top: 1em;">
-                <label for="controls">Controls:</label>
-                <select id="controls">
-                    <option value="keyboard">Keyboard (WASD/Arrows, P to reset)</option>
-                    <option value="touch">Touch</option>
-                </select>
+                <span>Controls:</span>
+                <ul style="margin: 0px; font-size: 0.9em;">
+                    <li><b>Keyboard:</b> WASD/Arrows, P to reset</li>
+                    <li><b>Touch:</b> tap & move around</li>
+                </ul>
             </div>
 
             <div>
@@ -119,6 +119,7 @@
         <p id="centered_msg"></p>
 
         <canvas id="mainc" style="display: none;"></canvas>
+        <canvas id="toucharea"></canvas>
     </div>
 </body>
 
