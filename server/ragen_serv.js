@@ -3,7 +3,7 @@
 // ---- CONFIGURATION ----
 const PORT = 3000;
 
-const CIRCUITRELOAD = 120000;//300000;
+const CIRCUITRELOAD = 300000;//300000;
 const PODIUM_SCENE_DURATION = 15000;
 
 const KEEPALIVETIME = 30000;
@@ -12,7 +12,7 @@ const CLEANINGFREQUENCE = 10000;
 const MAXPLAYER = 8;
 
 const POSITIONSREFRESH = 55;
-const GARBAGE_USER = 15000;
+const GARBAGE_USER = 10000;
 
 // ---- Function Utils ----
 function generateRandomSeed (size) {
@@ -222,7 +222,7 @@ class Session {
             if (p.disconnected) this.remove_user(p.token);
         }
 
-        for (let p of this.players) {
+        for (let p of this.players.values()) {
             if (p.disconnected) this.toDumpList.push(p);
         }
     }

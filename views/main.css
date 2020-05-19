@@ -37,6 +37,12 @@ input[type=button] {
     margin-left: 5px;
 }
 
+#fullscreen {
+    width: 10em;
+    float: right;
+    font-size: 0.7em;
+}
+
 /* Game elements */
 #mainc {
     width: 100%;
@@ -100,7 +106,7 @@ input[type=button] {
 }
 
 table {
-    max-width: 99%;
+    max-width: 100%;
     text-align: center;
     border-collapse: separate;
     border-spacing: 0px;
@@ -234,6 +240,8 @@ th, td {
     opacity: 1;
 }
 
+/* Touch commands */
+
 #toucharea {
     position: absolute;
     top: 0px;
@@ -243,3 +251,16 @@ th, td {
     z-index: 2;
 }
 
+.touch-cmd {
+    position: absolute;
+    font-size: 50px;
+    z-index: 1;
+    color: rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+#larr {
+    padding-right: 8px;
+}
+#rarr {
+    padding-left: 8px;
+}

@@ -28,6 +28,9 @@ class Menu {
             soloDiv: document.getElementById("solo_div"),
             multiB: document.getElementById("multi_b"),
             multiDiv: document.getElementById("multi_div"),
+            // Fullscrenn
+            container: document.getElementById("container"),
+            fullscreen: document.getElementById("fullscreen"),
         }
     
         // Link with action
@@ -51,6 +54,8 @@ class Menu {
 
         this.html.soloB.addEventListener("click", this.onSoloButton.bind(this), false);
         this.html.multiB.addEventListener("click", this.onMultiButton.bind(this), false);
+
+        this.html.fullscreen.addEventListener("click", this.toggleFullscreen.bind(this), false);
     }
     
     updatePlayerName () {
@@ -65,7 +70,7 @@ class Menu {
 
     showMenu () {
         // refresh session list
-        fetch('http://localhost:3000/sessions_list')
+        fetch(`http://${window.location.host}/sessions_list`)
         .then((res) => { return res.text(); })
         .then((data) => { this.html.sessionIdList.innerHTML = data; })
         .catch((err) => { console.log("error getting sessions_list", err); });
@@ -213,6 +218,19 @@ class Menu {
         } else {
             b.value = ">";
             this.html.multiDiv.style.display = "none";
+        }
+    }
+
+    toggleFullscreen () {
+        if (!document.fullscreenElement) {
+            this.html.container.requestFullscreen().then(() => {
+                this.html.fullscreen.value = "Exit Fullscreen";
+            }).catch(err => {
+                alert(`Can't enable fullscreen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            document.exitFullscreen();
+            this.html.fullscreen.value = "Go on Fullscreen";
         }
     }
 }

@@ -21,11 +21,12 @@
                 <input type="text" id="name" maxlength="10" value="anon" style="width: 8em;">
                 <input type="color" id="color" value="#00ffff">
             </div>
-            <div style="margin-top: 1em;">
+            <div style="margin-top: 1em; width: 100%;">
                 <span>Controls:</span>
-                <ul style="margin: 0px; font-size: 0.9em;">
+                <input type="button" value="Go on Fullscreen" id="fullscreen">
+                <ul style="margin: 4px 0px 0px; font-size: 0.9em;">
                     <li><b>Keyboard:</b> WASD/Arrows, P to reset</li>
-                    <li><b>Touch:</b> tap & move around</li>
+                    <li><b>Touch:</b> 1<sup>st</sup> tap acceleration, 2<sup>nd</sup> steering</li>
                 </ul>
             </div>
 
@@ -114,12 +115,20 @@
             <canvas id="minimapc"></canvas>
             <canvas id="redalert"></canvas>
             <input type="button" value="reset" id="reset" style="display: block;">
+
+            <!-- touch controls -->
+            <canvas id="toucharea"></canvas>
+            <div id="touch_accel" class="touch-cmd" style="display: none;">
+                <div id="uarr">&#8679;</div><div id="darr">&#8681;</div>
+            </div>
+            <div id="touch_steering" class="touch-cmd" style="display: none;">
+                <span id="larr">&#8678;</span><span id="rarr">&#8680;</span>
+            </div>
         </div>
 
         <p id="centered_msg"></p>
 
         <canvas id="mainc" style="display: none;"></canvas>
-        <canvas id="toucharea"></canvas>
     </div>
 </body>
 

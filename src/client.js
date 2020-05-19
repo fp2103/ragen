@@ -11,7 +11,8 @@
         this.player = player;
         this.podiumSceneFactory = podiumSceneFactory;
 
-        this.SERVER = "http://localhost:3000";
+
+        this.SERVER = "http://" + window.location.host;
         this.POS_REFRESH_RATE = 50;
         
         this.circuit_change_date = undefined;

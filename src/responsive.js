@@ -1,11 +1,12 @@
 
 
 class Responsive {
-    constructor (mainView, minimapView, leaderboard, client) {
+    constructor (mainView, minimapView, leaderboard, client, controls) {
         this.mainView = mainView;
         this.minimapView = minimapView;
         this.leaderboard = leaderboard;
         this.client = client;
+        this.controls = controls;
 
         this.currentW = 0;
         this.currentH = 0;
@@ -51,12 +52,18 @@ class Responsive {
         this.client.updateScorboardDisplay_cb = this.resizeScoreboard.bind(this);
     }
 
+    focusOnInputText () {
+        return document.activeElement.tagName == "INPUT" && document.activeElement.type == "text";
+    }
+
     windowResized () {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const res = w !== this.currentW || h !== this.currentH;
-        this.currentW = w;
-        this.currentH = h;
+        const res = !this.focusOnInputText() && (w !== this.currentW || h !== this.currentH);
+        if (res) {
+            this.currentW = w;
+            this.currentH = h;
+        }
         return res;
     }
 
@@ -86,11 +93,13 @@ class Responsive {
 
         // ---- Scoreboard ----
         if (emResize || wResize) {
+            this.controls.updateArea();
             this.resizeScoreboard(0);
         }
     }
 
     resizeScoreboard (after) {
+        this.controls.resetActions();
         this.leaderboard.table.cancelLastTimeout();
         clearTimeout(this.timeoutChange);
         clearTimeout(this.timeoutMaxHeight);

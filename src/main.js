@@ -18,7 +18,7 @@ const DEFAULT_EM = 16;
 const container = document.querySelector('#container');
 const stats = new Stats();
 stats.domElement.style.position = 'absolute';
-//container.appendChild(stats.domElement);
+container.appendChild(stats.domElement);
 
 // random generator utils
 function generateRandomSeed (size) {
@@ -67,7 +67,7 @@ async function main () {
     const menu = new Menu(gameplay, circuitFactory, driver, client); 
 
     // Adapt view to display
-    const responsive = new Responsive(mainView, minimapView, gameplay.leaderboard, client);
+    const responsive = new Responsive(mainView, minimapView, gameplay.leaderboard, client, controls);
  
     // init the menu / connect to given session
     const sid = menu.html.sessionIdInput.value;
@@ -95,6 +95,7 @@ async function main () {
             f();
         }
         responsive.update();
+        controls.tapUpdate();
         
         df += clock.getDelta() * FPS;    
         if (df > FPS) { df = 1; }
@@ -114,6 +115,8 @@ main();
 
 
 /* TODO:
+- freeze on mobile -> any improvment possible? options on qualty
+
 - scene improvment
     - drift traces
     - background objects
