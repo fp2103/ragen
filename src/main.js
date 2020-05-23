@@ -90,21 +90,23 @@ async function main () {
     let df = 0;
     function tick() {
         requestAnimationFrame(tick);
-        while (cssAnimationNextFrameCbs.length > 0) {
-            const f = cssAnimationNextFrameCbs.pop();
-            f();
-        }
-        responsive.update();
-        controls.tapUpdate();
         
         df += clock.getDelta() * FPS;    
         if (df > FPS) { df = 1; }
-        while (df >= 1) {
-            physics.world.stepSimulation(1/FPS, 1);
-            gameplay.update();
-            mainView.render();
+        if (df >= 1) {
+            while (cssAnimationNextFrameCbs.length > 0) {
+                cssAnimationNextFrameCbs.pop()();
+            }
+            responsive.update();
+            controls.tapUpdate();
+            
+            while (df >= 1) {
+                physics.world.stepSimulation(1/FPS, 1);
+                gameplay.update();
+                mainView.render();
+                df -= 1; 
+            }
             minimapView.render();
-            df -= 1; 
         }
         stats.update();
     }
@@ -115,7 +117,9 @@ main();
 
 
 /* TODO:
-- freeze on mobile -> any improvment possible? options on qualty
+- optimization:
+    - use less geo instances, less materials instances
+    - go through all the loops to find where it can be improved (less calc)
 
 - scene improvment
     - drift traces

@@ -69,7 +69,7 @@
         this.socket.on("del_user", (data) => this.del_user(data));
         this.socket.on("update_user", (data) => this.update_user(data));
         this.socket.on("update_positions", (data) => this.update_positions(data));
-        this.sendPosInter = setInterval(this.send_position.bind(this), this.posRefreshRate);
+        this.sendPosInter = setInterval(this.send_position.bind(this), this.POS_REFRESH_RATE);
 
         this.connect_cb = connect_cb;
     }
@@ -200,7 +200,10 @@
             d.name = data.name;
             d.car.updateColor('#' + data.color);
             this.podiumSceneFactory.updateDriver(d.id);
+            
             d.currTime = data.currTime;
+            this.gameplay.leaderboard.computeBestSectorTime();
+
             let last_blt = d.bestLapTime;
             d.bestLapTime = data.blt;
             if (last_blt != data.blt) this.gameplay.leaderboard.sortDrivers(true);

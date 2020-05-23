@@ -3,7 +3,7 @@
 // ---- CONFIGURATION ----
 const PORT = 3000;
 
-const CIRCUITRELOAD = 300000;//300000;
+const CIRCUITRELOAD = 240000;//240000;
 const PODIUM_SCENE_DURATION = 15000;
 
 const KEEPALIVETIME = 30000;
@@ -45,8 +45,8 @@ class Player {
 
         this.position = undefined;
         this.quaternion = undefined;
-        this.speed = undefined;
-        this.steeringValue = undefined;
+        this.speed = 0;
+        this.steeringValue = 0;
 
         this.disconnected = false;
     }
@@ -289,11 +289,16 @@ io.on('connection', (socket) => {
         if (p == undefined) {
             // Create new Player
             p = new Player(socket, userToken, session,
-                               data.user.name, data.user.color, data.user.currTime);
+                           data.user.name, data.user.color, data.user.currTime);
             session.new_user(p);
         } else {
             p.disconnected = false;
             p.socket = socket;
+            p.name = data.user.name;
+            p.color = data.user.color;
+            p.currTime = data.user.currTime;
+            p.bestLapTime = data.user.blt;
+            session.update_user(p);
         }
         socket_player.set(socket.id, p);
 

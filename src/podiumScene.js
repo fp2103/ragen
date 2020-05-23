@@ -1,13 +1,17 @@
 
+const SPARKLE_GEO = new THREE.PlaneBufferGeometry(0.15, 0.15);
+SPARKLE_GEO.rotateX(Math.PI/2);
+
 class Sparkle extends Particle {
 
     constructor (initPos, angle) {
-        super({x: 0.15, y: 0.15}, Math.floor(Math.random()*16777215), 2);
+        const mat = new THREE.MeshBasicMaterial({color: Math.floor(Math.random()*16777215), side: THREE.DoubleSide});
+        super(new THREE.Mesh(SPARKLE_GEO, mat), 2);
+        this.mat = mat;
 
-        this.lastt = 0;
+        this.lastt = Date.now();
         this.initPosition(initPos, new THREE.Quaternion());
         this.mesh.rotateZ(angle);
-        this.mesh.rotateX(Math.PI/2);
         
         this.initSpeed = new THREE.Vector3();
         this.initSpeed.x = Math.random()*2-1;
@@ -16,7 +20,7 @@ class Sparkle extends Particle {
     }
 
     update() {
-        let dt = this.lastt > 0 ? Date.now() - this.lastt : 0;
+        let dt = Date.now() - this.lastt;
         dt = dt/1000;
         this.lastt = Date.now();
 
@@ -25,6 +29,10 @@ class Sparkle extends Particle {
         const y = p.y + dt * this.initSpeed.y;
         const z = p.z + (-10*dt*dt + dt*this.initSpeed.z);
         this.mesh.position.set(x, y, z);
+    }
+
+    dispose () {
+        this.mat.dispose();
     }
 }
 

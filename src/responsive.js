@@ -86,9 +86,9 @@ class Responsive {
         }
         const minimapc = this.minimapView.canvas;
         if (minimapc.width !== minimapc.clientWidth || minimapc.height !== minimapc.clientHeight) {
-                this.minimapView.renderer.setSize(minimapc.clientWidth, minimapc.clientHeight, false);
-                this.minimapView.camera.aspect = minimapc.clientWidth / minimapc.clientHeight;
-                this.minimapView.camera.updateProjectionMatrix();
+            this.minimapView.renderer.setSize(minimapc.clientWidth, minimapc.clientHeight, false);
+            this.minimapView.camera.aspect = minimapc.clientWidth / minimapc.clientHeight;
+            this.minimapView.camera.updateProjectionMatrix();
         }
 
         // ---- Scoreboard ----

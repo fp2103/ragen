@@ -1,12 +1,8 @@
 
 class Particle {
 
-    constructor (size, color, time) {
-        // Object3D
-        this.geo = new THREE.PlaneBufferGeometry(size.x, size.y);
-        this.mat = new THREE.MeshBasicMaterial({color, side: THREE.DoubleSide});
-        this.mesh = new THREE.Mesh(this.geo, this.mat);
-
+    constructor (mesh, time) {
+        this.mesh = mesh;
         // Time
         this.clock = new THREE.Clock();
         this.maxTime = time;
@@ -23,10 +19,7 @@ class Particle {
 
     update () {}
 
-    dispose () {
-        this.geo.dispose();
-        this.mat.dispose();
-    }
+    dispose () {}
 }
 
 class ParticlesManager {

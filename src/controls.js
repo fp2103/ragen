@@ -2,7 +2,7 @@
 class TouchArrows {
     constructor (container, arrow1, arrow2, steering) {
         this.active = false;
-        this.lastTouched = undefined;
+        this.epirationDate = undefined;
         this.x = -1;
         this.y = -1;
         this.hw = 0;
@@ -21,16 +21,15 @@ class TouchArrows {
     reset () {
         this.container.style.display = "none";
         this.active = false;
-        this.lastTouched = undefined;
+        this.epirationDate = undefined;
         this.x = -1;
         this.y = -1;
         this.down = 0;
     }
 
-    update () {
-        const n = Date.now();
-        if (this.lastTouched != undefined && 
-            n > this.lastTouched + this.ARROW_KEEP_ALIVE) {
+    update (n) {
+        if (this.epirationDate != undefined && 
+            n > this.epirationDate) {
             this.reset();
         }
     }
@@ -52,7 +51,7 @@ class TouchArrows {
             res = true;
 
             this.touchList.add(id);
-            this.lastTouched = undefined;
+            this.epirationDate = undefined;
             if ((this.steering && x > this.x) || (!this.steering && y > this.y)) {
                 if (this.down != 2) {
                     this.arrow1.style.textDecoration = "";
@@ -83,7 +82,7 @@ class TouchArrows {
             this.arrow2.style.color = "";
 
             if (this.touchList.size == 0) {
-                this.lastTouched = Date.now();
+                this.epirationDate = Date.now() + this.ARROW_KEEP_ALIVE;
             }
         }
     }
@@ -256,8 +255,9 @@ class Controls {
     }
 
     tapUpdate () {
-        this.firstTouch.update();
-        this.secondTouch.update();
+        const n = Date.now();
+        this.firstTouch.update(n);
+        this.secondTouch.update(n);
     }
 
     updateArea () {

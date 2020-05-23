@@ -103,7 +103,6 @@ class Car {
         // Colors
         this.currentColor = new THREE.Color(color);
         this.outerMinimapColor = mainPlayer ? 0xFFFF00: 0xFFFFFF; 
-        this.COLOR_GRASS_PARTICLE = 0x87B982;
 
         // scene add/remove Callbacks
         this.visible_cb = undefined;
@@ -113,9 +112,14 @@ class Car {
         // Client setted position
         this.lerpPosition = undefined;
         this.lerpQuaternion = undefined;
-        this.clientSpeed = undefined;
-        this.clientSteeringVal = undefined;
+        this.wheelsRotation = undefined;
+        this.diffSteeringVal = undefined;
         this.lastSteeringVal = 0;
+        this.LERP_SPEED = 0.2;
+
+        // Particles
+        this.GRASS_PARTICLES_GEO = new THREE.PlaneBufferGeometry(1,1);
+        this.GRASS_PARTICLES_MAT = new THREE.MeshBasicMaterial({color: 0x87B982});
     }
 
     initMainView (geo) {
@@ -137,11 +141,11 @@ class Car {
         const wh = -0.3;
         const width = this._wheelRadius/1.5;
         const wheelGeo = new THREE.CylinderGeometry(this._wheelRadius, this._wheelRadius, width, 24, 1);
-        const wheelGeoIndicator = new THREE.BoxGeometry(width * 1.5, this._wheelRadius * 1.75, this._wheelRadius*.25); 
+        const wheelGeoIndicator = new THREE.BoxGeometry(width * 1.2, this._wheelRadius * 1.5, this._wheelRadius*.15); 
         wheelGeo.rotateZ(Math.PI/2);
         for (var i = 0; i < this.WHEELSNUMBER; i++) {
             let m = new THREE.Mesh(wheelGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
-            m.add(new THREE.Mesh(wheelGeoIndicator, new THREE.MeshBasicMaterial({color: 0xfff000})));
+            m.add(new THREE.Mesh(wheelGeoIndicator, new THREE.MeshBasicMaterial({color: 0xa9a9a9})));
             if (i == this.FRONTLEFT) m.position.set(-ww, wl, wh);
             if (i == this.FRONTRIGHT) m.position.set(ww, wl, wh);
             if (i == this.BACKLEFT) m.position.set(-ww, -wl, wh);
@@ -309,10 +313,13 @@ class Car {
     }
 
     createParticleMarkGrass (idWheel, speed) {
-        let pos = this.wheelMeshes[idWheel].position.clone();
-        let y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
-        let part = new Particle(new THREE.Vector2(this._wheelRadius/1.5, y), this.COLOR_GRASS_PARTICLE, 2);
+        const y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
         
+        const m = new THREE.Mesh(this.GRASS_PARTICLES_GEO, this.GRASS_PARTICLES_MAT);
+        m.applyMatrix(new THREE.Matrix4().makeScale(this._wheelRadius/1.5, y, 1));
+        const part = new Particle(m, 2);
+        
+        let pos = this.wheelMeshes[idWheel].position.clone();
         pos.z -= this._wheelRadius;
         let rot = this.chassisMesh.rotation.clone();
         rot.x = 0;
@@ -332,37 +339,28 @@ class Car {
     setLerpPosition (pos, quat, speed, steeringVal) {
         this.lerpPosition = pos;
         this.lerpQuaternion = quat;
-        this.clientSpeed = speed;
-        this.clientSteeringVal = steeringVal;
+        let dd = speed*(1/FPS);
+        this.wheelsRotation = dd/this._wheelRadius;
+        this.diffSteeringVal = steeringVal - this.lastSteeringVal;
+        this.lastSteeringVal = steeringVal;
     }
 
     updateLerpPosition () {
-        if (this.lerpPosition != undefined && this.lerpQuaternion != undefined
-            && this.clientSpeed != undefined && this.clientSteeringVal != undefined) {
-            // lerpspeed depend on actual distance to position
-            const lerpSpeed = (this.minimapMesh.position.x == 0 
-                               && this.minimapMesh.position.y == 0
-                               && this.minimapMesh.position.z == 0) ? 1 : 0.2;
-
-            this.minimapMesh.position.lerp(this.lerpPosition, lerpSpeed);
+        if (this.lerpPosition != undefined) {
+            this.minimapMesh.position.lerp(this.lerpPosition, this.LERP_SPEED);
             
-            this.chassisMesh.position.lerp(this.lerpPosition, lerpSpeed);
+            this.chassisMesh.position.lerp(this.lerpPosition, this.LERP_SPEED);
             this.chassisMesh.quaternion.set(this.lerpQuaternion.x,
                                             this.lerpQuaternion.y,
                                             this.lerpQuaternion.z,
                                             this.lerpQuaternion.w);
 
-            // rotate the wheel at the speed of the car
-            let dd = this.clientSpeed*(1/FPS);
-            let rad = dd/this._wheelRadius;
+            // rotate the wheel at the speed of the car && steering
             for (var i = 0; i < this.WHEELSNUMBER; i++) {
-                this.wheelMeshes[i].rotateX(-rad);
+                this.wheelMeshes[i].rotateX(-this.wheelsRotation);
             }
-
-            let dsv = this.clientSteeringVal - this.lastSteeringVal;
-            this.lastSteeringVal = this.clientSteeringVal;
-            this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
-            this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
+            this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), this.diffSteeringVal);
+            this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), this.diffSteeringVal);
         }
     }
 

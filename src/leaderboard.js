@@ -57,7 +57,7 @@ class Leaderboard {
         this.last = undefined;
         this.endSectorMsg = "";
         this.endSector_min = undefined;
-        this.msgStartTime = 0;
+        this.msgExpirationDate = 0;
 
         // Keep best times for each sector
         this.bestSectorTime = [undefined, undefined, undefined];
@@ -79,11 +79,10 @@ class Leaderboard {
         this.last = undefined;
         this.endSectorMsg = "";
         this.endSector_min = undefined;
-        this.msgStartTime = 0;
-
-        this.bestSectorTime = [undefined, undefined, undefined];
+        this.msgExpirationDate = 0;
 
         this.mainDriver.cancelCurrTime();
+        this.computeBestSectorTime();
     }
 
     sectorEnd (sector) {
@@ -102,6 +101,7 @@ class Leaderboard {
                 }
             }
             this.mainDriver.client_CB();
+            this.computeBestSectorTime();
         }
         
         if (sector < 2) {
@@ -116,13 +116,14 @@ class Leaderboard {
 
         if (bestMsg || timegapMsg || this.last != undefined || this.endSector_min != undefined) {
             if (bestMsg || timegapMsg) this.endSectorMsg = bestMsg + "<br/>" + timegapMsg;
-            this.msgStartTime = Date.now();
+            this.msgExpirationDate = Date.now() + this.MESSAGESHOWINGTIME;
         }
     }
 
     disqualify () {
         this.validtime = false;
         this.mainDriver.cancelCurrTime();
+        this.computeBestSectorTime();
     }
 
     // --- Time table ---
@@ -132,7 +133,6 @@ class Leaderboard {
         // fill table drivers
         const multi = this.mode == "multi" || this.mode == "spectator";
         let mainDriverPos = '-';
-        this.computeBestSectorTime();
         for (let i = 0; i < this.drivers.length; i++) {
             const p = this.drivers[i].bestLapTime == undefined ? '-' : i+1;
             let l = p + " . " + this.drivers[i].name;
@@ -177,7 +177,7 @@ class Leaderboard {
         let lastRowLabel = "Current";
         let lastRowLabelColor = undefined;
         let lastRowData = this.current;
-        if (Date.now() - this.msgStartTime <= this.MESSAGESHOWINGTIME) {
+        if (Date.now() <= this.msgExpirationDate) {
             if (this.last != undefined) {
                 lastRowLabel = "Last";
                 lastRowData = this.last;
@@ -296,12 +296,18 @@ class Leaderboard {
     }
 
     delDriver (driverid) {
+        let toDelInd = undefined;
         for (var i = 0; i < this.drivers.length; i++) {
             if (this.drivers[i].id == driverid) {
-                this.drivers.splice(i, 1);
-                this.rows.delete(driverid);
-                this.table.delRow(driverid, true);
+                toDelInd = i;
+                break;
             }
+        }
+        if (toDelInd != undefined) {
+            this.drivers.splice(toDelInd, 1);
+            this.rows.delete(driverid);
+            this.table.delRow(driverid, true);
+            this.computeBestSectorTime();
         }
     }
 

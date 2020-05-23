@@ -217,7 +217,7 @@ class Gameplay {
             let maxspeed = this.MAX_SPEED;
             
             // Check Ground under each wheel
-            // must use raycaster from threejs because ammojs doesn't work
+            // use raycaster from threejs because i didn't find with ammojs
             let raycaster = new THREE.Raycaster(this.player.car.wheelMeshes[i].position, 
                                                 this.DOWN_VECTOR, 0, 5);
             let intercir = raycaster.intersectObject(this.circuit.mesh);
@@ -258,8 +258,8 @@ class Gameplay {
             }
 
             // verify next checkpoint crossed (with any wheel)
-            let intercp = raycaster.intersectObject(this.checkpoints[this.nextcp]);
             if (!nextcpcrossed) {
+                let intercp = raycaster.intersectObject(this.checkpoints[this.nextcp]);
                 nextcpcrossed = intercp.length > 0 && !this.justReset;
             }
         }
