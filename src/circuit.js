@@ -12,6 +12,14 @@ class CircuitFactory {
 
         this.currSeed = undefined;
         this.currCircuit = undefined;
+
+        this.MATERIALS = {
+            matGrey: new THREE.MeshLambertMaterial({color: new THREE.Color().setHSL(0.1, 0.06, 0.33)}),
+            matWhite: new THREE.MeshBasicMaterial({color: 0xffffff}),
+            matBlue: new THREE.MeshBasicMaterial({color: 0x0000ff}),
+            matLineBlue: new THREE.LineBasicMaterial({color: 0x0000ff}),
+            matLineWhite: new THREE.LineBasicMaterial({color: 0xffffff})
+        }
     }
 
     createCircuit (seed) {
@@ -24,11 +32,7 @@ class CircuitFactory {
                       width: 12.5,
                       margin: 0.5,
                       pointResolution: 200,
-                      Z: 0.6,
-                      colorHSL: [0.1, 0.06, 0.33],
-                      colorMargin: 0xffffff,
-                      colorCP: 0x0000ff,
-                      colorMinimap: 0x0000ff};
+                      Z: 0.6};
 
         const circuitPromise = new Promise(resolve => {
             if (seed == this.currSeed) {
@@ -39,7 +43,7 @@ class CircuitFactory {
                     this.minimapScene.remove(this.currCircuit.minimapMesh);
                     this.phyWorld.removeCollisionObject(this.currCircuit.body);
                 }
-                resolve(new Circuit(CONF, seed));
+                resolve(new Circuit(this.MATERIALS, CONF, seed));
             }
         });
 
@@ -59,7 +63,7 @@ class CircuitFactory {
 
 class Circuit {
 
-    constructor  (conf, id) {
+    constructor  (materials, conf, id) {
         this.id = id;
         const rng = new Math.seedrandom(id);
 
@@ -235,55 +239,46 @@ class Circuit {
 
         // ----- THREE ------
         // MAIN VUE
-        const matGrey = new THREE.MeshLambertMaterial({color: 0xffffff});
-        matGrey.color.setHSL(conf.colorHSL[0], conf.colorHSL[1], conf.colorHSL[2]);
-        const matWhite = new THREE.MeshLambertMaterial({color: conf.colorMargin});
-        const matLineBlue = new THREE.LineBasicMaterial({color: conf.colorCP});
-        const matLineWhite = new THREE.LineBasicMaterial({color: conf.colorMargin});
-
         // margin mesh
         const inMaginGeo = new THREE.BufferGeometry().setFromPoints(marginInVertices);
         inMaginGeo.computeVertexNormals(); 
-        const inMarginMesh = new THREE.Mesh(inMaginGeo, matWhite);
+        const inMarginMesh = new THREE.Mesh(inMaginGeo, materials.matWhite);
         inMarginMesh.position.z += VERY_SMALL_GAP;
 
         const outMarginGeo = new THREE.BufferGeometry().setFromPoints(marginExtVertices);
         outMarginGeo.computeVertexNormals();
-        const outMarginMesh = new THREE.Mesh(outMarginGeo, matWhite);
+        const outMarginMesh = new THREE.Mesh(outMarginGeo, materials.matWhite);
         outMarginMesh.position.z += VERY_SMALL_GAP;
 
         // starting line mesh
         this.startingLinePoints = [points[maxSegLengthId], cir.secPoints[maxSegLengthId]];
         const startingLineMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, conf.margin,
                                                                          false, conf.width+1).geo,
-                                                matWhite);
-        this.slMesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.startingLinePoints), matLineWhite);
+                                                materials.matWhite);
+        this.slMesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.startingLinePoints), materials.matLineWhite);
         this.slMesh.add(startingLineMesh);
         this.slMesh.position.z += VERY_SMALL_GAP;
                     
         // Checkpoints mesh
         let cp_id = getIdFromLength(startLength+(1 + Number(!this.clockwise))*sectorLength);
         this.checkpoint1LinePoints = [points[cp_id], cir.secPoints[cp_id]];
-        this.cp1Mesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.checkpoint1LinePoints), matLineBlue);
+        this.cp1Mesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.checkpoint1LinePoints), materials.matLineBlue);
 
         cp_id = getIdFromLength(startLength+(1 + Number(this.clockwise))*sectorLength);
         this.checkpoint2LinePoints = [points[cp_id], cir.secPoints[cp_id]];
-        this.cp2Mesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.checkpoint2LinePoints), matLineBlue);
+        this.cp2Mesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.checkpoint2LinePoints), materials.matLineBlue);
 
         // main mesh
-        this.mesh = new THREE.Mesh(cir.geo, matGrey);
+        this.mesh = new THREE.Mesh(cir.geo, materials.matGrey);
         this.mesh.add(inMarginMesh, outMarginMesh, this.slMesh, this.cp1Mesh, this.cp2Mesh);
-        this.mesh.receiveShadow = true;
         this.mesh.position.z = conf.Z;
         
         // MINIMAP VUE
-        const matBlue = new THREE.MeshBasicMaterial({color: conf.colorMinimap});
-        const matWhite_minimap = new THREE.MeshBasicMaterial({color: conf.colorMargin});
         const startingLineMinimapMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, 10,
                                                                                 false, conf.width+1).geo,
-                                                       matWhite_minimap);
-        startingLineMinimapMesh.position.z += SMALL_GAP;
-        this.minimapMesh = new THREE.Mesh(cir.geo, matBlue);
+                                                       materials.matWhite);
+        startingLineMinimapMesh.position.z += 1;
+        this.minimapMesh = new THREE.Mesh(cir.geo, materials.matBlue);
         this.minimapMesh.add(startingLineMinimapMesh);
 
         // ------ AMMO -------

@@ -9,10 +9,11 @@ class CarFactory {
         // Geometry properties
         const CAR_WIDTH = 1.8;
         const CAR_LENGTH = 4;
+        const WHEEL_RADIUS = CAR_WIDTH/5;
         this.size = {width: CAR_WIDTH,
                      length: CAR_LENGTH,
                      height: CAR_WIDTH/2,
-                     wheelRadius: CAR_WIDTH/5};
+                     wheelRadius: WHEEL_RADIUS};
         
         // Load Main Geometry
         // Build car shape around origin
@@ -20,31 +21,53 @@ class CarFactory {
         const l = this.size.length/2;
         const h = this.size.height/2;
         const carVertices = [
-            new THREE.Vector3(w, -l, -h),
+            new THREE.Vector3(-w, -l, -h),
             new THREE.Vector3(0, l, -h),
+            new THREE.Vector3(w, -l, -h),
+        
+            new THREE.Vector3(w, -l, -h),
+            new THREE.Vector3(0, w-l, h),
             new THREE.Vector3(-w, -l, -h),
         
             new THREE.Vector3(-w, -l, -h),
             new THREE.Vector3(0, w-l, h),
-            new THREE.Vector3(w, -l, -h),
-        
-            new THREE.Vector3(w, -l, -h),
-            new THREE.Vector3(0, w-l, h),
             new THREE.Vector3(0, l, -h),
         
             new THREE.Vector3(0, l, -h),
             new THREE.Vector3(0, w-l, h),
-            new THREE.Vector3(-w, -l, -h)
+            new THREE.Vector3(w, -l, -h),
         ];
-        this.mainGeo = new THREE.BufferGeometry().setFromPoints(carVertices);
-        this.mainGeo.computeVertexNormals();
+        const mainGeo = new THREE.BufferGeometry().setFromPoints(carVertices);
+        mainGeo.computeVertexNormals();
+
+        this.geomteries = {
+            mainGeo: mainGeo,
+            edges: new THREE.EdgesGeometry(mainGeo),
+            grass_particles: new THREE.PlaneBufferGeometry(1,1),
+            wheelGeo: new THREE.CylinderGeometry(WHEEL_RADIUS, WHEEL_RADIUS, WHEEL_RADIUS/1.5, 10, 1),
+            wheelGeoIndicator: new THREE.BoxGeometry(1.2*WHEEL_RADIUS/1.5, WHEEL_RADIUS, 0.15*WHEEL_RADIUS),
+            wheelGeoIndicator2: undefined,
+            minimapGeo: new THREE.PlaneBufferGeometry(30,30),
+            minimapGeoInner: new THREE.PlaneBufferGeometry(20,20)
+        };
+        this.geomteries.wheelGeo.rotateZ(Math.PI/2);
+        this.geomteries.wheelGeoIndicator2 = this.geomteries.wheelGeoIndicator.clone();
+        this.geomteries.wheelGeoIndicator2.rotateX(Math.PI/2);
+
+        this.materials = {
+            grass_particles_mat: new THREE.MeshBasicMaterial({color: 0x87B982}),
+            edgeMat: new THREE.LineBasicMaterial({color: 0x000000}),
+            wheelMat: new THREE.MeshBasicMaterial({color: 0x000000}),
+            wheelMatIndicator: new THREE.MeshBasicMaterial({color: 0xDCDCDC})
+        };
     }
 
     createCar (color, mainPlayer) {
-        const car = new Car(this.size, color, mainPlayer);
-        car.initMainView(this.mainGeo);
+        const car = new Car(this.geomteries, this.materials, this.size, color, mainPlayer);
+        car.initMainView();
         car.initMinimapView();
         if (mainPlayer) {
+            car.chassisMesh.applyMatrix(new THREE.Matrix4().makeScale(1.01, 1.01, 1.01));
             car.initPhysics(this.phyWorld, {mass: 800,
                                             suspensionStiffness: 100,
                                             suspensionRestLength: 0.4,
@@ -70,12 +93,15 @@ class CarFactory {
 
 class Car {
 
-    constructor (size, color, mainPlayer) {
+    constructor (geos, mats, size, color, mainPlayer) {
         this.WHEELSNUMBER = 4;
         this.FRONTLEFT = 0;
         this.FRONTRIGHT = 1;
         this.BACKLEFT = 2;
         this.BACKRIGHT = 3;
+
+        this.geos = geos;
+        this.mats = mats;
 
         // Geometry properties
         this._width = size.width;
@@ -113,21 +139,15 @@ class Car {
         this.lerpPosition = undefined;
         this.lerpQuaternion = undefined;
         this.wheelsRotation = undefined;
-        this.diffSteeringVal = undefined;
+        this.newSteeringVal = 0;
         this.lastSteeringVal = 0;
         this.LERP_SPEED = 0.2;
-
-        // Particles
-        this.GRASS_PARTICLES_GEO = new THREE.PlaneBufferGeometry(1,1);
-        this.GRASS_PARTICLES_MAT = new THREE.MeshBasicMaterial({color: 0x87B982});
     }
 
-    initMainView (geo) {
-        const edges = new THREE.EdgesGeometry(geo);
-        const lineMesh = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
-
+    initMainView () {
+        const lineMesh = new THREE.LineSegments(this.geos.edges, this.mats.edgeMat);
         const material = new THREE.MeshLambertMaterial({color : this.currentColor});
-        this.chassisMesh = new THREE.Mesh(geo, material);
+        this.chassisMesh = new THREE.Mesh(this.geos.mainGeo, material);
         this.chassisMesh.add(lineMesh);
 
         // Camera
@@ -138,14 +158,12 @@ class Car {
         // Wheels
         const ww = (this._width/2);
         const wl = (this._length/2)*0.80;
-        const wh = -0.3;
-        const width = this._wheelRadius/1.5;
-        const wheelGeo = new THREE.CylinderGeometry(this._wheelRadius, this._wheelRadius, width, 24, 1);
-        const wheelGeoIndicator = new THREE.BoxGeometry(width * 1.2, this._wheelRadius * 1.5, this._wheelRadius*.15); 
-        wheelGeo.rotateZ(Math.PI/2);
+        const wh = this.independantWheels ? -0.3 : -0.4;
         for (var i = 0; i < this.WHEELSNUMBER; i++) {
-            let m = new THREE.Mesh(wheelGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
-            m.add(new THREE.Mesh(wheelGeoIndicator, new THREE.MeshBasicMaterial({color: 0xa9a9a9})));
+            let m = new THREE.Mesh(this.geos.wheelGeo, this.mats.wheelMat);
+            m.add(new THREE.Mesh(this.geos.wheelGeoIndicator, this.mats.wheelMatIndicator));
+            m.add(new THREE.Mesh(this.geos.wheelGeoIndicator2, this.mats.wheelMatIndicator));
+
             if (i == this.FRONTLEFT) m.position.set(-ww, wl, wh);
             if (i == this.FRONTRIGHT) m.position.set(ww, wl, wh);
             if (i == this.BACKLEFT) m.position.set(-ww, -wl, wh);
@@ -156,11 +174,8 @@ class Car {
     }
 
     initMinimapView () {
-        const minimapgeo = new THREE.PlaneBufferGeometry(30,30);
-        this.minimapMesh = new THREE.Mesh(minimapgeo, new THREE.MeshBasicMaterial({color: this.outerMinimapColor}));
-
-        const minimapgeoInner = new THREE.PlaneBufferGeometry(20,20);
-        this.minimapMeshInner = new THREE.Mesh(minimapgeoInner, new THREE.MeshBasicMaterial({color: this.currentColor}));
+        this.minimapMesh = new THREE.Mesh(this.geos.minimapGeo, new THREE.MeshBasicMaterial({color: this.outerMinimapColor}));
+        this.minimapMeshInner = new THREE.Mesh(this.geos.minimapGeoInner, new THREE.MeshBasicMaterial({color: this.currentColor}));
 
         this.minimapMesh.add(this.minimapMeshInner);
     }
@@ -315,7 +330,7 @@ class Car {
     createParticleMarkGrass (idWheel, speed) {
         const y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
         
-        const m = new THREE.Mesh(this.GRASS_PARTICLES_GEO, this.GRASS_PARTICLES_MAT);
+        const m = new THREE.Mesh(this.geos.grass_particles, this.mats.grass_particles_mat);
         m.applyMatrix(new THREE.Matrix4().makeScale(this._wheelRadius/1.5, y, 1));
         const part = new Particle(m, 2);
         
@@ -341,8 +356,7 @@ class Car {
         this.lerpQuaternion = quat;
         let dd = speed*(1/FPS);
         this.wheelsRotation = dd/this._wheelRadius;
-        this.diffSteeringVal = steeringVal - this.lastSteeringVal;
-        this.lastSteeringVal = steeringVal;
+        this.newSteeringVal = steeringVal;
     }
 
     updateLerpPosition () {
@@ -355,12 +369,16 @@ class Car {
                                             this.lerpQuaternion.z,
                                             this.lerpQuaternion.w);
 
-            // rotate the wheel at the speed of the car && steering
+            // rotate the wheel at the speed of the car
             for (var i = 0; i < this.WHEELSNUMBER; i++) {
                 this.wheelMeshes[i].rotateX(-this.wheelsRotation);
             }
-            this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), this.diffSteeringVal);
-            this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), this.diffSteeringVal);
+
+            // steering
+            let dsv = this.newSteeringVal - this.lastSteeringVal;
+            this.lastSteeringVal = this.newSteeringVal;
+            this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
+            this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
         }
     }
 

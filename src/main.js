@@ -117,14 +117,10 @@ main();
 
 
 /* TODO:
-- optimization:
-    - use less geo instances, less materials instances
-    - go through all the loops to find where it can be improved (less calc)
-
 - scene improvment
+    - shadow
     - drift traces
     - background objects
-    - car design
 - sound
 - check webgl, loading logo
 */
