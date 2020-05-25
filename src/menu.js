@@ -172,7 +172,7 @@ class Menu {
     onSessionShare () {
         if (this.html.sessionIdInput.value) {
             const linkta = document.createElement('textarea');
-            linkta.value = "localhost:3000?sessionid=" + this.html.sessionIdInput.value.toUpperCase();
+            linkta.value = window.location.host + "?sessionid=" + this.html.sessionIdInput.value.toUpperCase();
 
             linkta.setAttribute('readonly', '');
             linkta.style.position = 'absolute';

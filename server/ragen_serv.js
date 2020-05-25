@@ -1,7 +1,7 @@
 'use strict';
 
 // ---- CONFIGURATION ----
-const PORT = 3000;
+const PORT = process.env.PORT || 8080;
 
 const CIRCUITRELOAD = 240000;
 const PODIUM_SCENE_DURATION = 15000;
