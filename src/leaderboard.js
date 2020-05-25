@@ -80,6 +80,7 @@ class Leaderboard {
         this.endSectorMsg = "";
         this.endSector_min = undefined;
         this.msgExpirationDate = 0;
+        this.htmlMessage.innerHTML = "";
 
         this.mainDriver.cancelCurrTime();
         this.computeBestSectorTime();
@@ -256,6 +257,7 @@ class Leaderboard {
             if (!this.rows.has(k)) this.table.delRow(k, false);
         }
 
+        this.computeBestSectorTime();
         this.sortDrivers(false);
     }
     

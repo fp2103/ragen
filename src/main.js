@@ -12,13 +12,18 @@ const DEFAULT_EM = 16;
 
 // ----- Main -----
 
-// TODO WEBGL check
+// WEBGL Check
+if (!WEBGL.isWebGLAvailable()) {
+    const warning = WEBGL.getWebGLErrorMessage();
+    document.getElementById("centered_msg").appendChild(warning);
+    throw new Error(warning);
+}
 
-// Stats
+// DEBUG: Stats
 const container = document.querySelector('#container');
 const stats = new Stats();
 stats.domElement.style.position = 'absolute';
-container.appendChild(stats.domElement);
+//container.appendChild(stats.domElement);
 
 // random generator utils
 function generateRandomSeed (size) {
@@ -108,15 +113,9 @@ async function main () {
             }
             minimapView.render();
         }
-        stats.update();
+        //stats.update();
     }
     tick();
 
 }
 main();
-
-
-/* TODO:
-- check webgl, loading logo
-*/
-

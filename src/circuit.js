@@ -34,9 +34,12 @@ class CircuitFactory {
         
         this.trees = {truncs: treesTrunc, cones: treesCone, shadows: treesShadow};
         this.mainScene.add(treesTrunc, treesCone, treesShadow);
+
+        this.centeredMsg = document.getElementById("centered_msg");
     }
 
     createCircuit (seed) {
+        this.centeredMsg.textContent = `Creating circuit ${seed}...`;
         const CONF = {minPoints: 15,
                       maxPoints: 30,
                       minX: -300,
@@ -71,6 +74,7 @@ class CircuitFactory {
                 this.minimapScene.add(value.minimapMesh);
                 this.phyWorld.addRigidBody(value.body);
             }
+            this.centeredMsg.textContent = "";
         });
         return circuitPromise;
     }

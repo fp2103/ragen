@@ -96,7 +96,6 @@
 
             this.htmlElements.seed.value = data.cid;
             this.htmlElements.menuSeed.value = data.cid;
-            this.htmlElements.centeredMsg.textContent = ""
             this.spectator = data.nonplayable;
             this.podiumScene = data.state == "podium";
 

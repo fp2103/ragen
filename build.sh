@@ -34,6 +34,7 @@ LIBS="
 seedrandom
 three
 three/stats
+WebGL
 ammo
 socket.io-client/socket.io
 "

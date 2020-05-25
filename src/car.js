@@ -77,7 +77,7 @@ class CarFactory {
         car.initMainView();
         car.initMinimapView();
         if (mainPlayer) {
-            car.chassisMesh.applyMatrix(new THREE.Matrix4().makeScale(1.01, 1.01, 1.01));
+            car.chassisMesh.applyMatrix4(new THREE.Matrix4().makeScale(1.01, 1.01, 1.01));
             car.initPhysics(this.phyWorld, {mass: 800,
                                             suspensionStiffness: 100,
                                             suspensionRestLength: 0.4,
@@ -351,7 +351,7 @@ class Car {
         const y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
         
         const m = new THREE.Mesh(this.geos.particles, this.mats.grass_particles_mat);
-        m.applyMatrix(new THREE.Matrix4().makeScale(this._wheelRadius/1.5, y, 1));
+        m.applyMatrix4(new THREE.Matrix4().makeScale(this._wheelRadius/1.5, y, 1));
         const part = new Particle(m, 2);
         
         let pos = this.wheelMeshes[idWheel].position.clone();
