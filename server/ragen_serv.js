@@ -12,7 +12,7 @@ const CLEANINGFREQUENCE = 10000;
 const MAXPLAYER = 8;
 
 const POSITIONSREFRESH = 55;
-const GARBAGE_USER = 10000;
+const GARBAGE_USER = 30000;
 
 // ---- Function Utils ----
 function generateRandomSeed (size) {

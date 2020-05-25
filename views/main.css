@@ -150,6 +150,14 @@ th, td {
     z-index: 4;
 }
 
+#connexion_error {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 0);
+    z-index: 1;
+}
+
 /* Small scoreboard */
 #scoreboard_min {
     position: absolute;

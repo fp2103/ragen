@@ -21,6 +21,7 @@
         this.socket = undefined;
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
+        this.reconnect_inprogress = false;
         window.addEventListener("beforeunload", this.disconnect.bind(this), false);
         setInterval(this.updateRT.bind(this), 1000);
         this.player.client_CB = this.mainDriverUpdate.bind(this);
@@ -38,7 +39,8 @@
             menuSeed: document.getElementById("menu_seed"),
             sessionSpan: document.getElementById("session_span"),
             remainingTime: document.getElementById("remaining_time"),
-            remainingTime2: document.getElementById("remaining_time_2")
+            remainingTime2: document.getElementById("remaining_time_2"),
+            errorMsg: document.getElementById("connexion_error")
         }
         this.updateScorboardDisplay_cb = undefined;
     }
@@ -69,6 +71,7 @@
         this.socket.on("del_user", (data) => this.del_user(data));
         this.socket.on("update_user", (data) => this.update_user(data));
         this.socket.on("update_positions", (data) => this.update_positions(data));
+        this.socket.on("disconnect", (reason) => this.onDisconnect(reason));
         this.sendPosInter = setInterval(this.send_position.bind(this), this.POS_REFRESH_RATE);
 
         this.connect_cb = connect_cb;
@@ -82,40 +85,46 @@
     }
 
     send_session_info () {
+        this.htmlElements.errorMsg.textContent = "";
         this.socket.emit("join_session", {sid: this.sessionid, t: this.userToken,
                                           user: this.get_user_data()});
     }
 
     load_session (data) {
-        this.circuitFactory.createCircuit(data.cid).then(v => {
-            // Convert players data to new Driver
-            const drivers = [];
-            for (let pData of data.players) {
-                drivers.push(this.createDriverFromData(pData));
-            }
 
-            this.htmlElements.seed.value = data.cid;
-            this.htmlElements.menuSeed.value = data.cid;
-            this.spectator = data.nonplayable;
-            this.podiumScene = data.state == "podium";
+        if (!this.reconnect_inprogress || this.gameplay.circuit.id != data.cid
+            || data.state == "podium" || this.spectator != data.nonplayable) {
+            this.circuitFactory.createCircuit(data.cid).then(v => {
+                // Convert players data to new Driver
+                const drivers = [];
+                for (let pData of data.players) {
+                    drivers.push(this.createDriverFromData(pData));
+                }
 
-            // Callback if defined
-            if (this.connect_cb != undefined) this.connect_cb();
+                this.htmlElements.seed.value = data.cid;
+                this.htmlElements.menuSeed.value = data.cid;
+                this.spectator = data.nonplayable;
+                this.podiumScene = data.state == "podium";
 
-            if (this.onMenu) {
-                this.gameplay.setState("menu", v, drivers);
-                return;
-            }
+                // Callback if defined
+                if (this.connect_cb != undefined) this.connect_cb();
 
-            if (this.podiumScene) {
-                this.gameplay.setState("podium", v, drivers);
-            } else if (this.spectator) {
-                this.gameplay.setState("spectator", v, drivers);
-            } else {
-                this.gameplay.setState("multi", v, drivers);
-            }
-        });
+                if (this.onMenu) {
+                    this.gameplay.setState("menu", v, drivers);
+                    return;
+                }
 
+                if (this.podiumScene) {
+                    this.gameplay.setState("podium", v, drivers);
+                } else if (this.spectator) {
+                    this.gameplay.setState("spectator", v, drivers);
+                } else {
+                    this.gameplay.setState("multi", v, drivers);
+                }
+            });
+        }
+
+        this.reconnect_inprogress = false;
         this.htmlElements.sessionSpan.textContent = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
@@ -136,6 +145,8 @@
         this.spectator = false;
         this.podiumScene = false;
         this.socket = undefined;
+        this.htmlElements.errorMsg.textContent = "";
+        this.reconnect_inprogress = false;
         clearInterval(this.sendPosInter);
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
@@ -229,5 +240,13 @@
         let s = this.player.car.vehiclePhysics.getCurrentSpeedKmHour()/3.6;
         let sv = this.player.car.vehiclePhysics.getSteeringValue(0);
         this.socket.emit("update_position", {p: p, q: q, s: s, sv: sv});
+    }
+
+    onDisconnect (reason) {
+        this.htmlElements.errorMsg.textContent = "Connexion lost, trying to reconnect...";
+        this.reconnect_inprogress = true;
+        if (reason == "io server disconnect") {
+            this.socket.connect();
+        }
     }
  }
