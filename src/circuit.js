@@ -20,6 +20,20 @@ class CircuitFactory {
             matLineBlue: new THREE.LineBasicMaterial({color: 0x0000ff}),
             matLineWhite: new THREE.LineBasicMaterial({color: 0xffffff})
         }
+
+        // Trees
+        this.TREES_COUNT = 200;
+        const treeTruncGeo = new THREE.CylinderBufferGeometry(1, 1, 3, 8);
+        treeTruncGeo.rotateX(Math.PI/2);
+        const treesTrunc = new THREE.InstancedMesh(treeTruncGeo, new THREE.MeshLambertMaterial({color: 0x8B4513}), this.TREES_COUNT);
+        const treeConeGeo = new THREE.ConeBufferGeometry(3, 5, 8);
+        treeConeGeo.rotateX(Math.PI/2);
+        const treesCone = new THREE.InstancedMesh(treeConeGeo, new THREE.MeshLambertMaterial({color: 0x6B8E23}), this.TREES_COUNT);
+        const treesShadow = new THREE.InstancedMesh(new THREE.CircleBufferGeometry(3.1, 8),
+                                new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true}), this.TREES_COUNT);
+        
+        this.trees = {truncs: treesTrunc, cones: treesCone, shadows: treesShadow};
+        this.mainScene.add(treesTrunc, treesCone, treesShadow);
     }
 
     createCircuit (seed) {
@@ -32,7 +46,9 @@ class CircuitFactory {
                       width: 12.5,
                       margin: 0.5,
                       pointResolution: 200,
-                      Z: 0.6};
+                      Z: 0.6,
+                      terrainSide: 800,
+                      treesCount: this.TREES_COUNT};
 
         const circuitPromise = new Promise(resolve => {
             if (seed == this.currSeed) {
@@ -43,7 +59,7 @@ class CircuitFactory {
                     this.minimapScene.remove(this.currCircuit.minimapMesh);
                     this.phyWorld.removeCollisionObject(this.currCircuit.body);
                 }
-                resolve(new Circuit(this.MATERIALS, CONF, seed));
+                resolve(new Circuit(this.MATERIALS, CONF, seed, this.trees));
             }
         });
 
@@ -63,7 +79,7 @@ class CircuitFactory {
 
 class Circuit {
 
-    constructor  (materials, conf, id) {
+    constructor  (materials, conf, id, trees) {
         this.id = id;
         const rng = new Math.seedrandom(id);
 
@@ -151,6 +167,7 @@ class Circuit {
         // Get the catmullrom for the points
         const chordal = new THREE.CatmullRomCurve3(points, false, 'centripetal');
         points = chordal.getPoints(conf.pointResolution);
+        const spacedPoints = chordal.getSpacedPoints(conf.pointResolution);
 
         // Get the geometry && update points
         const cir = createWidthLineBufferGeo(points, conf.width, true, 1);
@@ -196,7 +213,7 @@ class Circuit {
             return resId-1;
         }
 
-        // Create margin geometry (three & ammo)
+        // Create margin geometry
         this._margin = conf.margin;
         const marginInVertices = [];
         const marginExtVertices = [];
@@ -297,6 +314,70 @@ class Circuit {
         this.body = new Ammo.btRigidBody(rbInfo);
         
         this.body.setFriction(1);
+
+        // ----- TREES -----
+        let tree_points = generate2DUniqueRandomPoints(rng, conf.treesCount, conf.treesCount, 
+                                                       -conf.terrainSide/2, conf.terrainSide/2,
+                                                       -conf.terrainSide/2, conf.terrainSide/2);
+        let tree_points_cleaned = [];
+        let treeInd = 0;
+        let tempPos = new THREE.Object3D();
+        const dstSq = conf.width*conf.width;
+        const dstCircuitSq = 4*dstSq;
+        for (var i = 0; i < tree_points.length; i++) {
+            let treep = tree_points[i];
+
+            // not close to circuit
+            let bad = false;
+            for (let trackp of spacedPoints) {
+                let diff = new THREE.Vector3().subVectors(treep, trackp);
+                if (diff.lengthSq() < dstCircuitSq) {
+                    bad = true;
+                    break;
+                }
+            }
+            if (!bad) {
+
+                // Larger area around starting points (for podium)
+                let diffsl = new THREE.Vector3().subVectors(treep, this.startingLinePoints[0]);
+                if (diffsl.lengthSq() < 2*dstCircuitSq) continue;
+                diffsl = new THREE.Vector3().subVectors(treep, this.startingLinePoints[1]);
+                if (diffsl.lengthSq() < 2*dstCircuitSq) continue;
+
+                // not close to others
+                let bad2 = false;
+                for (let otreep of tree_points_cleaned) {
+                    let diff = new THREE.Vector3().subVectors(treep, otreep);
+                    if (diff.lengthSq() < dstSq) {
+                        bad2 = true;
+                        break;
+                    }
+                }
+
+                if (!bad2) {
+                    tempPos.position.set(treep.x, treep.y, 2);
+                    tempPos.updateMatrix();
+                    trees.truncs.setMatrixAt(treeInd, tempPos.matrix);
+
+                    tempPos.position.set(treep.x, treep.y, 4.5);
+                    tempPos.updateMatrix();
+                    trees.cones.setMatrixAt(treeInd, tempPos.matrix);
+
+                    tempPos.position.set(treep.x, treep.y-0.5, 0.6);
+                    tempPos.updateMatrix();
+                    trees.shadows.setMatrixAt(treeInd, tempPos.matrix);
+
+                    tree_points_cleaned.push(treep);
+                    treeInd++;
+                }
+            }
+        }
+        trees.truncs.count = treeInd;
+        trees.cones.count = treeInd;
+        trees.shadows.count = treeInd;
+        trees.truncs.instanceMatrix.needsUpdate = true;
+        trees.cones.instanceMatrix.needsUpdate = true;
+        trees.shadows.instanceMatrix.needsUpdate = true;
     }
 
     getStartingPosition () {

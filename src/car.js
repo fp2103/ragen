@@ -40,15 +40,24 @@ class CarFactory {
         const mainGeo = new THREE.BufferGeometry().setFromPoints(carVertices);
         mainGeo.computeVertexNormals();
 
+        const shadowVertices = [
+            new THREE.Vector3(w, -l, 0),
+            new THREE.Vector3(0, l, 0),
+            new THREE.Vector3(-w, -l, 0)];
+        const shadowGeo = new THREE.BufferGeometry().setFromPoints(shadowVertices);
+        shadowGeo.computeVertexNormals();
+        shadowGeo.scale(1.07, 1.07, 1.07);
+
         this.geomteries = {
             mainGeo: mainGeo,
             edges: new THREE.EdgesGeometry(mainGeo),
-            grass_particles: new THREE.PlaneBufferGeometry(1,1),
+            particles: new THREE.PlaneBufferGeometry(1,1),
             wheelGeo: new THREE.CylinderGeometry(WHEEL_RADIUS, WHEEL_RADIUS, WHEEL_RADIUS/1.5, 10, 1),
             wheelGeoIndicator: new THREE.BoxGeometry(1.2*WHEEL_RADIUS/1.5, WHEEL_RADIUS, 0.15*WHEEL_RADIUS),
             wheelGeoIndicator2: undefined,
             minimapGeo: new THREE.PlaneBufferGeometry(30,30),
-            minimapGeoInner: new THREE.PlaneBufferGeometry(20,20)
+            minimapGeoInner: new THREE.PlaneBufferGeometry(20,20),
+            shadowGeo: shadowGeo
         };
         this.geomteries.wheelGeo.rotateZ(Math.PI/2);
         this.geomteries.wheelGeoIndicator2 = this.geomteries.wheelGeoIndicator.clone();
@@ -58,7 +67,8 @@ class CarFactory {
             grass_particles_mat: new THREE.MeshBasicMaterial({color: 0x87B982}),
             edgeMat: new THREE.LineBasicMaterial({color: 0x000000}),
             wheelMat: new THREE.MeshBasicMaterial({color: 0x000000}),
-            wheelMatIndicator: new THREE.MeshBasicMaterial({color: 0xDCDCDC})
+            wheelMatIndicator: new THREE.MeshBasicMaterial({color: 0xDCDCDC}),
+            shadowMat: new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true})
         };
     }
 
@@ -118,6 +128,10 @@ class Car {
         this.wheelMeshes = [undefined, undefined, undefined, undefined];
         this.independantWheels = mainPlayer;
 
+        this.shadowMesh = undefined;
+        this.shadowZ = 0.2+this._height/2;
+        this.shadowY = 0.1;
+
         this.minimapMeshInner = undefined;
         this.minimapMesh = undefined;
 
@@ -137,6 +151,7 @@ class Car {
 
         // Client setted position
         this.lerpPosition = undefined;
+        this.lerpPosition_shadow = undefined;
         this.lerpQuaternion = undefined;
         this.wheelsRotation = undefined;
         this.newSteeringVal = 0;
@@ -171,6 +186,8 @@ class Car {
             this.wheelMeshes[i] = m;
             if (!this.independantWheels) this.chassisMesh.add(m);
         }
+
+        this.shadowMesh = new THREE.Mesh(this.geos.shadowGeo, this.mats.shadowMat);
     }
 
     initMinimapView () {
@@ -249,9 +266,9 @@ class Car {
         if (this.visible) return;
 
         if (this.independantWheels) {
-            this.visible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+            this.visible_cb([this.chassisMesh, this.shadowMesh, ...this.wheelMeshes], this.minimapMesh);
         } else {
-            this.visible_cb([this.chassisMesh], this.minimapMesh);
+            this.visible_cb([this.chassisMesh, this.shadowMesh], this.minimapMesh);
         }
         this.visible = true;
     }
@@ -260,9 +277,9 @@ class Car {
         if (!this.visible) return;
 
         if (this.independantWheels) {
-            this.unvisible_cb([this.chassisMesh, ...this.wheelMeshes], this.minimapMesh);
+            this.unvisible_cb([this.chassisMesh, this.shadowMesh, ...this.wheelMeshes], this.minimapMesh);
         } else {
-            this.unvisible_cb([this.chassisMesh], this.minimapMesh);
+            this.unvisible_cb([this.chassisMesh, this.shadowMesh], this.minimapMesh);
         }
         this.visible = false;
     }
@@ -310,6 +327,9 @@ class Car {
             this.chassisMesh.position.set(p.x(), p.y(), p.z());
             this.chassisMesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
 
+            this.shadowMesh.position.set(p.x(), p.y()-this.shadowY, p.z()-this.shadowZ);
+            this.shadowMesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
+
             this.minimapMesh.position.set(p.x(), p.y(), p.z());
         }
 
@@ -330,7 +350,7 @@ class Car {
     createParticleMarkGrass (idWheel, speed) {
         const y = ((1000*Math.abs(speed)/3600) * (1/FPS)) + SMALL_GAP;
         
-        const m = new THREE.Mesh(this.geos.grass_particles, this.mats.grass_particles_mat);
+        const m = new THREE.Mesh(this.geos.particles, this.mats.grass_particles_mat);
         m.applyMatrix(new THREE.Matrix4().makeScale(this._wheelRadius/1.5, y, 1));
         const part = new Particle(m, 2);
         
@@ -353,6 +373,9 @@ class Car {
 
     setLerpPosition (pos, quat, speed, steeringVal) {
         this.lerpPosition = pos;
+        if (pos != undefined) {
+            this.lerpPosition_shadow = new THREE.Vector3(pos.x, pos.y-this.shadowY, pos.z-this.shadowZ);
+        }
         this.lerpQuaternion = quat;
         let dd = speed*(1/FPS);
         this.wheelsRotation = dd/this._wheelRadius;
@@ -368,6 +391,11 @@ class Car {
                                             this.lerpQuaternion.y,
                                             this.lerpQuaternion.z,
                                             this.lerpQuaternion.w);
+            this.shadowMesh.position.lerp(this.lerpPosition_shadow, this.LERP_SPEED);
+            this.shadowMesh.quaternion.set(this.lerpQuaternion.x,
+                                           this.lerpQuaternion.y,
+                                           this.lerpQuaternion.z,
+                                           this.lerpQuaternion.w);
 
             // rotate the wheel at the speed of the car
             for (var i = 0; i < this.WHEELSNUMBER; i++) {

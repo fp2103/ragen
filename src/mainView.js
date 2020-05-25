@@ -23,7 +23,6 @@ class MainView {
         dirLight.color.setHSL(0.1, 1, 0.95);
         dirLight.position.set(0, 50, 100);
         this.scene.add(dirLight);
-        this.scene.add(new THREE.DirectionalLightHelper(dirLight, 1))
     }
 
     render () {

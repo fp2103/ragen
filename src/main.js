@@ -117,11 +117,6 @@ main();
 
 
 /* TODO:
-- scene improvment
-    - shadow
-    - drift traces
-    - background objects
-- sound
 - check webgl, loading logo
 */
 
