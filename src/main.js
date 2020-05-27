@@ -113,9 +113,12 @@ async function main () {
             }
             minimapView.render();
         }
-        //stats.update();
     }
     tick();
 
 }
 main();
+
+/* TODO:
+- lap counter & sort player on this
+*/

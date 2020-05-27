@@ -242,6 +242,7 @@ app.get('/sessions_list', (req,res) => {
     for (let [sid, s] of sessions.entries()) {
         sessions_list.push({sid: sid, p: s.activePlayerCount});
     }
+    res.append('Access-Control-Allow-Origin', '*');
     res.render('sessions_list', {sessions: sessions_list, mp: MAXPLAYER});
 });
 
@@ -305,20 +306,15 @@ io.on('connection', (socket) => {
         socket.emit('load_session', session.getData(socket.id));
     });
 
-    socket.on('desco', () => {
-        console.log("User disconnected (asked by client)", socket.id);
+    socket.on('disconnect', (reason) => {
+        console.log("Socket disconnected", socket.id, `(${reason})`);
         let player = socket_player.get(socket.id);
         if (player != undefined) {
-            player.session.remove_user(player.token);
-        }
-        socket_player.delete(socket.id);
-    });
-
-    socket.on('disconnect', () => {
-        console.log("Socket disconnected", socket.id);
-        let player = socket_player.get(socket.id);
-        if (player != undefined) {
-            player.disconnected = true;
+            if (reason.startsWith("client") || reason == "transport close") {
+                player.session.remove_user(player.token);
+            } else {
+                player.disconnected = true;
+            }
         }
         socket_player.delete(socket.id);
     });

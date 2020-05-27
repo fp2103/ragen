@@ -99,3 +99,54 @@ fi;
 echo "JS done"
 echo "End build"
 echo
+
+# ----- ITCHIO BUILD ---------
+
+if [ "$1" == "itchio" ] ; then
+    echo "Concat everything in one file for itchio"
+    #SERVER="my-project-24674.appspot.com"
+    SERVER="localhost:8080"
+
+    # itchio specific in ragen.js 
+    cp public/ragen.js public/ragen.js.bak
+    sed "s/window.location.host/\"${SERVER}\"/" public/ragen.js > res
+    mv res public/ragen.js
+
+    # sessionid
+    cp views/index.ejs public/index.html
+    sed 's/<%= sessionid %>//' public/index.html > res
+    mv res public/index.html
+    # fullscreen button
+    sed 's/id="fullscreen"/id="fullscreen" style="display: none;"/' public/index.html > res
+    mv res public/index.html
+
+    # css
+    grepline=` grep -n "main.css" public/index.html | awk -F ':' '{print $1}' `
+    head -$(( ${grepline} - 1 )) public/index.html > res
+    echo "<style>" >> res
+    cat views/main.css >> res
+    echo "</style>" >> res
+    awk "NR>${grepline}" public/index.html >> res
+
+    # scripts
+    grep "<script src=" res > scr_list
+    while read line ; do
+        
+        scr_src=` echo $line | awk -F '"' '{print $2}' `
+        scr_line=` grep -n "${scr_src}" res | awk -F ':' '{print $1}' `
+
+        head -$(( ${scr_line} - 1 )) res > res2
+        echo "<script>" >> res2
+        cat public/$scr_src >> res2
+        echo "" >> res2
+        echo "</script>" >> res2
+        awk "NR>${scr_line}" res >> res2
+
+        mv res2 res
+
+    done < scr_list
+    rm scr_list
+
+    mv res public/index.html
+    mv public/ragen.js.bak public/ragen.js
+fi

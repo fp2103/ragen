@@ -70,7 +70,8 @@ class Menu {
 
     showMenu () {
         // refresh session list
-        fetch(`http://${window.location.host}/sessions_list`)
+        const host = window.location.host;
+        fetch(`http://${host}/sessions_list`)
         .then((res) => { return res.text(); })
         .then((data) => { this.html.sessionIdList.innerHTML = data; })
         .catch((err) => { console.log("error getting sessions_list", err); });

@@ -22,7 +22,6 @@
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
         this.reconnect_inprogress = false;
-        window.addEventListener("beforeunload", this.disconnect.bind(this), false);
         setInterval(this.updateRT.bind(this), 1000);
         this.player.client_CB = this.mainDriverUpdate.bind(this);
 
@@ -62,7 +61,7 @@
         // create a user token for this connection
         this.userToken= generateRandomSeed(10);
 
-        this.socket = io.connect(this.SERVER);
+        this.socket = io.connect(this.SERVER, {'sync disconnect on unload': true});
         this.sessionid = sessionid.toUpperCase();
 
         this.socket.on("session_please", () => this.send_session_info());
@@ -134,10 +133,6 @@
     disconnect () {
         if (this.socket == undefined) return;
 
-        this.gameplay.otherDrivers.forEach((v) => { v.car.makeUnvisible() });
-        this.gameplay.otherDrivers.clear();
-
-        this.socket.emit("desco");
         this.socket.close();
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
@@ -145,12 +140,15 @@
         this.spectator = false;
         this.podiumScene = false;
         this.socket = undefined;
-        this.htmlElements.errorMsg.textContent = "";
         this.reconnect_inprogress = false;
         clearInterval(this.sendPosInter);
         this.sendPosInter = undefined;
         this.connect_cb = undefined;
 
+        this.gameplay.otherDrivers.forEach((v) => { v.car.makeUnvisible() });
+        this.gameplay.otherDrivers.clear();
+
+        this.htmlElements.errorMsg.textContent = "";
         this.htmlElements.remainingTime.innerHTML = "&infin;";
         this.htmlElements.remainingTime2.innerHTML = "&infin;";
         this.htmlElements.remainingTime.classList.remove("soon");
