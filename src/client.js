@@ -45,7 +45,7 @@
         this.updateScorboardDisplay_cb = undefined;
         window.addEventListener("beforeunload", () => {
             if (this.socket != undefined) {
-                this.socket.emit("desco");
+                this.socket.close();
             }
         })
     }
