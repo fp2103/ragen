@@ -43,6 +43,11 @@
             errorMsg: document.getElementById("connexion_error")
         }
         this.updateScorboardDisplay_cb = undefined;
+        window.addEventListener("beforeunload", () => {
+            if (this.socket != undefined) {
+                this.socket.emit("desco");
+            }
+        })
     }
 
     getSessionState () {
