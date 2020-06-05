@@ -121,4 +121,5 @@ main();
 
 /* TODO:
 - lap counter & sort player on this
+- ghost
 */

@@ -24,6 +24,7 @@
         this.reconnect_inprogress = false;
         setInterval(this.updateRT.bind(this), 1000);
         this.player.client_CB = this.mainDriverUpdate.bind(this);
+        this.oldSessions = [];
 
         // State
         this.onMenu = false;
@@ -133,7 +134,14 @@
     disconnect () {
         if (this.socket == undefined) return;
 
-        this.socket.close();
+        this.socket.emit("desco");
+        this.oldSessions.push(this.socket);
+        setTimeout(() => { 
+            while (this.oldSessions.length > 0) {
+                this.oldSessions.pop().close();
+            }
+         }, 1000);
+
         this.circuit_change_date = undefined;
         this.sessionid = undefined;
         this.userToken = undefined;
@@ -241,6 +249,10 @@
     }
 
     onDisconnect (reason) {
+        if (reason == "io client disconnect") {
+            return;
+        }
+
         this.htmlElements.errorMsg.textContent = "Connexion lost, trying to reconnect...";
         this.reconnect_inprogress = true;
         if (reason == "io server disconnect") {

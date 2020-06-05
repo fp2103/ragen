@@ -12,7 +12,7 @@ const CLEANINGFREQUENCE = 10000;
 const MAXPLAYER = 8;
 
 const POSITIONSREFRESH = 55;
-const GARBAGE_USER = 30000;
+const GARBAGE_USER = 10000;
 
 // ---- Function Utils ----
 function generateRandomSeed (size) {
@@ -80,8 +80,7 @@ class Session {
         // load a new circuit
         this.reload_circuit();
 
-        this.garbageUserIter = setInterval(this.garbageUserCollector.bind(this), GARBAGE_USER);
-        this.toDumpList = [];
+        this.garbageUserIter = setInterval(this.garbageUserCollector.bind(this), 1000);
     }
 
     getData (socketid_dest) {
@@ -217,13 +216,13 @@ class Session {
     }
 
     garbageUserCollector () {
-        while (this.toDumpList.length > 0) {
-            let p = this.toDumpList.pop();
-            if (p.disconnected) this.remove_user(p.token);
-        }
-
+        const n = Date.now();
+        const toDel = [];
         for (let p of this.players.values()) {
-            if (p.disconnected) this.toDumpList.push(p);
+            if (p.disconnected && n > p.disconnected) toDel.push(p.token);
+        }
+        for (let d of toDel) {
+            this.remove_user(d);
         }
     }
 }
@@ -306,15 +305,20 @@ io.on('connection', (socket) => {
         socket.emit('load_session', session.getData(socket.id));
     });
 
+
+    socket.on('desco', () => {
+        console.log("Client ask to be removed", socket.id);
+        let player = socket_player.get(socket.id);
+        if (player != undefined) {
+            player.session.remove_user(player.token);
+        }
+    });
+
     socket.on('disconnect', (reason) => {
         console.log("Socket disconnected", socket.id, `(${reason})`);
         let player = socket_player.get(socket.id);
         if (player != undefined) {
-            if (reason.startsWith("client") || reason == "transport close") {
-                player.session.remove_user(player.token);
-            } else {
-                player.disconnected = true;
-            }
+            player.disconnected = Date.now() + GARBAGE_USER;
         }
         socket_player.delete(socket.id);
     });
