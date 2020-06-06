@@ -45,6 +45,7 @@
         this.updateScorboardDisplay_cb = undefined;
         window.addEventListener("beforeunload", () => {
             if (this.socket != undefined) {
+                this.socket.emit("desco");
                 this.socket.close();
             }
         })
@@ -86,7 +87,8 @@
         return {name: this.player.name,
                 color: this.player.car.currentColor.getHexString(),
                 currTime: this.player.currTime,
-                blt: this.player.bestLapTime};
+                blt: this.player.bestLapTime,
+                lapCount: this.player.lapCount};
     }
 
     send_session_info () {
@@ -227,7 +229,11 @@
 
             let last_blt = d.bestLapTime;
             d.bestLapTime = data.blt;
-            if (last_blt != data.blt) this.gameplay.leaderboard.sortDrivers(true);
+
+            let last_lapCount = d.lapCount;
+            d.lapCount = data.lapCount;
+
+            if (last_lapCount != data.lapCount || last_blt != data.blt) this.gameplay.leaderboard.sortDrivers(true);
         }
     }
 

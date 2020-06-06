@@ -42,7 +42,7 @@ class RowWrap {
         this.id = id;
         this.htmlRow = undefined;
         this.cells = [];
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 5; i++) {
             this.cells.push(new CellWrap());
         }
 
@@ -57,6 +57,7 @@ class RowWrap {
             c.force();
         }
         this.cells[0].htmlCell.colSpan = 2;
+        this.cells[1].htmlCell.classList.add("lap-cell");
     }
 
     setColorAllRow (color) {

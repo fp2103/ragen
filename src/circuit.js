@@ -217,6 +217,36 @@ class Circuit {
             return resId-1;
         }
 
+        // create spaced points list from the start
+        this.spaced10Points = [];
+        let closestToStart_SpacedPoint = undefined;
+        let minDiff = 1000;
+        for (let k = 0; k < spacedPoints.length; k++) {
+            let diff = (new THREE.Vector3().subVectors(points[maxSegLengthId], spacedPoints[k])).lengthSq();
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestToStart_SpacedPoint = k;
+            }
+        }
+        const nextk = Math.floor(conf.pointResolution/10);
+        if (this.clockwise) {
+            let k = 0;
+            for (k = closestToStart_SpacedPoint; k < spacedPoints.length-1; k += nextk) {
+                this.spaced10Points.push(spacedPoints[k]);
+            }
+            for (k = 1+k-spacedPoints.length; k < closestToStart_SpacedPoint; k += nextk) {
+                this.spaced10Points.push(spacedPoints[k]);
+            }
+        } else {
+            let k = 0;
+            for (k = closestToStart_SpacedPoint; k > 0; k -= nextk) {
+                this.spaced10Points.push(spacedPoints[k]);
+            }
+            for (k = spacedPoints.length+k-1; k > closestToStart_SpacedPoint; k -= nextk) {
+                this.spaced10Points.push(spacedPoints[k]);
+            }
+        }
+
         // Create margin geometry
         this._margin = conf.margin;
         const marginInVertices = [];

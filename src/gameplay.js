@@ -51,6 +51,7 @@ class Gameplay {
         // Rules
         this.started = false;
         this.nextcp = 0;
+        this.next_sp = 1;
         
         // reset
         this.justReset = false;
@@ -180,6 +181,7 @@ class Gameplay {
         
         this.started = false;
         this.nextcp = 0;
+        this.next_sp = 1;
 
         this.leaderboard.resetTime();
         this.controls.resetActions();
@@ -289,6 +291,7 @@ class Gameplay {
             } else {
                 const sector = this.nextcp == 0 ? 2 : this.nextcp-1;
                 this.leaderboard.sectorEnd(sector)
+                if (sector == 2) this.next_sp = 1;
             }
 
             this.nextcp += 1;
@@ -298,14 +301,24 @@ class Gameplay {
         // Outside of track: change color & disqualify!
         if (this.started && wheelOffside == this.player.car.WHEELSNUMBER) {
             this.htmlElements.redAlert.style.display = "block";
-            this.leaderboard.disqualify();
+            if(this.leaderboard.validtime) this.leaderboard.disqualify();
         } else {
             this.htmlElements.redAlert.style.display = "none";
         }
         
         // Update car position
         this.player.car.updatePosition(speed, false);
-        
+
+        // Update current Lap Count
+        if (this.started && this.leaderboard.validtime && this.next_sp < 10) {
+            let trackp = this.circuit.spaced10Points[this.next_sp];
+            let dst = (new THREE.Vector3().subVectors(this.player.car.chassisMesh.position, trackp)).lengthSq();
+            if (dst < 500) {
+                this.player.currLapCount = this.player.lapCount + this.next_sp/10;
+                this.next_sp += 1;
+            }
+        }
+
         // Update camera Position (and lerp factor after 1st movement)
         if (this.cameraLerp == this.LERP_SLOW && (actions.acceleration || actions.braking)) {
             this.cameraLerp = this.LERP_FAST;

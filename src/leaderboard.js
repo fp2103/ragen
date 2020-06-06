@@ -83,6 +83,7 @@ class Leaderboard {
         this.htmlMessage.innerHTML = "";
 
         this.mainDriver.cancelCurrTime();
+        this.mainDriver.currLapCount = this.mainDriver.lapCount;
         this.computeBestSectorTime();
     }
 
@@ -95,7 +96,6 @@ class Leaderboard {
             this.current[sector] = this.mainDriver.updateCurrTime(sector, this.laptime);
             this.endSector_min = this.current[sector];
             if (sector == 2 && this.mainDriver.updateBestTime(this.laptime)) {
-                this.sortDrivers(true);
                 bestMsg = this.PERSONALBEST;
                 if (this.mode == "multi" && this.drivers[0].id == this.mainDriver.id) {
                     bestMsg = this.SESSIONBEST;
@@ -108,11 +108,15 @@ class Leaderboard {
         if (sector < 2) {
             this.current_sector += 1;
         } else {
-            if (this.validtime) this.last = [...this.current];
+            if (this.validtime) {
+                this.sortDrivers(true);
+                this.last = [...this.current];
+            }
             this.current = [undefined, undefined, undefined];
             this.laptime = 0
             this.validtime = true;
             this.current_sector = 0;
+            this.mainDriver.currLapCount = this.mainDriver.lapCount;
         }
 
         if (bestMsg || timegapMsg || this.last != undefined || this.endSector_min != undefined) {
@@ -144,7 +148,8 @@ class Leaderboard {
 
             this.fillRow(this.drivers[i].id, l, 
                          "#" + this.drivers[i].car.currentColor.getHexString(), 
-                         this.drivers[i].currTime, multi);
+                         this.drivers[i].currTime, multi,
+                         this.drivers[i].lapCount, false);
         }
 
         // update minimal scoreboard
@@ -178,10 +183,12 @@ class Leaderboard {
         let lastRowLabel = "Current";
         let lastRowLabelColor = undefined;
         let lastRowData = this.current;
+        let lastRowLapCount = this.mainDriver.currLapCount;
         if (Date.now() <= this.msgExpirationDate) {
             if (this.last != undefined) {
                 lastRowLabel = "Last";
                 lastRowData = this.last;
+                lastRowLapCount = this.mainDriver.lapCount;
             }
             if (this.endSectorMsg && !this.htmlMessage.innerHTML) {
                 this.htmlMessage.innerHTML = this.endSectorMsg;
@@ -211,7 +218,7 @@ class Leaderboard {
         }
 
         // fill table current/last
-        this.fillRow("current", lastRowLabel, lastRowLabelColor, lastRowData, multi);
+        this.fillRow("current", lastRowLabel, lastRowLabelColor, lastRowData, multi, lastRowLapCount, this.laptime>0);
         if (!this.mergeCurrentAndMain && this.last == undefined && !this.validtime) {
             this.rows.get("current").setColorAllRow("red");
         }
@@ -263,15 +270,25 @@ class Leaderboard {
     
     // ---- Utils ----
 
-    fillRow (id, label, labelColor, sectors, purplize) {
+    fillRow (id, label, labelColor, sectors, purplize, lapcount, currentLapCount) {
         const row = this.rows.get(id);
 
         // label
         row.cells[0].setContent(label, labelColor);
 
+        // lap count
+        if (!currentLapCount) {
+            row.cells[1].setContent(lapcount, undefined);
+        } else {
+            // force to display "0"
+            row.cells[1].text = lapcount;
+            row.cells[1].htmlCell.textContent = lapcount;
+            row.cells[1].setColor(this.validtime ? undefined : "red");
+        }
+
         // sectors
         for (var j = 0; j < 3; j++) {
-            const cell = row.cells[j+1];
+            const cell = row.cells[j+2];
             if (sectors[j] != undefined) {
                 cell.setText(convertTimeToString(sectors[j].time, true));
                 cell.setColor(sectors[j].color);
@@ -315,14 +332,18 @@ class Leaderboard {
 
     sortDrivers (animate) {
         this.drivers.sort((a, b) => {
-            if (a.bestLapTime == undefined && b.bestLapTime == undefined) {
-                return 0;
-            } else if (a.bestLapTime != undefined && b.bestLapTime == undefined) {
-                return -1;
-            } else if (a.bestLapTime == undefined && b.bestLapTime != undefined) {
-                return 1;
+            if (a.lapCount == b.lapCount) {
+                if (a.bestLapTime == undefined && b.bestLapTime == undefined) {
+                    return 0;
+                } else if (a.bestLapTime != undefined && b.bestLapTime == undefined) {
+                    return -1;
+                } else if (a.bestLapTime == undefined && b.bestLapTime != undefined) {
+                    return 1;
+                }
+                return a.bestLapTime - b.bestLapTime;
+            } else {
+                return b.lapCount - a.lapCount;
             }
-            return a.bestLapTime - b.bestLapTime;
         });
 
         // Set rows position

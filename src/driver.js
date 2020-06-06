@@ -9,6 +9,8 @@ class Driver {
         this.bestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
+        this.lapCount = 0;
+        this.currLapCount = 0;
 
         this.client_CB = undefined;
     }
@@ -17,6 +19,8 @@ class Driver {
         this.bestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
+        this.lapCount = 0;
+        this.currLapCount = 0;
     }
 
     updateCurrTime (sector, time) {
@@ -26,6 +30,7 @@ class Driver {
     }
 
     updateBestTime (time) {
+        this.lapCount += 1;
         if (this.bestLapTime == undefined || time < this.bestLapTime) {
             this.bestLapTime = time;
             for (var i = 0; i < 3; i++) {

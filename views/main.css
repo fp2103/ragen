@@ -122,6 +122,11 @@ th, td {
     transition: max-height 0.2s ease-out;
 }
 
+.lap-cell {
+    min-width: 0px;
+    width: 2em;
+}
+
 /* Other game elements */
 #centered_msg {
     position: absolute;

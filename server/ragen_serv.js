@@ -33,7 +33,7 @@ app.use(express.static('public'));
 
 // Each individual player
 class Player {
-    constructor (socket, token, session, name, color, currTime, blt) {
+    constructor (socket, token, session, name, color, currTime, blt, lapCount) {
         this.socket = socket;
         this.token = token;
         this.session = session;
@@ -41,6 +41,7 @@ class Player {
         this.color = color;
         this.currTime = currTime;
         this.bestLapTime = blt;
+        this.lapCount = lapCount;
         this.isSpectator = false;
 
         this.position = undefined;
@@ -56,7 +57,8 @@ class Player {
                 name: this.name,
                 color: this.color,
                 currTime: this.currTime,
-                blt: this.bestLapTime};
+                blt: this.bestLapTime,
+                lapCount: this.lapCount};
     }
 }
 const socket_player = new Map();
@@ -289,7 +291,8 @@ io.on('connection', (socket) => {
         if (p == undefined) {
             // Create new Player
             p = new Player(socket, userToken, session,
-                           data.user.name, data.user.color, data.user.currTime);
+                           data.user.name, data.user.color,
+                           data.user.currTime, data.user.lapCount);
             session.new_user(p);
         } else {
             p.disconnected = false;
@@ -298,6 +301,7 @@ io.on('connection', (socket) => {
             p.color = data.user.color;
             p.currTime = data.user.currTime;
             p.bestLapTime = data.user.blt;
+            p.lapCount = data.lapCount;
             session.update_user(p);
         }
         socket_player.set(socket.id, p);
