@@ -10,7 +10,6 @@ class Driver {
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
         this.lapCount = 0;
-        this.currLapCount = 0;
 
         this.client_CB = undefined;
     }
@@ -20,7 +19,6 @@ class Driver {
         this.bestTime = [undefined, undefined, undefined];
         this.currTime = [undefined, undefined, undefined];
         this.lapCount = 0;
-        this.currLapCount = 0;
     }
 
     updateCurrTime (sector, time) {

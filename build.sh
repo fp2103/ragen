@@ -21,6 +21,7 @@ leaderboard.js
 driver.js
 controls.js
 podiumScene.js
+ghost.js
 gameplay.js
 client.js
 menu.js

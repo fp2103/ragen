@@ -111,13 +111,14 @@ class PodiumScene {
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         if (player != undefined) {
             const NAMEFONTSIZE = 40;
-            const TIMEFONTSIZE = 30;
+            const TIMEFONTSIZE = 28;
             ctx.fillStyle = `#${player.car.currentColor.getHexString()}`;
             ctx.font = `${NAMEFONTSIZE}px Arial`;
             ctx.fillText(player.name, ctx.canvas.width/2, NAMEFONTSIZE + 20);
             ctx.fillStyle = "black";
             ctx.font = `${TIMEFONTSIZE}px Arial`;
-            ctx.fillText(convertTimeToString(player.bestLapTime, true), ctx.canvas.width/2, (TIMEFONTSIZE+20)*2);
+            const t = 'Lap: ' + player.lapCount + ', Best: ' + convertTimeToString(player.bestLapTime, true);
+            ctx.fillText(t, ctx.canvas.width/2, (TIMEFONTSIZE+20)*2);
         }
     }
 

@@ -60,12 +60,13 @@ async function main () {
     randomColor = '#' + randomColor;
     document.getElementById("color").value = randomColor;
     const driver = new Driver(0, DEFAULT_NAME, carFactory.createCar(randomColor, true));
+    const ghost = new Ghost(carFactory, driver);
 
     // Controls
     const controls = new Controls();
 
     // Game main
-    const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager, podiumScene);
+    const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager, podiumScene, ghost);
 
     // Inputs
     const client = new Client(gameplay, circuitFactory, carFactory, driver, podiumScene);
@@ -120,6 +121,8 @@ async function main () {
 main();
 
 /* TODO:
-- lap counter & sort player on this
 - ghost
+- rethink position sharing (/ deco when no data received expect if spectator)
+
+- show lap on podium
 */

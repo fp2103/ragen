@@ -83,23 +83,26 @@ class Leaderboard {
         this.htmlMessage.innerHTML = "";
 
         this.mainDriver.cancelCurrTime();
-        this.mainDriver.currLapCount = this.mainDriver.lapCount;
         this.computeBestSectorTime();
     }
 
     sectorEnd (sector) {
         let bestMsg = "";
         let timegapMsg = "";
+        let isPersonalBest = false;
 
         if (this.validtime) {
             timegapMsg = this.computeTimeGap(sector, this.laptime);
             this.current[sector] = this.mainDriver.updateCurrTime(sector, this.laptime);
             this.endSector_min = this.current[sector];
-            if (sector == 2 && this.mainDriver.updateBestTime(this.laptime)) {
-                bestMsg = this.PERSONALBEST;
-                if (this.mode == "multi" && this.drivers[0].id == this.mainDriver.id) {
-                    bestMsg = this.SESSIONBEST;
+            if (sector == 2) {
+                isPersonalBest = this.mainDriver.updateBestTime(this.laptime);
+                this.sortDrivers(true);
+                if (isPersonalBest) {
+                    bestMsg = (this.mode == "multi" && this.drivers[0].id == this.mainDriver.id) ? 
+                                this.SESSIONBEST : this.PERSONALBEST;
                 }
+                this.last = [...this.current];
             }
             this.mainDriver.client_CB();
             this.computeBestSectorTime();
@@ -108,21 +111,17 @@ class Leaderboard {
         if (sector < 2) {
             this.current_sector += 1;
         } else {
-            if (this.validtime) {
-                this.sortDrivers(true);
-                this.last = [...this.current];
-            }
             this.current = [undefined, undefined, undefined];
             this.laptime = 0
             this.validtime = true;
             this.current_sector = 0;
-            this.mainDriver.currLapCount = this.mainDriver.lapCount;
         }
 
         if (bestMsg || timegapMsg || this.last != undefined || this.endSector_min != undefined) {
             if (bestMsg || timegapMsg) this.endSectorMsg = bestMsg + "<br/>" + timegapMsg;
             this.msgExpirationDate = Date.now() + this.MESSAGESHOWINGTIME;
         }
+        return isPersonalBest;
     }
 
     disqualify () {
@@ -149,7 +148,7 @@ class Leaderboard {
             this.fillRow(this.drivers[i].id, l, 
                          "#" + this.drivers[i].car.currentColor.getHexString(), 
                          this.drivers[i].currTime, multi,
-                         this.drivers[i].lapCount, false);
+                         this.drivers[i].lapCount);
         }
 
         // update minimal scoreboard
@@ -183,7 +182,7 @@ class Leaderboard {
         let lastRowLabel = "Current";
         let lastRowLabelColor = undefined;
         let lastRowData = this.current;
-        let lastRowLapCount = this.mainDriver.currLapCount;
+        let lastRowLapCount = this.laptime > 0 ? this.mainDriver.lapCount + 1 : '-';
         if (Date.now() <= this.msgExpirationDate) {
             if (this.last != undefined) {
                 lastRowLabel = "Last";
@@ -218,7 +217,7 @@ class Leaderboard {
         }
 
         // fill table current/last
-        this.fillRow("current", lastRowLabel, lastRowLabelColor, lastRowData, multi, lastRowLapCount, this.laptime>0);
+        this.fillRow("current", lastRowLabel, lastRowLabelColor, lastRowData, multi, lastRowLapCount);
         if (!this.mergeCurrentAndMain && this.last == undefined && !this.validtime) {
             this.rows.get("current").setColorAllRow("red");
         }
@@ -270,21 +269,14 @@ class Leaderboard {
     
     // ---- Utils ----
 
-    fillRow (id, label, labelColor, sectors, purplize, lapcount, currentLapCount) {
+    fillRow (id, label, labelColor, sectors, purplize, lapcount) {
         const row = this.rows.get(id);
 
         // label
         row.cells[0].setContent(label, labelColor);
 
         // lap count
-        if (!currentLapCount) {
-            row.cells[1].setContent(lapcount, undefined);
-        } else {
-            // force to display "0"
-            row.cells[1].text = lapcount;
-            row.cells[1].htmlCell.textContent = lapcount;
-            row.cells[1].setColor(this.validtime ? undefined : "red");
-        }
+        row.cells[1].setContent(lapcount, undefined);
 
         // sectors
         for (var j = 0; j < 3; j++) {

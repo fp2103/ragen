@@ -217,6 +217,7 @@ class Circuit {
             return resId-1;
         }
 
+        /* --UNUSED--
         // create spaced points list from the start
         this.spaced10Points = [];
         let closestToStart_SpacedPoint = undefined;
@@ -246,6 +247,7 @@ class Circuit {
                 this.spaced10Points.push(spacedPoints[k]);
             }
         }
+        */
 
         // Create margin geometry
         this._margin = conf.margin;

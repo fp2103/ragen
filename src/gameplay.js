@@ -2,12 +2,13 @@
 // Gameplay and Menu
 class Gameplay {
 
-    constructor (player, controls, camera, particlesManager, podiumScene) {
+    constructor (player, controls, camera, particlesManager, podiumScene, ghost) {
         this.player = player;
         this.controls = controls;
         this.camera = camera;
         this.particlesManager = particlesManager;
         this.podiumScene = podiumScene;
+        this.ghost = ghost;
 
         this.leaderboard = new Leaderboard(player);
         this.otherDrivers = new Map();
@@ -51,7 +52,6 @@ class Gameplay {
         // Rules
         this.started = false;
         this.nextcp = 0;
-        this.next_sp = 1;
         
         // reset
         this.justReset = false;
@@ -78,6 +78,7 @@ class Gameplay {
             // Reset best laptime
             if (this.circuit == undefined || newCircuit.id != this.circuit.id) {
                 this.player.resetTime();
+                this.ghost.clear();
             }
 
             this.circuit = newCircuit;
@@ -97,6 +98,9 @@ class Gameplay {
             this.otherDrivers.clear();
             newOtherDrivers.forEach(d => this.otherDrivers.set(d.id, d));
         }
+
+        // Ghost
+        if (newState != "solo") this.ghost.hide();
 
         // Update state
         const sessionStatus = this.getSessionState_cb();
@@ -181,8 +185,8 @@ class Gameplay {
         
         this.started = false;
         this.nextcp = 0;
-        this.next_sp = 1;
 
+        this.ghost.reset();
         this.leaderboard.resetTime();
         this.controls.resetActions();
 
@@ -290,8 +294,11 @@ class Gameplay {
                 this.started = true;
             } else {
                 const sector = this.nextcp == 0 ? 2 : this.nextcp-1;
-                this.leaderboard.sectorEnd(sector)
-                if (sector == 2) this.next_sp = 1;
+                const personalBest = this.leaderboard.sectorEnd(sector)
+                if (sector == 2) {
+                    this.next_sp = 1;
+                    this.ghost.endLap(personalBest);
+                }
             }
 
             this.nextcp += 1;
@@ -309,16 +316,6 @@ class Gameplay {
         // Update car position
         this.player.car.updatePosition(speed, false);
 
-        // Update current Lap Count
-        if (this.started && this.leaderboard.validtime && this.next_sp < 10) {
-            let trackp = this.circuit.spaced10Points[this.next_sp];
-            let dst = (new THREE.Vector3().subVectors(this.player.car.chassisMesh.position, trackp)).lengthSq();
-            if (dst < 500) {
-                this.player.currLapCount = this.player.lapCount + this.next_sp/10;
-                this.next_sp += 1;
-            }
-        }
-
         // Update camera Position (and lerp factor after 1st movement)
         if (this.cameraLerp == this.LERP_SLOW && (actions.acceleration || actions.braking)) {
             this.cameraLerp = this.LERP_FAST;
@@ -332,6 +329,9 @@ class Gameplay {
             this.camera.up.lerp(this.UP_Z, this.LERP_FAST);
             this.camera.lookAt(this.cameraLookAt);
         }
+
+        // Ghost (for solo gameplay)
+        if (this.state == "solo") this.ghost.update(this.leaderboard.laptime);
     }
 
     addOtherDriver (driver) {
