@@ -247,16 +247,7 @@
     }
 
     send_position() {
-        let p = {x: this.player.car.chassisMesh.position.x,
-                 y: this.player.car.chassisMesh.position.y,
-                 z: this.player.car.chassisMesh.position.z};
-        let q = {x: this.player.car.chassisMesh.quaternion.x,
-                 y: this.player.car.chassisMesh.quaternion.y,
-                 z: this.player.car.chassisMesh.quaternion.z,
-                 w: this.player.car.chassisMesh.quaternion.w};
-        let s = this.player.car.vehiclePhysics.getCurrentSpeedKmHour()/3.6;
-        let sv = this.player.car.vehiclePhysics.getSteeringValue(0);
-        this.socket.emit("update_position", {p: p, q: q, s: s, sv: sv});
+        this.socket.emit("update_position", this.player.car.getPositionToLerp());
     }
 
     onDisconnect (reason) {

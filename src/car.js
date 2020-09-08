@@ -68,7 +68,8 @@ class CarFactory {
             edgeMat: new THREE.LineBasicMaterial({color: 0x000000}),
             wheelMat: new THREE.MeshBasicMaterial({color: 0x000000}),
             wheelMatIndicator: new THREE.MeshBasicMaterial({color: 0xDCDCDC}),
-            shadowMat: new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true})
+            shadowMat: new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true}),
+            chassisMat: (params) => { return new THREE.MeshLambertMaterial(params); }
         };
     }
 
@@ -99,6 +100,19 @@ class CarFactory {
         this.mainScene.remove(...mainMeshes);
         this.minimapScene.remove(minimapMesh);
     }
+
+    createGhost () {
+        const mats = Object.assign({}, this.materials);
+        mats.chassisMat = (p) => { return new THREE.MeshBasicMaterial(p); }
+        const car = new Car(this.geomteries, mats, this.size, 0xFFFFFF, false);
+        car.initMainView();
+        car.shadowMesh = new THREE.Object3D();
+        car.outerMinimapColor = 0x0;
+        car.initMinimapView();
+        car.visible_cb = this.visible_callback.bind(this);
+        car.unvisible_cb = this.unvisible_callback.bind(this);
+        return car;
+    }
 }
 
 class Car {
@@ -120,7 +134,7 @@ class Car {
         this._wheelRadius = size.wheelRadius;
 
         // Reset altitude
-        this.Z_RESET = 1.5;
+        this.Z_RESET = 0.6;
 
         // Meshes
         this.chassisMesh = undefined;
@@ -130,7 +144,7 @@ class Car {
 
         this.shadowMesh = undefined;
         this.shadowZ = 0.2+this._height/2;
-        this.shadowY = 0.1;
+        this.shadowY = 0.15;
 
         this.minimapMeshInner = undefined;
         this.minimapMesh = undefined;
@@ -157,11 +171,12 @@ class Car {
         this.newSteeringVal = 0;
         this.lastSteeringVal = 0;
         this.LERP_SPEED = 0.2;
+        this.lerp_speed = 1;
     }
 
     initMainView () {
         const lineMesh = new THREE.LineSegments(this.geos.edges, this.mats.edgeMat);
-        const material = new THREE.MeshLambertMaterial({color : this.currentColor});
+        const material = this.mats.chassisMat({color: this.currentColor});
         this.chassisMesh = new THREE.Mesh(this.geos.mainGeo, material);
         this.chassisMesh.add(lineMesh);
 
@@ -291,29 +306,9 @@ class Car {
         mav.multiplyScalar(-(this._length/2)-1);
         const initPoint = nosePoint.clone();
         initPoint.add(mav);
-        
-        // Align with the vector
-        var angleToVert = alignementVector.angleTo(new THREE.Vector3(0,1,0));
-        const orthoZ = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), alignementVector);
-        let sign = 1;
-        if (orthoZ.z < 0) {
-            sign = -1;
-        }
-        angleToVert = sign*angleToVert;
-        const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), angleToVert);
+        initPoint.z = this.Z_RESET;
 
-        // Modifiy Ammo body position
-        let t = new Ammo.btTransform();
-        t.setIdentity();
-        t.setOrigin(new Ammo.btVector3(initPoint.x, initPoint.y, this.Z_RESET));
-        t.setRotation(new Ammo.btQuaternion(q.x, q.y, q.z, q.w));
-        let motionState = new Ammo.btDefaultMotionState(t);
-        this.chassisBody.setMotionState(motionState);
-        this.chassisBody.setLinearVelocity(new Ammo.btVector3(0,0,0));
-        this.chassisBody.setAngularVelocity(new Ammo.btVector3(0,0,0));
-        this.chassisBody.setLinearVelocity(0);
-
-        this.updatePosition(0, true);
+        this.forceMeshToPosition(initPoint, alignementVector);
     }
 
     updatePosition (speed, force) {
@@ -371,12 +366,27 @@ class Car {
         }
     }
 
+    getPositionToLerp () {
+        let p = {x: this.chassisMesh.position.x,
+            y: this.chassisMesh.position.y,
+            z: this.chassisMesh.position.z};
+        let q = {x: this.chassisMesh.quaternion.x,
+            y: this.chassisMesh.quaternion.y,
+            z: this.chassisMesh.quaternion.z,
+            w: this.chassisMesh.quaternion.w};
+        let s = this.vehiclePhysics.getCurrentSpeedKmHour()/3.6;
+        let sv = this.vehiclePhysics.getSteeringValue(0);
+        return {p: p, q: q, s: s, sv: sv};
+    }
+
     setLerpPosition (pos, quat, speed, steeringVal) {
         this.lerpPosition = pos;
         if (pos != undefined) {
             this.lerpPosition_shadow = new THREE.Vector3(pos.x, pos.y-this.shadowY, pos.z-this.shadowZ);
         }
-        this.lerpQuaternion = quat;
+        if (quat != undefined) {
+            this.lerpQuaternion = new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
+        }
         let dd = speed*(1/FPS);
         this.wheelsRotation = dd/this._wheelRadius;
         this.newSteeringVal = steeringVal;
@@ -384,18 +394,12 @@ class Car {
 
     updateLerpPosition () {
         if (this.lerpPosition != undefined) {
-            this.minimapMesh.position.lerp(this.lerpPosition, this.LERP_SPEED);
+            this.minimapMesh.position.lerp(this.lerpPosition, this.lerp_speed);
             
-            this.chassisMesh.position.lerp(this.lerpPosition, this.LERP_SPEED);
-            this.chassisMesh.quaternion.set(this.lerpQuaternion.x,
-                                            this.lerpQuaternion.y,
-                                            this.lerpQuaternion.z,
-                                            this.lerpQuaternion.w);
-            this.shadowMesh.position.lerp(this.lerpPosition_shadow, this.LERP_SPEED);
-            this.shadowMesh.quaternion.set(this.lerpQuaternion.x,
-                                           this.lerpQuaternion.y,
-                                           this.lerpQuaternion.z,
-                                           this.lerpQuaternion.w);
+            this.chassisMesh.position.lerp(this.lerpPosition, this.lerp_speed);
+            this.chassisMesh.quaternion.slerp(this.lerpQuaternion, this.lerp_speed);
+            this.shadowMesh.position.lerp(this.lerpPosition_shadow, this.lerp_speed);
+            this.shadowMesh.quaternion.slerp(this.lerpQuaternion, this.lerp_speed);
 
             // rotate the wheel at the speed of the car
             for (var i = 0; i < this.WHEELSNUMBER; i++) {
@@ -407,6 +411,9 @@ class Car {
             this.lastSteeringVal = this.newSteeringVal;
             this.wheelMeshes[this.FRONTLEFT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
             this.wheelMeshes[this.FRONTRIGHT].rotateOnWorldAxis(new THREE.Vector3(0,0,1), dsv);
+
+            // reset lerp speed
+            this.lerp_speed = this.LERP_SPEED;
         }
     }
 

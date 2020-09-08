@@ -121,8 +121,6 @@ async function main () {
 main();
 
 /* TODO:
-- ghost
-- rethink position sharing (/ deco when no data received expect if spectator)
-
-- show lap on podium
+- start @ sector3 (for solo) + message
+- tests
 */

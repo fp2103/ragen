@@ -2,7 +2,8 @@
 class Ghost {
 
     constructor (carFactory, driver) {
-        this.ghost = carFactory.createCar("#FFFFFF", false); //carFactory.createGhost();
+        this.ghost = carFactory.createGhost();
+        this.ghost.LERP_SPEED = 0.10;
         this.car = driver.car;
 
         this.recording = [];
@@ -13,6 +14,7 @@ class Ghost {
 
     clear () {
         this.recording = [];
+        this.best = [];
         this.hide();
         this.reset();
     }
@@ -21,9 +23,16 @@ class Ghost {
         this.ghost.makeUnvisible();
     }
 
+    show () {
+        if (this.best.length > 0) {
+            this.ghost.makeVisible();
+        }
+    }
+
     reset () {
         this.recording = [];
         this.iter = 0;
+        this.ghost.lerp_speed = 1;
     }
 
     endLap (best) {
@@ -34,27 +43,35 @@ class Ghost {
         this.reset();
     }
 
-    update (laptime) {
-        /*if (laptime - this.last_laptime >= this.FREQUENCE) {
-            this.last_laptime = laptime;
-
-            const o = this.driver.car.getPosObject();
-            o.t = laptime;
-            this.curr.push(o);
+    update (laptime, valid) {
+        // Record
+        if (valid && laptime > 0) {
+            let r = this.car.getPositionToLerp();
+            r.t = laptime;
+            this.recording.push(r);
         }
-
+        
+        // Update ghost matrix
         if (this.best.length > 0) {
-            let b = this.best[this.iter-1];
-            while (laptime >= b.t && this.iter < this.best.length) {
-                if (laptime <= b.t + this.FREQUENCE) {
-                    this.ghost.setLerpPosition(b.p, b.q, b.s, b.sv);
+
+            while (this.iter < this.best.length) {
+                let b = this.best[this.iter];
+                if (b.t >= laptime) {
+                    let niter = this.iter + 9;
+                    if (niter >= this.best.length) {
+                        niter = this.best.length - 1;
+                    }
+                    let b2 = this.best[niter];
+
+                    console.log(b2);
+
+                    this.ghost.setLerpPosition(b2.p, b2.q, b2.s, b2.sv);
+                    this.ghost.updateLerpPosition();
+
                     break;
                 }
                 this.iter++;
-                b = this.best[this.iter-1];
             }
-
-            this.ghost.updateLerpPosition();
-        }*/
+        }
     }
 }

@@ -100,7 +100,11 @@ class Gameplay {
         }
 
         // Ghost
-        if (newState != "solo") this.ghost.hide();
+        if (newState != "solo") {
+            this.ghost.hide();
+        } else {
+            this.ghost.show();
+        }
 
         // Update state
         const sessionStatus = this.getSessionState_cb();
@@ -312,6 +316,9 @@ class Gameplay {
         } else {
             this.htmlElements.redAlert.style.display = "none";
         }
+
+        // Ghost (for solo gameplay)
+        if (this.state == "solo") this.ghost.update(this.leaderboard.laptime, this.leaderboard.validtime);
         
         // Update car position
         this.player.car.updatePosition(speed, false);
@@ -329,9 +336,6 @@ class Gameplay {
             this.camera.up.lerp(this.UP_Z, this.LERP_FAST);
             this.camera.lookAt(this.cameraLookAt);
         }
-
-        // Ghost (for solo gameplay)
-        if (this.state == "solo") this.ghost.update(this.leaderboard.laptime);
     }
 
     addOtherDriver (driver) {
