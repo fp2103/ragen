@@ -121,6 +121,5 @@ async function main () {
 main();
 
 /* TODO:
-- start @ sector3 (for solo) + message
 - tests
 */

@@ -22,6 +22,7 @@ class Gameplay {
             resetButton: document.getElementById("reset")
         }
         this.SESSIONFULL = "Session is Full";
+        this.CROSSSTARTLINE = "Cross the Start Line"
 
         // Init camera position
         this.UP_Z = new THREE.Vector3(0, 0, 1);
@@ -85,7 +86,7 @@ class Gameplay {
             this.checkpoints = [this.circuit.slMesh,
                                 this.circuit.cp1Mesh,
                                 this.circuit.cp2Mesh];
-            this.startingPos = this.circuit.getStartingPosition();
+            this.startingPos = this.circuit.getStartingPosition(newState == "solo");
         }
         if (this.circuit == undefined) return;
 
@@ -185,7 +186,8 @@ class Gameplay {
 
     reset () {
         this.player.car.setAtStartingPosition(this.startingPos.nosePoint, 
-                                              this.startingPos.directionVector);
+                                              this.startingPos.directionVector,
+                                              this.startingPos.sec3);
         
         this.started = false;
         this.nextcp = 0;
@@ -296,6 +298,7 @@ class Gameplay {
             if (!this.started) {
                 this.leaderboard.clock.start();
                 this.started = true;
+                this.htmlElements.centeredMsg.textContent = "";
             } else {
                 const sector = this.nextcp == 0 ? 2 : this.nextcp-1;
                 const personalBest = this.leaderboard.sectorEnd(sector)
@@ -335,6 +338,11 @@ class Gameplay {
             
             this.camera.up.lerp(this.UP_Z, this.LERP_FAST);
             this.camera.lookAt(this.cameraLookAt);
+        }
+
+        // Cross the line line message
+        if (!this.started && this.startingPos.sec3 && (actions.acceleration || actions.braking)) {
+            this.htmlElements.centeredMsg.textContent = this.CROSSSTARTLINE;
         }
     }
 

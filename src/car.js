@@ -299,13 +299,13 @@ class Car {
         this.visible = false;
     }
 
-    setAtStartingPosition (nosePoint, alignementVector) {
+    setAtStartingPosition (nosePoint, alignementVector, sec3) {
         // Set the nose to the right point
         const mav = alignementVector.clone();
         mav.normalize();
         mav.multiplyScalar(-(this._length/2)-1);
         const initPoint = nosePoint.clone();
-        initPoint.add(mav);
+        if(!sec3) initPoint.add(mav);
         initPoint.z = this.Z_RESET;
 
         this.forceMeshToPosition(initPoint, alignementVector);

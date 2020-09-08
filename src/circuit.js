@@ -416,23 +416,27 @@ class Circuit {
         trees.shadows.instanceMatrix.needsUpdate = true;
     }
 
-    getStartingPosition () {
+    getStartingPosition (sec3) {
         // compute nose position && alignement vector
-        const slv = new THREE.Vector3().subVectors(...this.startingLinePoints);
+        let p = this.startingLinePoints;
+        if (sec3) {
+            p = this.checkpoint2LinePoints;
+        }
+        const slv = new THREE.Vector3().subVectors(...p);
         slv.multiplyScalar(-1/2);
 
         const slvt = new THREE.Vector3().crossVectors(new THREE.Vector3(0,0,1), slv);
         slvt.normalize();
         slvt.multiplyScalar(this._margin);
         
-        const nosePoint = this.startingLinePoints[0].clone();
+        const nosePoint = p[0].clone();
         nosePoint.add(slv);
         if (this.clockwise) {
             nosePoint.add(slvt);
             slvt.multiplyScalar(-1);
         }
 
-        return {nosePoint: nosePoint, directionVector: slvt};
+        return {nosePoint: nosePoint, directionVector: slvt, sec3: sec3};
     }
 
     getPodiumPosition () {
