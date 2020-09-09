@@ -63,8 +63,6 @@ class Ghost {
                     }
                     let b2 = this.best[niter];
 
-                    console.log(b2);
-
                     this.ghost.setLerpPosition(b2.p, b2.q, b2.s, b2.sv);
                     this.ghost.updateLerpPosition();
 

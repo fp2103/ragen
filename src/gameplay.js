@@ -340,7 +340,7 @@ class Gameplay {
             this.camera.lookAt(this.cameraLookAt);
         }
 
-        // Cross the line line message
+        // Cross the line message
         if (!this.started && this.startingPos.sec3 && (actions.acceleration || actions.braking)) {
             this.htmlElements.centeredMsg.textContent = this.CROSSSTARTLINE;
         }

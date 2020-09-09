@@ -200,6 +200,7 @@
         const d = new Driver(data.id, data.name, c);
         d.currTime = data.currTime;
         d.bestLapTime = data.blt;
+        d.lapCount = data.lapCount;
         return d;
     }
 

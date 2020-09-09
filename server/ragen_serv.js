@@ -113,7 +113,7 @@ class Session {
         // if one player has a best time -> podium scene
         let podium_scene = false;
         for (let p of this.players.values()) {
-            if (p.bestLapTime != undefined) {
+            if (p.lapCount > 0) {
                 podium_scene = true;
                 break;
             }
@@ -138,6 +138,7 @@ class Session {
         for (let p of this.players.values()) {
             p.currTime = [undefined, undefined, undefined];
             p.bestLapTime = undefined;
+            p.lapCount = 0;
         }
         // Send new session info to players
         this.refreshSession();
@@ -292,7 +293,8 @@ io.on('connection', (socket) => {
             // Create new Player
             p = new Player(socket, userToken, session,
                            data.user.name, data.user.color,
-                           data.user.currTime, data.user.lapCount);
+                           data.user.currTime, data.user.blt,
+                           data.user.lapCount);
             session.new_user(p);
         } else {
             p.disconnected = false;
@@ -301,7 +303,7 @@ io.on('connection', (socket) => {
             p.color = data.user.color;
             p.currTime = data.user.currTime;
             p.bestLapTime = data.user.blt;
-            p.lapCount = data.lapCount;
+            p.lapCount = data.user.lapCount;
             session.update_user(p);
         }
         socket_player.set(socket.id, p);
@@ -334,6 +336,7 @@ io.on('connection', (socket) => {
             player.color = data.color;
             player.currTime = data.currTime;
             player.bestLapTime = data.blt;
+            player.lapCount = data.lapCount;
             player.session.update_user(player);
         }
     });

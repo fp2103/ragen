@@ -213,7 +213,10 @@ class Leaderboard {
                 } else if (this.mainDriver.currTime[j] != undefined) {
                     lastRowData[j] = this.mainDriver.currTime[j];
                 }
-            } 
+            }
+            if (lastRowLapCount == '-' && this.mainDriver.lapCount > 0) {
+                lastRowLapCount = this.mainDriver.lapCount;
+            }
         }
 
         // fill table current/last
