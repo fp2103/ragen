@@ -1,6 +1,6 @@
 # ragen
 
-threejs & ammojs race car game with random generated track
+small threejs & ammojs racing game with random generated track
 
 ## Resources:
 - https://www.gamasutra.com/blogs/GustavoMaciel/20131229/207833/Generating_Procedural_Racetracks.php
