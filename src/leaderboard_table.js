@@ -128,6 +128,11 @@ class TableWrap {
 
     addRow (id, cls, animate) {
         this.cancelLastTimeout();
+        if (this.allowAnimation) {
+            cssAnimationNextFrameCbs.unshift(() => {
+                this.container.style.maxHeight = "";
+            });
+        }
 
         const r = new RowWrap(id);
 
@@ -185,7 +190,7 @@ class TableWrap {
 
                 this.container.style.maxHeight = this.container.scrollHeight + "px";
                 this.container.style.transition = `max-height ${ANIMATION_DURATION}ms`;
-                cssAnimationNextFrameCbs.push(() => {
+                cssAnimationNextFrameCbs.unshift(() => {
                     const newmh = this.container.scrollHeight - this.htmlTable.rows[0].clientHeight;
                     this.container.style.maxHeight = `${newmh}px`;
                 });

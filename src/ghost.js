@@ -36,7 +36,7 @@ class Ghost {
     }
 
     endLap (best) {
-        if (best) {
+        if (best && this.recording.length > 0) {
             this.best = this.recording.slice();
             this.ghost.makeVisible();
         }
