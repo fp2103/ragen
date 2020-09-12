@@ -105,20 +105,19 @@ echo
 
 if [ "$1" == "itchio" ] ; then
     echo "Concat everything in one file for itchio"
-    #SERVER="my-project-24674.appspot.com"
-    SERVER="localhost:8080"
-
-    # itchio specific in ragen.js 
-    cp public/ragen.js public/ragen.js.bak
-    sed "s/window.location.host/\"${SERVER}\"/" public/ragen.js > res
-    mv res public/ragen.js
-
-    # sessionid
+    
     cp views/index.ejs public/index.html
+    # sessionid
     sed 's/<%= sessionid %>//' public/index.html > res
     mv res public/index.html
     # fullscreen button
     sed 's/id="fullscreen"/id="fullscreen" style="display: none;"/' public/index.html > res
+    mv res public/index.html
+    # Multi h4
+    sed 's/>Multi</>Multi (disabled because no server)</' public/index.html > res
+    mv res public/index.html
+    # join button
+    sed 's/id="session_go"/id="session_go" disabled/' public/index.html > res
     mv res public/index.html
 
     # css
@@ -149,5 +148,4 @@ if [ "$1" == "itchio" ] ; then
     rm scr_list
 
     mv res public/index.html
-    mv public/ragen.js.bak public/ragen.js
 fi
