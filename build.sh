@@ -113,13 +113,10 @@ if [ "$1" == "itchio" ] ; then
     # fullscreen button
     sed 's/id="fullscreen"/id="fullscreen" style="display: none;"/' public/index.html > res
     mv res public/index.html
-    # Multi h4
-    sed 's/>Multi</>Multi (disabled because no server)</' public/index.html > res
+    # Multi
+    sed 's/id="multi_arrow"/id="multi_arrow" style="display: none;"/' public/index.html > res
     mv res public/index.html
-    # join button
-    sed 's/id="session_go"/id="session_go" disabled/' public/index.html > res
-    mv res public/index.html
-
+    
     # css
     grepline=` grep -n "main.css" public/index.html | awk -F ':' '{print $1}' `
     head -$(( ${grepline} - 1 )) public/index.html > res
