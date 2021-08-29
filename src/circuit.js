@@ -31,8 +31,10 @@ class CircuitFactory {
         const treesCone = new THREE.InstancedMesh(treeConeGeo, new THREE.MeshLambertMaterial({color: 0x6B8E23}), this.TREES_COUNT);
         const treesShadow = new THREE.InstancedMesh(new THREE.CircleBufferGeometry(3.1, 8),
                                 new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true}), this.TREES_COUNT);
+        const treeShape = new Ammo.btCylinderShape(new Ammo.btVector3(1, 1.5, 1))
         
-        this.trees = {truncs: treesTrunc, cones: treesCone, shadows: treesShadow};
+        this.trees = {truncs: treesTrunc, cones: treesCone, shadows: treesShadow,
+                      shape: treeShape, bodies: new Array()};
         this.mainScene.add(treesTrunc, treesCone, treesShadow);
 
         this.centeredMsg = document.getElementById("centered_msg");
@@ -61,6 +63,9 @@ class CircuitFactory {
                     this.mainScene.remove(this.currCircuit.mesh);
                     this.minimapScene.remove(this.currCircuit.minimapMesh);
                     this.phyWorld.removeCollisionObject(this.currCircuit.body);
+                    while(this.trees.bodies.length) {
+                        this.phyWorld.removeCollisionObject(this.trees.bodies.pop());
+                    }
                 }
                 resolve(new Circuit(this.MATERIALS, CONF, seed, this.trees));
             }
@@ -73,6 +78,7 @@ class CircuitFactory {
                 this.mainScene.add(value.mesh);
                 this.minimapScene.add(value.minimapMesh);
                 this.phyWorld.addRigidBody(value.body);
+                this.trees.bodies.forEach(tb => this.phyWorld.addRigidBody(tb));
             }
             this.centeredMsg.textContent = "";
         });
@@ -402,6 +408,18 @@ class Circuit {
                     tempPos.position.set(treep.x, treep.y-0.5, 0.6);
                     tempPos.updateMatrix();
                     trees.shadows.setMatrixAt(treeInd, tempPos.matrix);
+
+                    // Ammo
+                    let tt = new Ammo.btTransform();
+                    tt.setIdentity();
+                    tt.setOrigin(new Ammo.btVector3(treep.x, treep.y, 2));
+                    tt.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
+                    let tmotionState = new Ammo.btDefaultMotionState(tt);
+                    let tlocalInertia = new Ammo.btVector3(0, 0, 0);
+                    let trbInfo = new Ammo.btRigidBodyConstructionInfo(0, tmotionState, trees.shape, tlocalInertia);
+                    let tbody = new Ammo.btRigidBody(trbInfo);
+                    tbody.setFriction(1);
+                    trees.bodies.push(tbody);
 
                     tree_points_cleaned.push(treep);
                     treeInd++;

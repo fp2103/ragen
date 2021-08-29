@@ -133,6 +133,5 @@ e- multi camera angle
 f- gate start (w. 3 lights on poles only for race mode + physical)
 d- solo reset -> acceleration > 0 (depending on close to a turn + not coming from camera high)
 m- solo racing line option (best bot)
-a- when unvalid lap reset at start whatever the number of checkpoint
 g- solo (option to add ghost or not)
 */
