@@ -140,7 +140,9 @@ class Car {
 
         // Meshes
         this.chassisMesh = undefined;
-        this.cameraPosition = undefined;
+        this.camerasPosition = [undefined, undefined, undefined];
+        this.camerasLookAt = [undefined, undefined, undefined];
+        this.camerasLerp = [undefined, undefined, undefined];
         this.wheelMeshes = [undefined, undefined, undefined, undefined];
         this.independantWheels = mainPlayer;
 
@@ -182,10 +184,32 @@ class Car {
         this.chassisMesh = new THREE.Mesh(this.geos.mainGeo, material);
         this.chassisMesh.add(lineMesh);
 
-        // Camera
-        this.cameraPosition = new THREE.Object3D();
-        this.cameraPosition.position.set(0, -5, 3.5);
-        this.chassisMesh.add(this.cameraPosition);
+        // Camera 1
+        this.camerasPosition[0] = new THREE.Object3D();
+        this.camerasPosition[0].position.set(0, -5, 3.5);
+        this.camerasLookAt[0] = new THREE.Object3D();
+        this.camerasLookAt[0].position.set(0, 2, 0);
+        this.chassisMesh.add(this.camerasPosition[0]);
+        this.chassisMesh.add(this.camerasLookAt[0]);
+        this.camerasLerp[0] = 0.15;
+
+        // Camera 2
+        this.camerasPosition[1] = new THREE.Object3D();
+        this.camerasPosition[1].position.set(0, 0, 1);
+        this.camerasLookAt[1] = new THREE.Object3D();
+        this.camerasLookAt[1].position.set(0, 10, 0);
+        this.chassisMesh.add(this.camerasPosition[1]);
+        this.chassisMesh.add(this.camerasLookAt[1]);
+        this.camerasLerp[1] = 1;
+
+        // Camera 3
+        this.camerasPosition[2] = new THREE.Object3D();
+        this.camerasPosition[2].position.set(0, -5, 2.8);
+        this.camerasLookAt[2] = new THREE.Object3D();
+        this.camerasLookAt[2].position.set(0, 2, 0);
+        this.chassisMesh.add(this.camerasPosition[2]);
+        this.chassisMesh.add(this.camerasLookAt[2]);
+        this.camerasLerp[2] = 1;
 
         // Wheels
         const ww = (this._width/2);

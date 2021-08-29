@@ -19,7 +19,8 @@ class Gameplay {
             redAlert: document.getElementById("redalert"),
             minimap: document.getElementById("minimapc"),
             centeredMsg: document.getElementById("centered_msg"),
-            resetButton: document.getElementById("reset")
+            bottomRightButtons: document.getElementById("bottom_right_buttons"),
+            cameraButton: document.getElementById("camera")
         }
         this.SESSIONFULL = "Session is Full";
         this.CROSSSTARTLINE = "Cross the Start Line"
@@ -59,7 +60,18 @@ class Gameplay {
 
         // Arcs status
         this.state = undefined;
-        this.getSessionState_cb = undefined; 
+        this.getSessionState_cb = undefined;
+
+        // Camera controls
+        this.htmlElements.cameraButton.addEventListener('click', this.switchCamera.bind(this), false);
+        window.addEventListener('keydown', (e) => { 
+            if((this.state == "solo" || this.state == "multi") && e.code == 'KeyC') {
+                this.switchCamera();
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+         });
     }
 
     /*
@@ -114,7 +126,7 @@ class Gameplay {
                 this.htmlElements.gameElements.style.display = "block";    
                 this.htmlElements.speed.style.display = "none";
                 this.htmlElements.minimap.style.display = "block";
-                this.htmlElements.resetButton.style.display = "none";
+                this.htmlElements.bottomRightButtons.style.display = "none";
                 this.htmlElements.centeredMsg.textContent = this.SESSIONFULL;
                 this.leaderboard.setMode("spectator", this.otherDrivers.values());
                 this.player.car.makeUnvisible();
@@ -136,7 +148,7 @@ class Gameplay {
                 this.htmlElements.gameElements.style.display = "block";    
                 this.htmlElements.speed.style.display = "block";
                 this.htmlElements.minimap.style.display = "block";
-                this.htmlElements.resetButton.style.display = "block";
+                this.htmlElements.bottomRightButtons.style.display = "block";
                 this.leaderboard.setMode(newState, this.otherDrivers.values());
                 this.player.car.makeVisible();
                 this.otherDrivers.forEach((v) => {v.car.makeVisible()});
@@ -145,7 +157,7 @@ class Gameplay {
                 this.htmlElements.gameElements.style.display = "block";    
                 this.htmlElements.speed.style.display = "none";
                 this.htmlElements.minimap.style.display = "none";
-                this.htmlElements.resetButton.style.display = "none";
+                this.htmlElements.bottomRightButtons.style.display = "none";
                 this.initPodiumScene(sessionStatus);
                 break;
         }
@@ -338,16 +350,22 @@ class Gameplay {
         this.player.car.updatePosition(speed, false);
 
         // Update camera Position (and lerp factor after 1st movement)
+        let cameraUpLerp = this.LERP_FAST;
+        let cameraId = this.player.cameraId;
         if (this.cameraLerp == this.LERP_SLOW && (actions.acceleration || actions.braking)) {
-            this.cameraLerp = this.LERP_FAST;
+            this.cameraLerp = this.player.car.camerasLerp[cameraId];
+            cameraUpLerp = this.cameraLerp;
         }
         if (this.cameraLerp != this.LERP_SLOW || Date.now() - this.cameraStartDate >= 1000) {
             let t = new THREE.Vector3();
-            this.player.car.cameraPosition.getWorldPosition(t);
-            this.camera.position.lerp(t, this.cameraLerp);
-            this.cameraLookAt.lerp(this.player.car.chassisMesh.position, this.cameraLerp);
             
-            this.camera.up.lerp(this.UP_Z, this.LERP_FAST);
+            this.player.car.camerasPosition[cameraId].getWorldPosition(t);
+            this.camera.position.lerp(t, this.cameraLerp);
+
+            this.player.car.camerasLookAt[cameraId].getWorldPosition(t);
+            this.cameraLookAt.lerp(t, this.cameraLerp);
+            
+            this.camera.up.lerp(this.UP_Z, cameraUpLerp);
             this.camera.lookAt(this.cameraLookAt);
         }
 
@@ -392,6 +410,13 @@ class Gameplay {
         }
 
         this.podiumScene.createScene(this.circuit, winners);
+    }
+
+    switchCamera () {
+        this.player.switchCamera();
+        this.cameraLerp = this.player.car.camerasLerp[this.player.cameraId];
+        let camId = this.player.cameraId+1;
+        this.htmlElements.cameraButton.value = "Camera " + camId.toString();
     }
 
 }

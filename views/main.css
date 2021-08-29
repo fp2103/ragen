@@ -148,7 +148,7 @@ th, td {
     display: none;
 }
 
-#reset {
+#bottom_right_buttons {
     position: absolute;
     bottom: 0;
     right: 0;

@@ -5,6 +5,7 @@ class Driver {
         this.id = id;
         this.name = name;
         this.car = car;
+        this.cameraId = 0;
         
         this.bestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];
@@ -50,6 +51,11 @@ class Driver {
             this.currTime[i] = this.bestTime[i];
         }
         if (!same) this.client_CB();
+    }
+
+    switchCamera () {
+        this.cameraId += 1;
+        if (this.cameraId > 2) this.cameraId = 0;
     }
 
 }
