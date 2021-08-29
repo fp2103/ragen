@@ -434,10 +434,10 @@ class Circuit {
         trees.shadows.instanceMatrix.needsUpdate = true;
     }
 
-    getStartingPosition (sec3) {
+    getStartingPosition (lastSector) {
         // compute nose position && alignement vector
         let p = this.startingLinePoints;
-        if (sec3) {
+        if (lastSector) {
             p = this.checkpoint2LinePoints;
         }
         const slv = new THREE.Vector3().subVectors(...p);
@@ -454,7 +454,7 @@ class Circuit {
             slvt.multiplyScalar(-1);
         }
 
-        return {nosePoint: nosePoint, directionVector: slvt, sec3: sec3};
+        return {nosePoint: nosePoint, directionVector: slvt, behindLine: !lastSector};
     }
 
     getPodiumPosition () {

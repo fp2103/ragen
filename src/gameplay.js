@@ -185,9 +185,7 @@ class Gameplay {
     }
 
     reset () {
-        this.player.car.setAtStartingPosition(this.startingPos.nosePoint, 
-                                              this.startingPos.directionVector,
-                                              this.startingPos.sec3);
+        this.player.car.setAtStartingPosition(this.startingPos);
         
         this.started = false;
         this.nextcp = 0;
@@ -354,7 +352,7 @@ class Gameplay {
         }
 
         // Cross the line message
-        if (!this.started && this.startingPos.sec3 && (actions.acceleration || actions.braking)) {
+        if (!this.started && this.state == "solo" && (actions.acceleration || actions.braking)) {
             this.htmlElements.centeredMsg.textContent = this.CROSSSTARTLINE;
         }
     }

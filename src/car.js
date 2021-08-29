@@ -301,16 +301,16 @@ class Car {
         this.visible = false;
     }
 
-    setAtStartingPosition (nosePoint, alignementVector, sec3) {
+    setAtStartingPosition (sp) {
         // Set the nose to the right point
-        const mav = alignementVector.clone();
+        const mav = sp.directionVector.clone();
         mav.normalize();
         mav.multiplyScalar(-(this._length/2)-1);
-        const initPoint = nosePoint.clone();
-        if(!sec3) initPoint.add(mav);
+        const initPoint = sp.nosePoint.clone();
+        if(sp.behindLine) initPoint.add(mav);
         initPoint.z = this.Z_RESET;
 
-        this.forceMeshToPosition(initPoint, alignementVector);
+        this.forceMeshToPosition(initPoint, sp.directionVector);
     }
 
     updatePosition (speed, force) {
@@ -437,7 +437,6 @@ class Car {
             this.chassisBody.setMotionState(motionState);
             this.chassisBody.setLinearVelocity(new Ammo.btVector3(0,0,0));
             this.chassisBody.setAngularVelocity(new Ammo.btVector3(0,0,0));
-            this.chassisBody.setLinearVelocity(0);
 
             this.updatePosition(0, true);
         } else {
