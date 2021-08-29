@@ -132,7 +132,7 @@
         }
 
         this.reconnect_inprogress = false;
-        this.htmlElements.sessionSpan.textContent = data.id;
+        this.htmlElements.sessionSpan.innerHTML = data.id;
         this.circuit_change_date = Date.now() + data.rt;
         this.updateRT();
         this.updateScorboardDisplay_cb(0);
@@ -168,7 +168,7 @@
         this.htmlElements.remainingTime2.innerHTML = "&infin;";
         this.htmlElements.remainingTime.classList.remove("soon");
         this.htmlElements.remainingTime2.classList.remove("soon");
-        this.htmlElements.sessionSpan.textContent = "N/A";
+        this.htmlElements.sessionSpan.innerHTML = "<i>Solo</i>";
         this.updateScorboardDisplay_cb(0);
     }
 

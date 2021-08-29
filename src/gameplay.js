@@ -223,6 +223,7 @@ class Gameplay {
         // Car controls: Update engine force
         let wheelOffside = 0;
         let nextcpcrossed = false;
+        let slcrossedWhileUnvalid = false;
         for (var i = 0; i < this.player.car.WHEELSNUMBER; i++) {
             let breakingForce = this.DEFAULT_DRAG;
             let engineForce = 0;
@@ -274,6 +275,12 @@ class Gameplay {
                 let intercp = raycaster.intersectObject(this.checkpoints[this.nextcp]);
                 nextcpcrossed = intercp.length > 0 && !this.justReset;
             }
+
+            // Crossing SL when unvalid time
+            if (this.nextcp != 0 && !this.leaderboard.validtime) {
+                let intercp = raycaster.intersectObject(this.checkpoints[0]);
+                slcrossedWhileUnvalid = intercp.length > 0 && !this.justReset;
+            }
         }
 
         // Car controls: Update steering force
@@ -303,13 +310,19 @@ class Gameplay {
                 const sector = this.nextcp == 0 ? 2 : this.nextcp-1;
                 const personalBest = this.leaderboard.sectorEnd(sector)
                 if (sector == 2) {
-                    this.next_sp = 1;
                     this.ghost.endLap(personalBest);
                 }
             }
 
             this.nextcp += 1;
             if (this.nextcp >= 3) this.nextcp = 0;
+        }
+
+        // crossing sl while unvalid lap
+        if (slcrossedWhileUnvalid) {
+            this.leaderboard.sectorEnd(2);
+            this.ghost.endLap(false);
+            this.nextcp = 1;
         }
 
         // Outside of track: change color & disqualify!
