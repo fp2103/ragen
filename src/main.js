@@ -124,7 +124,6 @@ main();
 l- sound effect
 n- DB to keep score and list of last played circuit + ghost
 j- BOTs on multi (degeneration from best)
-b- Physical tree
 c- Transparent ghost on solo
 h- Relief
 k- Mode de jeu avec multi/bot (most lap, time attack, race)

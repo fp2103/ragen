@@ -103,7 +103,9 @@ class CarFactory {
 
     createGhost () {
         const mats = Object.assign({}, this.materials);
-        mats.chassisMat = (p) => { return new THREE.MeshBasicMaterial(p); }
+        mats.wheelMat = new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.3, transparent: true});
+        mats.wheelMatIndicator = new THREE.MeshPhongMaterial({color: 0xDCDCDC, opacity: 0.1, transparent: true});
+        mats.chassisMat = (p) => { return new THREE.MeshPhongMaterial({color: p.color, opacity: 0.3, transparent: true}); }
         const car = new Car(this.geomteries, mats, this.size, 0xFFFFFF, false);
         car.initMainView();
         car.shadowMesh = new THREE.Object3D();
