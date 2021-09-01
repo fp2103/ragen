@@ -29,9 +29,9 @@ class Leaderboard {
 
         // Minimal scoreboard
         this.htmlPlayerMin = new CellWrap();
-        this.htmlPlayerMin.htmlCell = document.getElementById("player_min");
+        this.htmlPlayerMin.associateCell(document.getElementById("player_min"));
         this.htmlTimeMin = new CellWrap();
-        this.htmlTimeMin.htmlCell = document.getElementById("time_min");
+        this.htmlTimeMin.associateCell(document.getElementById("time_min"));
         
         this.drivers = [];
         this.rows = new Map();
@@ -240,7 +240,13 @@ class Leaderboard {
 
         // Clear old drivers list
         const oldRows = new Map();
-        for (let [k,v] of this.rows) oldRows.set(k, v);
+        for (let [k,v] of this.rows) {
+            oldRows.set(k, v);
+            // Remove ghost checkbox
+            for (let checkbox of v.cells[0].htmlCell.getElementsByTagName("INPUT")) {
+                v.cells[0].htmlCell.removeChild(checkbox);
+            }
+        }
         this.rows.clear();
         this.rows.set("current", oldRows.get("current"));
         this.drivers = [];
@@ -251,6 +257,11 @@ class Leaderboard {
                 this.rows.set(this.mainDriver.id, oldRows.get(this.mainDriver.id))
             }
             this.addDriver(this.mainDriver, false);
+            // Add ghost checkbox for solo
+            if (mode == "solo" && this.mainDriver.ghost != undefined) {
+                let mainCell = this.rows.get(this.mainDriver.id).cells[0];
+                mainCell.htmlCell.insertBefore(this.mainDriver.ghost.checkbox, mainCell.textSpan);
+            }
             this.rows.get("current").htmlRow.style.display = "";
         } else {
             this.rows.get("current").htmlRow.style.display = "none";

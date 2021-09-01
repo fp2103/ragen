@@ -4,6 +4,7 @@ const ANIMATION_DURATION = 500;
 class CellWrap {
     constructor () {
         this.htmlCell = undefined;
+        this.textSpan = document.createElement("SPAN");
         this.text = "-";
         this.color = "black";
     }
@@ -16,7 +17,7 @@ class CellWrap {
     setText (text) {
         const ntext = (!text) ? "-" : text;
         if (ntext != this.text) {
-            if (this.htmlCell != undefined) this.htmlCell.textContent = ntext;
+            this.textSpan.textContent = ntext;
             this.text = ntext;
         }
     }
@@ -24,16 +25,17 @@ class CellWrap {
     setColor (color) {
         const ncolor = (!color) ? "black" : color;
         if (ncolor != this.color) {
-            if (this.htmlCell != undefined) this.htmlCell.style.color = ncolor;
+            this.textSpan.style.color = ncolor;
             this.color = ncolor;
         }
     }
 
-    force () {
-        if (this.htmlCell != undefined) {
-            this.htmlCell.textContent = this.text;
-            this.htmlCell.style.color = this.color;
-        }
+    associateCell (htmlCell) {
+        this.textSpan.textContent = this.text;
+        this.textSpan.style.color = this.color;
+        
+        this.htmlCell = htmlCell;
+        this.htmlCell.appendChild(this.textSpan);
     }
 }
 
@@ -53,8 +55,7 @@ class RowWrap {
         this.htmlRow = htmlRow;
         if (cls) this.htmlRow.className = cls;
         for (let c of this.cells) {
-            c.htmlCell = this.htmlRow.insertCell(-1);
-            c.force();
+            c.associateCell(this.htmlRow.insertCell(-1));
         }
         this.cells[0].htmlCell.colSpan = 2;
         this.cells[1].htmlCell.classList.add("lap-cell");

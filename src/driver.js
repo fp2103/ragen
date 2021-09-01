@@ -6,6 +6,7 @@ class Driver {
         this.name = name;
         this.car = car;
         this.cameraId = 0;
+        this.ghost = undefined;
         
         this.bestLapTime = undefined;
         this.bestTime = [undefined, undefined, undefined];

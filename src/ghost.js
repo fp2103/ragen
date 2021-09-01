@@ -1,15 +1,31 @@
 
 class Ghost {
 
-    constructor (carFactory, driver) {
+    constructor (carFactory, carToCopy) {
         this.ghost = carFactory.createGhost();
         this.ghost.LERP_SPEED = 0.10;
-        this.car = driver.car;
+        this.carToCopy = carToCopy;
 
         this.recording = [];
 
         this.best = [];
         this.iter = 0;
+
+        // Html element to activate/deactivate this ghost
+        this.activated = true;
+        this.checkbox = document.createElement("INPUT");
+        this.checkbox.setAttribute('type', 'checkbox');
+        this.checkbox.style.position = "absolute";
+        this.checkbox.style.left = "0px";
+        this.checkbox.style.display = "none";
+        this.checkbox.addEventListener('click', () => {
+            this.activated = this.checkbox.checked;
+            if (this.activated) {
+                this.show();
+            } else {
+                this.hide();
+            }
+        }, false);
     }
 
     clear () {
@@ -17,6 +33,9 @@ class Ghost {
         this.best = [];
         this.hide();
         this.reset();
+        
+        // Hide checkbox when not ready
+        this.checkbox.style.display = "none";
     }
 
     hide () {
@@ -25,7 +44,13 @@ class Ghost {
 
     show () {
         if (this.best.length > 0) {
-            this.ghost.makeVisible();
+            // Show checkbox when ready
+            if (this.checkbox.style.display == "none") {
+                this.checkbox.style.display = "inline-block";
+                this.checkbox.checked = this.activated;
+            }
+
+            if (this.activated) this.ghost.makeVisible();
         }
     }
 
@@ -38,7 +63,7 @@ class Ghost {
     endLap (best) {
         if (best && this.recording.length > 0) {
             this.best = this.recording.slice();
-            this.ghost.makeVisible();
+            this.show();
         }
         this.reset();
     }
@@ -46,7 +71,7 @@ class Ghost {
     update (laptime, valid) {
         // Record
         if (valid && laptime > 0) {
-            let r = this.car.getPositionToLerp();
+            let r = this.carToCopy.getPositionToLerp();
             r.t = laptime;
             this.recording.push(r);
         }

@@ -2,13 +2,12 @@
 // Gameplay and Menu
 class Gameplay {
 
-    constructor (player, controls, camera, particlesManager, podiumScene, ghost) {
+    constructor (player, controls, camera, particlesManager, podiumScene) {
         this.player = player;
         this.controls = controls;
         this.camera = camera;
         this.particlesManager = particlesManager;
         this.podiumScene = podiumScene;
-        this.ghost = ghost;
 
         this.leaderboard = new Leaderboard(player);
         this.otherDrivers = new Map();
@@ -91,7 +90,7 @@ class Gameplay {
             // Reset best laptime
             if (this.circuit == undefined || newCircuit.id != this.circuit.id) {
                 this.player.resetTime();
-                this.ghost.clear();
+                this.player.ghost.clear();
             }
 
             this.circuit = newCircuit;
@@ -114,9 +113,9 @@ class Gameplay {
 
         // Ghost
         if (newState != "solo") {
-            this.ghost.hide();
+            this.player.ghost.hide();
         } else {
-            this.ghost.show();
+            this.player.ghost.show();
         }
 
         // Update state
@@ -202,7 +201,7 @@ class Gameplay {
         this.started = false;
         this.nextcp = 0;
 
-        this.ghost.reset();
+        this.player.ghost.reset();
         this.leaderboard.resetTime();
         this.controls.resetActions();
 
@@ -320,7 +319,7 @@ class Gameplay {
                 const sector = this.nextcp == 0 ? 2 : this.nextcp-1;
                 const personalBest = this.leaderboard.sectorEnd(sector)
                 if (sector == 2) {
-                    this.ghost.endLap(personalBest);
+                    this.player.ghost.endLap(personalBest);
                 }
             }
 
@@ -331,7 +330,7 @@ class Gameplay {
         // crossing sl while unvalid lap
         if (slcrossedWhileUnvalid) {
             this.leaderboard.sectorEnd(2);
-            this.ghost.endLap(false);
+            this.player.ghost.endLap(false);
             this.nextcp = 1;
         }
 
@@ -344,7 +343,7 @@ class Gameplay {
         }
 
         // Ghost (for solo gameplay)
-        if (this.state == "solo") this.ghost.update(this.leaderboard.laptime, this.leaderboard.validtime);
+        if (this.state == "solo") this.player.ghost.update(this.leaderboard.laptime, this.leaderboard.validtime);
         
         // Update car position
         this.player.car.updatePosition(speed, false);

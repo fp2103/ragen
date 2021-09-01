@@ -66,7 +66,7 @@ class CarFactory {
         this.materials = {
             grass_particles_mat: new THREE.MeshBasicMaterial({color: 0x87B982}),
             edgeMat: new THREE.LineBasicMaterial({color: 0x000000}),
-            wheelMat: new THREE.MeshBasicMaterial({color: 0x000000}),
+            wheelMat: new THREE.MeshPhongMaterial({color: 0x000000, opacity: 1.0, transparent: false}),
             wheelMatIndicator: new THREE.MeshBasicMaterial({color: 0xDCDCDC}),
             shadowMat: new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true}),
             chassisMat: (params) => { return new THREE.MeshLambertMaterial(params); }
@@ -420,7 +420,8 @@ class Car {
 
     updateLerpPosition () {
         if (this.lerpPosition != undefined) {
-            this.minimapMesh.position.lerp(this.lerpPosition, this.lerp_speed);
+            let minimapPos = new THREE.Vector3(this.lerpPosition.x, this.lerpPosition.y, this.lerpPosition.z-0.1);
+            this.minimapMesh.position.lerp(minimapPos, this.lerp_speed);
             
             this.chassisMesh.position.lerp(this.lerpPosition, this.lerp_speed);
             this.chassisMesh.quaternion.slerp(this.lerpQuaternion, this.lerp_speed);

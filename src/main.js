@@ -60,13 +60,13 @@ async function main () {
     randomColor = '#' + randomColor;
     document.getElementById("color").value = randomColor;
     const driver = new Driver(0, DEFAULT_NAME, carFactory.createCar(randomColor, true));
-    const ghost = new Ghost(carFactory, driver);
+    driver.ghost = new Ghost(carFactory, driver.car);
 
     // Controls
     const controls = new Controls();
 
     // Game main
-    const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager, podiumScene, ghost);
+    const gameplay = new Gameplay(driver, controls, mainView.camera, particlesManager, podiumScene);
 
     // Inputs
     const client = new Client(gameplay, circuitFactory, carFactory, driver, podiumScene);
@@ -127,7 +127,6 @@ j- BOTs on multi (degeneration from best)
 h- Relief
 k- Mode de jeu avec multi/bot (most lap, time attack, race)
 i- vehicle physics++ + menu for modification in leaderboard (sandbox, no db entry)
-e- multi camera angle
 m- solo racing line option (best bot)
 g- solo (option to add ghost or not)
 */
