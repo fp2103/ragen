@@ -36,6 +36,7 @@ class Ghost {
         
         // Hide checkbox when not ready
         this.checkbox.style.display = "none";
+        if(this.checkbox.parentElement) this.checkbox.parentElement.style.paddingLeft = "";
     }
 
     hide () {
@@ -46,6 +47,7 @@ class Ghost {
         if (this.best.length > 0) {
             // Show checkbox when ready
             if (this.checkbox.style.display == "none") {
+                if(this.checkbox.parentElement) this.checkbox.parentElement.style.paddingLeft = "1.2em";
                 this.checkbox.style.display = "inline-block";
                 this.checkbox.checked = this.activated;
             }

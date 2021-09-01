@@ -244,6 +244,7 @@ class Leaderboard {
             oldRows.set(k, v);
             // Remove ghost checkbox
             for (let checkbox of v.cells[0].htmlCell.getElementsByTagName("INPUT")) {
+                v.cells[0].htmlCell.style.paddingLeft = "";
                 v.cells[0].htmlCell.removeChild(checkbox);
             }
         }

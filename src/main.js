@@ -128,5 +128,4 @@ h- Relief
 k- Mode de jeu avec multi/bot (most lap, time attack, race)
 i- vehicle physics++ + menu for modification in leaderboard (sandbox, no db entry)
 m- solo racing line option (best bot)
-g- solo (option to add ghost or not)
 */
