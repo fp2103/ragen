@@ -49,7 +49,7 @@ class PodiumScene {
         // Configuration
         const SIZE = 6;
         this.HEIGHTS = [3, 2, 1.5];
-        this.Z = this.HEIGHTS[0]/2 + 0.5;
+        this.Z = this.HEIGHTS[0]/2;
 
         // Create boxes
         this.boxes = [];
@@ -140,7 +140,7 @@ class PodiumScene {
         angle = sign*angle;
         const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), angle);
 
-        this.podiumMesh.position.set(pos.p.x, pos.p.y, this.Z);
+        this.podiumMesh.position.set(pos.p.x, pos.p.y, pos.p.z + this.Z);
         this.podiumMesh.quaternion.set(q.x, q.y, q.z, q.w);
         this.podiumMesh.updateMatrixWorld();
         

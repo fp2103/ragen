@@ -38,7 +38,7 @@ function getPseudoDerivativeVector(points, i, loop) {
     return new THREE.Vector3().subVectors(pB, pA);
 }
 
-function createWidthLineBufferGeo (points, width, loop, step) {
+function createWidthLineBufferGeo (points, width, loop, step, z_function) {
 
     // Create intermediate points
     const morePoints = [];
@@ -158,6 +158,16 @@ function createWidthLineBufferGeo (points, width, loop, step) {
         }
     }
     //console.log("More Points: ", morePoints.length, exterPoints.length);
+
+    // Compute z for all points
+    if (z_function != undefined) {
+        for (var i = 0; i < morePoints.length; i++) {
+            morePoints[i].z = z_function(morePoints[i].x, morePoints[i].y);
+        }
+        for (var i = 0; i < exterPoints.length; i++) {
+            exterPoints[i].z = z_function(exterPoints[i].x, exterPoints[i].y);
+        }
+    }
 
     // Clean to don't have too much points and create a nice geometry
     const origPoints = [];

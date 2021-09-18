@@ -136,7 +136,7 @@ class Car {
         this._wheelRadius = size.wheelRadius;
 
         // Reset altitude
-        this.Z_RESET = 0.6;
+        this.Z_RESET = 0.3;
 
         // Meshes
         this.chassisMesh = undefined;
@@ -332,7 +332,7 @@ class Car {
         mav.multiplyScalar(-(this._length/2)-1);
         const initPoint = sp.nosePoint.clone();
         if(sp.behindLine) initPoint.add(mav);
-        initPoint.z = this.Z_RESET;
+        initPoint.z += this.Z_RESET;
 
         this.forceMeshToPosition(initPoint, sp.directionVector);
     }
@@ -376,7 +376,7 @@ class Car {
         const part = new Particle(m, 2);
         
         let pos = this.wheelMeshes[idWheel].position.clone();
-        pos.z -= this._wheelRadius;
+        pos.z -= (this._wheelRadius-VERY_SMALL_GAP);
         let rot = this.chassisMesh.rotation.clone();
         rot.x = 0;
         rot.y = 0;

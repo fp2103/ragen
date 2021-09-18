@@ -6,9 +6,9 @@ class CircuitFactory {
         this.minimapScene = minimapView.scene;
         this.phyWorld = physics.world;
 
-        const terrain = new Terrain();
-        this.mainScene.add(terrain.mesh);
-        this.phyWorld.addRigidBody(terrain.body);
+        this.terrain = new Terrain();
+        this.mainScene.add(this.terrain.mesh);
+        this.phyWorld.addRigidBody(this.terrain.body);
 
         this.currSeed = undefined;
         this.currCircuit = undefined;
@@ -53,7 +53,8 @@ class CircuitFactory {
                       pointResolution: 200,
                       Z: 0.6,
                       terrainSide: 800,
-                      treesCount: this.TREES_COUNT};
+                      treesCount: this.TREES_COUNT,
+                      altitude: this.terrain.altitude};
 
         const circuitPromise = new Promise(resolve => {
             if (seed == this.currSeed) {
@@ -180,7 +181,7 @@ class Circuit {
         const spacedPoints = chordal.getSpacedPoints(conf.pointResolution);
 
         // Get the geometry && update points
-        const cir = createWidthLineBufferGeo(points, conf.width, true, 1);
+        const cir = createWidthLineBufferGeo(points, conf.width, true, 1, conf.altitude);
         points = cir.origPoints;
 
         // Compute start/stop & checkpoints
@@ -312,7 +313,7 @@ class Circuit {
         // starting line mesh
         this.startingLinePoints = [points[maxSegLengthId], cir.secPoints[maxSegLengthId]];
         const startingLineMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, conf.margin,
-                                                                         false, conf.width+1).geo,
+                                                                         false, conf.width+1, conf.altitude).geo,
                                                 materials.matWhite);
         this.slMesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.startingLinePoints), materials.matLineWhite);
         this.slMesh.add(startingLineMesh);
@@ -330,7 +331,7 @@ class Circuit {
         // main mesh
         this.mesh = new THREE.Mesh(cir.geo, materials.matGrey);
         this.mesh.add(inMarginMesh, outMarginMesh, this.slMesh, this.cp1Mesh, this.cp2Mesh);
-        this.mesh.position.z = conf.Z;
+        this.mesh.position.z = SMALL_GAP;
         
         // MINIMAP VUE
         const startingLineMinimapMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, 10,
@@ -346,7 +347,7 @@ class Circuit {
 
         let t = new Ammo.btTransform();
         t.setIdentity();
-        t.setOrigin(new Ammo.btVector3(0, 0, conf.Z));
+        t.setOrigin(new Ammo.btVector3(0, 0, SMALL_GAP));
         t.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
         let motionState = new Ammo.btDefaultMotionState(t);
 
@@ -381,9 +382,13 @@ class Circuit {
             if (!bad) {
 
                 // Larger area around starting points (for podium)
-                let diffsl = new THREE.Vector3().subVectors(treep, this.startingLinePoints[0]);
+                let slp0 = this.startingLinePoints[0].clone();
+                slp0.z = 0;
+                let slp1 = this.startingLinePoints[1].clone();
+                slp1.z = 0;
+                let diffsl = new THREE.Vector3().subVectors(treep, slp0);
                 if (diffsl.lengthSq() < 2*dstCircuitSq) continue;
-                diffsl = new THREE.Vector3().subVectors(treep, this.startingLinePoints[1]);
+                diffsl = new THREE.Vector3().subVectors(treep, slp1);
                 if (diffsl.lengthSq() < 2*dstCircuitSq) continue;
 
                 // not close to others
@@ -397,22 +402,24 @@ class Circuit {
                 }
 
                 if (!bad2) {
-                    tempPos.position.set(treep.x, treep.y, 2);
+                    let tz = conf.altitude(treep.x, treep.y);
+
+                    tempPos.position.set(treep.x, treep.y, tz+1.5);
                     tempPos.updateMatrix();
                     trees.truncs.setMatrixAt(treeInd, tempPos.matrix);
 
-                    tempPos.position.set(treep.x, treep.y, 4.5);
+                    tempPos.position.set(treep.x, treep.y, tz+4);
                     tempPos.updateMatrix();
                     trees.cones.setMatrixAt(treeInd, tempPos.matrix);
 
-                    tempPos.position.set(treep.x, treep.y-0.5, 0.6);
+                    tempPos.position.set(treep.x, treep.y-0.5, tz+SMALL_GAP);
                     tempPos.updateMatrix();
                     trees.shadows.setMatrixAt(treeInd, tempPos.matrix);
 
                     // Ammo
                     let tt = new Ammo.btTransform();
                     tt.setIdentity();
-                    tt.setOrigin(new Ammo.btVector3(treep.x, treep.y, 2));
+                    tt.setOrigin(new Ammo.btVector3(treep.x, treep.y, tz+1.5));
                     tt.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
                     let tmotionState = new Ammo.btDefaultMotionState(tt);
                     let tlocalInertia = new Ammo.btVector3(0, 0, 0);
