@@ -6,10 +6,6 @@ class CircuitFactory {
         this.minimapScene = minimapView.scene;
         this.phyWorld = physics.world;
 
-        this.terrain = new Terrain();
-        this.mainScene.add(this.terrain.mesh);
-        this.phyWorld.addRigidBody(this.terrain.body);
-
         this.currSeed = undefined;
         this.currCircuit = undefined;
 
@@ -51,16 +47,15 @@ class CircuitFactory {
                       width: 12.5,
                       margin: 0.5,
                       pointResolution: 200,
-                      Z: 0.6,
-                      terrainSide: 800,
-                      treesCount: this.TREES_COUNT,
-                      altitude: this.terrain.altitude};
+                      treesCount: this.TREES_COUNT};
 
         const circuitPromise = new Promise(resolve => {
             if (seed == this.currSeed) {
                 resolve(this.currCircuit);
             } else {
                 if (this.currCircuit != undefined) {
+                    this.mainScene.remove(this.currCircuit.terrain.mesh);
+                    this.phyWorld.removeCollisionObject(this.currCircuit.terrain.body);
                     this.mainScene.remove(this.currCircuit.mesh);
                     this.minimapScene.remove(this.currCircuit.minimapMesh);
                     this.phyWorld.removeCollisionObject(this.currCircuit.body);
@@ -76,6 +71,8 @@ class CircuitFactory {
             if (value.id != this.currSeed) {
                 this.currSeed = seed;
                 this.currCircuit = value;
+                this.mainScene.add(value.terrain.mesh);
+                this.phyWorld.addRigidBody(value.terrain.body);
                 this.mainScene.add(value.mesh);
                 this.minimapScene.add(value.minimapMesh);
                 this.phyWorld.addRigidBody(value.body);
@@ -93,6 +90,10 @@ class Circuit {
     constructor  (materials, conf, id, trees) {
         this.id = id;
         const rng = new Math.seedrandom(id);
+
+        // Create Terrain
+        this.terrain = new Terrain(rng);
+        let terrainSide = this.terrain.size - (0.2*this.terrain.size);
 
         // Define direction
         this.clockwise = rng() < (1/2);
@@ -181,37 +182,38 @@ class Circuit {
         const spacedPoints = chordal.getSpacedPoints(conf.pointResolution);
 
         // Get the geometry && update points
-        const cir = createWidthLineBufferGeo(points, conf.width, true, 1, conf.altitude);
+        const z_line_conf = {func: this.terrain.altitude.bind(this.terrain),
+                             max: this.terrain.blockSize}
+        const cir = createWidthLineBufferGeo(points, conf.width, true, 1, z_line_conf);
         points = cir.origPoints;
 
         // Compute start/stop & checkpoints
         let totLength = 0;
         const segLength = [];
         const cumSegLength = [];
-        let maxSegLength = 0;
-        let maxSegLengthId = 0;
         for (var i = 0; i < points.length-1; i++) {
             cumSegLength.push(totLength);
             const segL = new THREE.Vector3().subVectors(points[i+1], points[i]).length();
             totLength = totLength + segL;
             segLength.push(segL);
-            if (segL > maxSegLength) {
-                maxSegLengthId = i;
-                maxSegLength = segL;
-            }
         }
 
-        // Put start line BEFORE longest segment
-        if (!this.clockwise) {
-            maxSegLengthId++;
-            if (maxSegLengthId >= cumSegLength.length) {
-                maxSegLengthId = 0;
+        // find longest double segment and put sl in the middle
+        let maxDoubleSegLength = 0;
+        let slId = 0;
+        for (var i = 0; i < segLength.length; i++) {
+            let previ = i-1;
+            if (previ < 0) previ = segLength.length-1;
+            let doubleSegL = segLength[previ] + segLength[i];
+            if (doubleSegL > maxDoubleSegLength) {
+                slId = i;
+                maxDoubleSegLength = doubleSegL;
             }
         }
 
         // Search the sector checkpoint positions
         const sectorLength = totLength/3;
-        const startLength = cumSegLength[maxSegLengthId];
+        const startLength = cumSegLength[slId];
         function getIdFromLength (length) {
             let mlength = length;
             while (mlength > totLength) {
@@ -223,38 +225,6 @@ class Circuit {
             }
             return resId-1;
         }
-
-        /* --UNUSED--
-        // create spaced points list from the start
-        this.spaced10Points = [];
-        let closestToStart_SpacedPoint = undefined;
-        let minDiff = 1000;
-        for (let k = 0; k < spacedPoints.length; k++) {
-            let diff = (new THREE.Vector3().subVectors(points[maxSegLengthId], spacedPoints[k])).lengthSq();
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestToStart_SpacedPoint = k;
-            }
-        }
-        const nextk = Math.floor(conf.pointResolution/10);
-        if (this.clockwise) {
-            let k = 0;
-            for (k = closestToStart_SpacedPoint; k < spacedPoints.length-1; k += nextk) {
-                this.spaced10Points.push(spacedPoints[k]);
-            }
-            for (k = 1+k-spacedPoints.length; k < closestToStart_SpacedPoint; k += nextk) {
-                this.spaced10Points.push(spacedPoints[k]);
-            }
-        } else {
-            let k = 0;
-            for (k = closestToStart_SpacedPoint; k > 0; k -= nextk) {
-                this.spaced10Points.push(spacedPoints[k]);
-            }
-            for (k = spacedPoints.length+k-1; k > closestToStart_SpacedPoint; k -= nextk) {
-                this.spaced10Points.push(spacedPoints[k]);
-            }
-        }
-        */
 
         // Create margin geometry
         this._margin = conf.margin;
@@ -311,9 +281,9 @@ class Circuit {
         outMarginMesh.position.z += VERY_SMALL_GAP;
 
         // starting line mesh
-        this.startingLinePoints = [points[maxSegLengthId], cir.secPoints[maxSegLengthId]];
+        this.startingLinePoints = [points[slId], cir.secPoints[slId]];
         const startingLineMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, conf.margin,
-                                                                         false, conf.width+1, conf.altitude).geo,
+                                                                         false, conf.width+1, z_line_conf).geo,
                                                 materials.matWhite);
         this.slMesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.startingLinePoints), materials.matLineWhite);
         this.slMesh.add(startingLineMesh);
@@ -330,9 +300,11 @@ class Circuit {
 
         // main mesh
         this.mesh = new THREE.Mesh(cir.geo, materials.matGrey);
-        this.mesh.add(inMarginMesh, outMarginMesh, this.slMesh, this.cp1Mesh, this.cp2Mesh);
+        this.mesh.add(inMarginMesh, outMarginMesh, this.slMesh, this.cp1Mesh, this.cp2Mesh);       
+        //const edges = new THREE.LineSegments(new THREE.WireframeGeometry(cir.geo), new THREE.LineBasicMaterial({color: 0xffffff}));
+        //this.mesh.add(edges);
         this.mesh.position.z = SMALL_GAP;
-        
+
         // MINIMAP VUE
         const startingLineMinimapMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, 10,
                                                                                 false, conf.width+1).geo,
@@ -360,8 +332,8 @@ class Circuit {
 
         // ----- TREES -----
         let tree_points = generate2DUniqueRandomPoints(rng, conf.treesCount, conf.treesCount, 
-                                                       -conf.terrainSide/2, conf.terrainSide/2,
-                                                       -conf.terrainSide/2, conf.terrainSide/2);
+                                                       -terrainSide/2, terrainSide/2,
+                                                       -terrainSide/2, terrainSide/2);
         let tree_points_cleaned = [];
         let treeInd = 0;
         let tempPos = new THREE.Object3D();
@@ -402,7 +374,7 @@ class Circuit {
                 }
 
                 if (!bad2) {
-                    let tz = conf.altitude(treep.x, treep.y);
+                    let tz = this.terrain.altitude(treep.x, treep.y);
 
                     tempPos.position.set(treep.x, treep.y, tz+1.5);
                     tempPos.updateMatrix();

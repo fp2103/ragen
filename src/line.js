@@ -38,7 +38,13 @@ function getPseudoDerivativeVector(points, i, loop) {
     return new THREE.Vector3().subVectors(pB, pA);
 }
 
-function createWidthLineBufferGeo (points, width, loop, step, z_function) {
+function createWidthLineBufferGeo (points, width, loop, step, z_conf) {
+    let z_function = undefined;
+    let z_max = 0;
+    if (z_conf != undefined) {
+        z_function = z_conf.func;
+        z_max = z_conf.max;
+    }
 
     // Create intermediate points
     const morePoints = [];
@@ -181,6 +187,7 @@ function createWidthLineBufferGeo (points, width, loop, step, z_function) {
         // Search next point that is before a turn
         let nexti = i+1;
         while (nexti < morePoints.length &&
+               (z_max == 0 || morePoints[i].distanceTo(morePoints[nexti]) < z_max) &&
                d.angleTo(getPseudoDerivativeVector(morePoints, nexti, loop)) < 0.01) {
             nexti++;
         }
@@ -252,7 +259,6 @@ function createWidthLineBufferGeo (points, width, loop, step, z_function) {
         }
     }
 
-    //console.log("Cleaned Points:", origPoints.length, secPoints.length);
     const geo = new THREE.BufferGeometry().setFromPoints(vertices);
     geo.computeVertexNormals();
 

@@ -1,16 +1,93 @@
+// ----- Perlin Noise Utils function ---------
+const PERLINW = 64;
+
+function getConstantPerlinVector(v){
+    //v is the value from the permutation table
+    let h = v & 3;
+    if(h == 0)
+        return new THREE.Vector2(1.0, 1.0);
+    else if(h == 1)
+        return new THREE.Vector2(-1.0, 1.0);
+    else if(h == 2)
+        return new THREE.Vector2(-1.0, -1.0);
+    else
+        return new THREE.Vector2(1.0, -1.0);
+}
+
+function perlinFade(t){
+    return ((6*t - 15)*t + 10)*t*t*t;
+}
+
+function perlinLerp(t, a1, a2){
+    return a1 + t*(a2-a1);
+}
+
+function perlinNoise(P, x, y){
+    let X = Math.floor(x) & (PERLINW-1);
+    let Y = Math.floor(y) & (PERLINW-1);
+
+    let xf = x-Math.floor(x);
+    let yf = y-Math.floor(y);
+
+    let topRight = new THREE.Vector2(xf-1.0, yf-1.0);
+    let topLeft = new THREE.Vector2(xf, yf-1.0);
+    let bottomRight = new THREE.Vector2(xf-1.0, yf);
+    let bottomLeft = new THREE.Vector2(xf, yf);
+    
+    //Select a value in the array for each of the 4 corners
+    let valueTopRight = P[P[X+1]+Y+1];
+    let valueTopLeft = P[P[X]+Y+1];
+    let valueBottomRight = P[P[X+1]+Y];
+    let valueBottomLeft = P[P[X]+Y];
+    
+    let dotTopRight = topRight.dot(getConstantPerlinVector(valueTopRight));
+    let dotTopLeft = topLeft.dot(getConstantPerlinVector(valueTopLeft));
+    let dotBottomRight = bottomRight.dot(getConstantPerlinVector(valueBottomRight));
+    let dotBottomLeft = bottomLeft.dot(getConstantPerlinVector(valueBottomLeft));
+    
+    let u = perlinFade(xf);
+    let v = perlinFade(yf);
+    
+    return perlinLerp(u,
+                perlinLerp(v, dotBottomLeft, dotTopLeft),
+                perlinLerp(v, dotBottomRight, dotTopRight)
+            );
+
+}
+//-------------------------
 
 class Terrain {
-    constructor () {
-        const N = 50;
-		const blockSize = 20;
-        const offset = N*blockSize/2;
+    constructor (rng) {
+        const N = 40;
+		this.blockSize = 25;
+        this.size = N*this.blockSize;
+
+        // Create Perlin permutation table
+        this._perlinP = [];
+        for(let i = 0; i < PERLINW; i++){
+            this._perlinP.push(i);
+        }
+        // shuffle
+        for(let e = PERLINW-1; e > 0; e--){
+            let index = Math.round(rng()*(e-1));
+            let temp  = this._perlinP[e];
+            
+            this._perlinP[e] = this._perlinP[index];
+            this._perlinP[index] = temp;
+        }
+        // double it
+        for(let i = 0; i < PERLINW; i++){
+            this._perlinP.push(this._perlinP[i]);
+        }
 
         // Points
 		const terrainPoints = new Array();
-		for (let x = 0; x < N; x+=1) {
+        const hN = Math.round(N/2);
+		for (let x = -hN; x < hN; x+=1) {
 		    let xl = new Array();
-			for (let y = 0; y < N; y+=1) {
-				xl.push(new THREE.Vector3(x*blockSize, y*blockSize, this.altitude(x*blockSize, y*blockSize)));
+			for (let y = -hN; y < hN; y+=1) {
+				let z = this.altitude(x*this.blockSize, y*this.blockSize);
+				xl.push(new THREE.Vector3(x*this.blockSize, y*this.blockSize, z));
 			}
 			terrainPoints.push(xl);
 		}
@@ -44,9 +121,9 @@ class Terrain {
 
         const terrainGeo = new THREE.BufferGeometry().setFromPoints(threeVertices);
         terrainGeo.computeVertexNormals();
-
         this.mesh = new THREE.Mesh(terrainGeo, mapMaterial);
-        this.mesh.position.copy(new THREE.Vector3(-offset, -offset, 0));
+        //const edges = new THREE.LineSegments(new THREE.WireframeGeometry(terrainGeo), new THREE.LineBasicMaterial({color: 0x000000}));
+        //this.mesh.add(edges);
 
         // Ammo
         const ground = new Ammo.btBvhTriangleMeshShape(ammoTMesh, true, true);
@@ -54,7 +131,7 @@ class Terrain {
 
         let t = new Ammo.btTransform();
         t.setIdentity();
-        t.setOrigin(new Ammo.btVector3(-offset, -offset, 0));
+        t.setOrigin(new Ammo.btVector3(0, 0, 0));
         t.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
         let motionState = new Ammo.btDefaultMotionState(t);
 
@@ -66,6 +143,12 @@ class Terrain {
     }
 
     altitude (x, y) {
-        return 0;
+        let z = 50*perlinNoise(this._perlinP, x*0.001, y*0.001);
+        return z;
+        // c. podium +haut
+        // b. minimap flatten
+        // e. start with break on
+        // d. tree (phy & shadow)
     }
+    
 }
