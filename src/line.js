@@ -262,10 +262,21 @@ function createWidthLineBufferGeo (points, width, loop, step, z_conf) {
     const geo = new THREE.BufferGeometry().setFromPoints(vertices);
     geo.computeVertexNormals();
 
+    // Flatten
+    const flatVertices = [];
+    for (let v of vertices) {
+        let fv = v.clone();
+        fv.z = 0;
+        flatVertices.push(fv);
+    }
+    const flatGeo = new THREE.BufferGeometry().setFromPoints(flatVertices);
+    flatGeo.computeVertexNormals();
+
     return {
         origPoints: origPoints,
         secPoints: secPoints,
         geo: geo,
+        flatGeo: flatGeo,
         btShape: new Ammo.btBvhTriangleMeshShape(btTMesh, true, true)
     }
 }

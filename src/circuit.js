@@ -307,10 +307,10 @@ class Circuit {
 
         // MINIMAP VUE
         const startingLineMinimapMesh = new THREE.Mesh(createWidthLineBufferGeo(this.startingLinePoints, 10,
-                                                                                false, conf.width+1).geo,
+                                                                                false, conf.width+1).flatGeo,
                                                        materials.matWhite);
         startingLineMinimapMesh.position.z += 1;
-        this.minimapMesh = new THREE.Mesh(cir.geo, materials.matBlue);
+        this.minimapMesh = new THREE.Mesh(cir.flatGeo, materials.matBlue);
         this.minimapMesh.add(startingLineMinimapMesh);
 
         // ------ AMMO -------

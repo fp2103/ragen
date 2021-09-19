@@ -351,7 +351,7 @@ class Car {
             this.shadowMesh.position.set(p.x(), p.y()-this.shadowY, p.z()-this.shadowZ);
             this.shadowMesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
 
-            this.minimapMesh.position.set(p.x(), p.y(), p.z());
+            this.minimapMesh.position.set(p.x(), p.y(), 2);
         }
 
         // Update wheels position
@@ -420,7 +420,7 @@ class Car {
 
     updateLerpPosition () {
         if (this.lerpPosition != undefined) {
-            let minimapPos = new THREE.Vector3(this.lerpPosition.x, this.lerpPosition.y, this.lerpPosition.z-0.1);
+            let minimapPos = new THREE.Vector3(this.lerpPosition.x, this.lerpPosition.y, 1.9);
             this.minimapMesh.position.lerp(minimapPos, this.lerp_speed);
             
             this.chassisMesh.position.lerp(this.lerpPosition, this.lerp_speed);
