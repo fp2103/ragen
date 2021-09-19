@@ -48,7 +48,7 @@ class PodiumScene {
 
         // Configuration
         const SIZE = 6;
-        this.HEIGHTS = [3, 2, 1.5];
+        this.HEIGHTS = [5, 4, 3];
         this.Z = this.HEIGHTS[0]/2;
 
         // Create boxes
@@ -86,7 +86,7 @@ class PodiumScene {
 
         // Camera position
         this.cameraStart = new THREE.Object3D();
-        this.cameraStart.position.set(9, -9, 6);
+        this.cameraStart.position.set(9, -9, 7);
         this.podiumMesh.add(this.cameraStart);
         
         this.ROTATION_AXIS = new THREE.Vector3(0, 0, -1);

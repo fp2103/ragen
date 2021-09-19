@@ -27,7 +27,7 @@ class CircuitFactory {
         const treesCone = new THREE.InstancedMesh(treeConeGeo, new THREE.MeshLambertMaterial({color: 0x6B8E23}), this.TREES_COUNT);
         const treesShadow = new THREE.InstancedMesh(new THREE.CircleBufferGeometry(3.1, 8),
                                 new THREE.MeshPhongMaterial({color: 0x000000, opacity: 0.2, transparent: true}), this.TREES_COUNT);
-        const treeShape = new Ammo.btCylinderShape(new Ammo.btVector3(1, 1.5, 1))
+        const treeShape = new Ammo.btCylinderShape(new Ammo.btVector3(1, 1, 5))
         
         this.trees = {truncs: treesTrunc, cones: treesCone, shadows: treesShadow,
                       shape: treeShape, bodies: new Array()};

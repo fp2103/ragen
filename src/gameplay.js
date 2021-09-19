@@ -234,7 +234,7 @@ class Gameplay {
         let nextcpcrossed = false;
         let slcrossedWhileUnvalid = false;
         for (var i = 0; i < this.player.car.WHEELSNUMBER; i++) {
-            let breakingForce = this.DEFAULT_DRAG;
+            let breakingForce = this.justReset ? this.MAX_BREAKING_FORCE : this.DEFAULT_DRAG;
             let engineForce = 0;
             let maxspeed = this.MAX_SPEED;
             

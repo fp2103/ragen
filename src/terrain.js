@@ -145,9 +145,6 @@ class Terrain {
     altitude (x, y) {
         let z = 50*perlinNoise(this._perlinP, x*0.001, y*0.001);
         return z;
-        // c. podium +haut
-        // e. start with break on
-        // d. tree (phy & shadow)
     }
     
 }
