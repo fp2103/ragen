@@ -7,3 +7,4 @@ small threejs & ammojs racing game with random generated track
 - https://github.com/kripken/ammo.js/blob/master/examples/webgl_demo_vehicle/index.html
 - http://blender3d.org.ua/forum/game/iwe/upload/Vehicle_Simulation_With_Bullet.pdf
 - https://medium.com/@noufel.gouirhate/build-a-simple-chat-app-with-node-js-and-socket-io-ea716c093088
+- https://rtouti.github.io/graphics/perlin-noise-algorithm

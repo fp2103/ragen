@@ -124,8 +124,6 @@ main();
 l- sound effect
 n- DB to keep score and list of last played circuit + ghost
 j- BOTs on multi (degeneration from best)
-h- Relief
 k- Mode de jeu avec multi/bot (most lap, time attack, race)
-i- vehicle physics++ + menu for modification in leaderboard (sandbox, no db entry)
 m- solo racing line option (best bot)
 */
