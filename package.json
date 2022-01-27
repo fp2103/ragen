@@ -9,7 +9,7 @@
     "nodemon": "^2.0.4",
     "seedrandom": "^3.0.5",
     "socket.io": "^2.3.0",
-    "three": "^0.116.1",
+    "three": "^0.137.0",
     "uglify-es": "^3.3.9"
   },
   "devDependencies": {},
